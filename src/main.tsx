@@ -10,6 +10,7 @@ import "@fontsource/baloo-bhaijaan-2/arabic-800.css";
 import "@fontsource/baloo-bhaijaan-2/latin-600.css";
 import "@fontsource/baloo-bhaijaan-2/latin-800.css";
 import "./styles.css";
+import "./map.css";
 import App from "./App";
 
 createRoot(document.getElementById("root")!).render(

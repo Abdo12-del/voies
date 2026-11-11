@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
 import { JourneyMap } from "./components/JourneyMap";
 import { LessonView } from "./components/LessonView";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
 import { TeacherPanel } from "./components/TeacherPanel";
-import { CheckIcon, KeyIcon, LockIcon } from "./components/icons";
 import type { LevelId } from "./data/sessions";
 import {
   clearPendingCelebration,
@@ -94,14 +94,24 @@ export default function App() {
     }
   }, [progress.completed, route.name]);
 
-  // ── عند فتح الخارطة: الانتقال بهدوء إلى المحطة الحالية ──
+  // ── عند فتح الخارطة: الانتقال مباشرة إلى المحطة الحالية (الطريق يبدأ من الأسفل) ──
   useEffect(() => {
     if (route.name !== "map") return;
-    const id = currentSessionId(progress.completed);
-    const delay = firstMapMount.current ? 1100 : 150;
+    const first = firstMapMount.current;
     firstMapMount.current = false;
-    if (!id || id === 1 || progress.pendingUnlock) return;
-    const t = setTimeout(() => scrollToStation(id), delay);
+    const id = currentSessionId(progress.completed) ?? 32;
+    const target = progress.pendingUnlock ? Math.max(1, progress.pendingUnlock - 1) : id;
+    let tries = 0;
+    let t: ReturnType<typeof setTimeout>;
+    const go = () => {
+      // ننتظر حتى تُرسم الخارطة (تعتمد على عرض الشاشة)
+      if (!document.querySelector(`[data-station="${target}"]`) && tries++ < 20) {
+        t = setTimeout(go, 30);
+        return;
+      }
+      scrollToStation(target, false);
+    };
+    t = setTimeout(go, first ? 0 : 60);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.name]);
@@ -162,28 +172,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header progress={progress} onGoToCurrent={goToCurrent} />
-
-      <div className="legend" aria-label="دليل الألوان">
-        <span className="legend-item">
-          <i className="lg lg-current" /> متاحة الآن
-        </span>
-        <span className="legend-item">
-          <i className="lg lg-done">
-            <CheckIcon size={11} />
-          </i>{" "}
-          مكتملة
-        </span>
-        <span className="legend-item">
-          <i className="lg lg-locked">
-            <LockIcon size={11} />
-          </i>{" "}
-          مقفلة
-        </span>
-        <span className="legend-item">
-          <i className="lg lg-milestone">★</i> محطة إنجاز
-        </span>
-      </div>
+      <Header progress={progress} />
 
       <JourneyMap
         progress={progress}
@@ -195,16 +184,14 @@ export default function App() {
         onOpenMilestone={(level) => setSheet({ kind: "milestone", level })}
       />
 
-      <footer className="app-footer">
-        <p>🎤 المتحدث الصغير — 32 محطة في مستويين، تُفتح واحدة تلو الأخرى.</p>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setTeacherOpen(true)}>
-          <KeyIcon size={16} /> لوحة المدرّب
-        </button>
-      </footer>
-
-      <button type="button" className="teacher-fab" onClick={() => setTeacherOpen(true)} aria-label="لوحة المدرّب" title="لوحة المدرّب">
-        <KeyIcon size={20} />
-      </button>
+      <BottomBar
+        progress={progress}
+        busy={unlockingId !== null}
+        onStart={(id) => startLesson(id)}
+        onGoToCurrent={goToCurrent}
+        onTeacher={() => setTeacherOpen(true)}
+        onFinale={() => setSheet({ kind: "milestone", level: 2 })}
+      />
 
       <StationSheet
         target={sheet}

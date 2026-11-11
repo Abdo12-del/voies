@@ -2,15 +2,14 @@ import type { Session } from "../data/sessions";
 import type { StationStatus } from "../lib/progress";
 import { CheckIcon, LockIcon, PlayIcon } from "./icons";
 
-export type LabelSide = "left" | "right";
-
 interface Props {
   session: Session;
   status: StationStatus;
   x: number;
   y: number;
   size: number;
-  labelSide: LabelSide;
+  /** إزاحة عنوان المحطة أفقيًا (لإبعاده عن منعطف الطريق) */
+  labelShift: number;
   labelWidth: number;
   unlocking: boolean;
   justCompleted: boolean;
@@ -31,7 +30,7 @@ export function Station({
   x,
   y,
   size,
-  labelSide,
+  labelShift,
   labelWidth,
   unlocking,
   justCompleted,
@@ -66,24 +65,34 @@ export function Station({
         onClick={() => onOpen(session.id)}
         aria-label={`الحصة ${session.id}: ${session.title} — ${STATUS_TEXT[status]}`}
       >
-        {status === "current" && <span className="station-glow" aria-hidden="true" />}
-        <span className="station-disc">
-          {status === "locked" || unlocking ? (
-            <>
-              <span className="station-lock">
-                <LockIcon size={Math.round(size * 0.42)} />
-              </span>
-              {unlocking && <span className="station-num station-num--reveal">{session.id}</span>}
-            </>
-          ) : (
-            <span className="station-num">{session.id}</span>
-          )}
-        </span>
-        {status !== "locked" && (
-          <span className="station-icon" aria-hidden="true">
-            {session.icon}
-          </span>
+        {status === "current" && (
+          <>
+            <span className="station-glow" aria-hidden="true" />
+            <span className="station-sparkles" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+          </>
         )}
+        <span className="puck">
+          <span className="puck-face">
+            {status === "locked" || unlocking ? (
+              <>
+                <span className="station-lock">
+                  <LockIcon size={Math.round(size * 0.4)} />
+                </span>
+                {unlocking && <span className="station-num station-num--reveal">{session.id}</span>}
+              </>
+            ) : (
+              <span className="station-num">{session.id}</span>
+            )}
+          </span>
+        </span>
+        <span className="station-icon" aria-hidden="true">
+          {session.icon}
+        </span>
         {status === "locked" && !unlocking && (
           <span className="station-badge-num" aria-hidden="true">
             {session.id}
@@ -91,25 +100,27 @@ export function Station({
         )}
         {status === "completed" && (
           <span className="station-check" aria-hidden="true">
-            <CheckIcon size={Math.round(size * 0.26)} />
+            <CheckIcon size={Math.round(size * 0.24)} />
           </span>
         )}
       </button>
 
       <div
-        className={`station-label side-${labelSide}`}
-        style={{ width: labelWidth, [labelSide === "left" ? "right" : "left"]: size + 12 } as React.CSSProperties}
+        className="station-label"
+        style={{
+          width: labelWidth,
+          transform: `translateX(calc(-50% + ${labelShift}px))`,
+          // في أطراف الصفوف يلتصق العنوان بجهة المحطة (الاتجاه RTL: البداية = اليمين)
+          alignItems: labelShift < 0 ? "flex-start" : labelShift > 0 ? "flex-end" : "center",
+        }}
       >
         <button type="button" className="station-label-text" onClick={() => onOpen(session.id)} tabIndex={-1}>
-          <span className="station-label-num">
-            {status === "current" ? "محطتك الآن · " : ""}الحصة {session.id}
-            {status === "completed" && <span className="label-done"> ✓</span>}
-          </span>
+          {status === "current" && <span className="station-label-now">محطتك الآن · الحصة {session.id}</span>}
           <span className="station-label-title">{session.title}</span>
         </button>
         {status === "current" && !unlocking && (
-          <button type="button" className="btn btn-start btn-sm" onClick={() => onStart(session.id)}>
-            <PlayIcon size={16} />
+          <button type="button" className="btn btn-start btn-sm station-start" onClick={() => onStart(session.id)}>
+            <PlayIcon size={15} />
             ابدأ الحصة
           </button>
         )}

@@ -1,13 +1,12 @@
 import { TOTAL_SESSIONS, getLevel, getSession } from "../data/sessions";
 import { currentLevel, currentSessionId, type ProgressState } from "../lib/progress";
-import { MicIcon, PinIcon } from "./icons";
+import { MicIcon } from "./icons";
 
 interface Props {
   progress: ProgressState;
-  onGoToCurrent: () => void;
 }
 
-export function Header({ progress, onGoToCurrent }: Props) {
+export function Header({ progress }: Props) {
   const { completed, childName } = progress;
   const level = getLevel(currentLevel(completed));
   const currentId = currentSessionId(completed);
@@ -45,11 +44,6 @@ export function Header({ progress, onGoToCurrent }: Props) {
             <span className="progress-text">
               الحصص المكتملة: <b className="progress-count">{completed} / {TOTAL_SESSIONS}</b>
             </span>
-            {current && (
-              <button type="button" className="btn btn-ghost btn-sm go-current" onClick={onGoToCurrent}>
-                <PinIcon size={16} /> اذهب إلى محطتي
-              </button>
-            )}
           </div>
           <div
             className="progress-bar"

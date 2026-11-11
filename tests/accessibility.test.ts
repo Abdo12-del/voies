@@ -1,6 +1,10 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { SceneryDefs } from "../src/components/Scenery";
+import { computeLayout } from "../src/lib/mapLayout";
 
 const css =
   readFileSync(new URL("../src/styles.css", import.meta.url), "utf8") +
@@ -41,11 +45,17 @@ function readable(selector: string, background: string) {
 
 describe("visual invariants independent of axe's visibility heuristics", () => {
   it("keeps locked/completed titles legible in both worlds and numbered platforms", () => {
-    for (const background of ["#bcd6b2", "#c2dda4", "#e4cf97"]) {
+    for (const background of [
+      "#7dba62",
+      "#91ce70",
+      "#97d56e",
+      "#a3dc78",
+      "#e8bf68",
+      "#dbaf58",
+    ]) {
       readable(".station-label", background);
-    }
-    for (const background of ["#c2dda4", "#e4cf97"])
       readable(".station-label.is-completed", background);
+    }
     readable(".station-number", color(".station-number", "background"));
     readable(
       ".is-current .station-number",
@@ -57,13 +67,17 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
     );
   });
   it("has 4.5:1 text contrast on reserved cards, speech and the darkest wooden sign", () => {
-    readable(".current-card h2", "#fffdf0");
-    readable(".current-card-kicker", "#fffdf0");
-    readable(".current-card-kicker > bdi", "#fffdf0");
-    readable(".speech", "#fff9e7");
-    readable(".world-sign > span", "#e3c997");
-    readable(".world-sign > div", "#e3c997");
-    readable(".world-sign-2 h3", "#e3c997");
+    readable(".current-card h2", "#ffffff");
+    readable(".current-card-kicker", "#ffffff");
+    readable(".current-card-kicker > bdi", "#ffffff");
+    readable(".speech", "#ffffff");
+    for (const background of ["#fff1d8", "#ffe9b5"]) {
+      readable(".world-sign > span", background);
+      readable(".world-sign > div", background);
+      readable(".world-sign-2 h3", background);
+    }
+    for (const background of ["#ffe680", "#ffbd1a"])
+      readable(".btn-start", background);
   });
   it("keeps small header, lesson and dialog text legible", () => {
     for (const selector of [
@@ -78,8 +92,48 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
       ".lesson-step-number",
     ])
       readable(selector, "#fffdf1");
-    readable(".lesson-step p", "#fffdf1");
-    readable(".lesson-approval-note", "#eef2df");
+    readable(".lesson-step p", "#ffffff");
+    readable(".lesson-approval-note", "#fff4cf");
+  });
+  it("restores the original saturated meadow, filled grass, and gold/blue game platforms", () => {
+    const markup = renderToStaticMarkup(
+      createElement(
+        "svg",
+        null,
+        createElement(
+          "defs",
+          null,
+          createElement(SceneryDefs, { L: computeLayout(1440, 702) }),
+        ),
+      ),
+    );
+    const meadow = markup.match(
+      /<linearGradient id="springGround"[^>]*>([\s\S]*?)<\/linearGradient>/,
+    )?.[1];
+    expect(meadow).toContain('stop-color="#97d56e"');
+    expect(meadow).toContain('stop-color="#a3dc78"');
+    const grass = markup.match(/<g id="d-tuft">([\s\S]*?)<\/g>/)?.[1];
+    // Shapes and spring colors copied from the original ac224a3 artwork, not
+    // a global saturation filter (which would also alter the characters).
+    expect(grass?.match(/<path /g)).toHaveLength(3);
+    for (const path of [
+      "M-22 0 Q-24 -40 -6 -60 Q-12 -30 -8 0 Z",
+      "M-6 0 Q-2 -60 10 -90 Q8 -40 10 0 Z",
+      "M8 0 Q20 -40 34 -56 Q22 -26 22 0 Z",
+    ])
+      expect(grass).toContain(`d="${path}"`);
+    for (const originalColor of ["#5db552", "#4ea846", "#62bd57"])
+      expect(grass).toContain(originalColor);
+    const current = css.match(
+      /\n\.is-current \.station-face\s*\{([^}]+)\}/,
+    )?.[1];
+    const completed = css.match(
+      /\n\.is-completed \.station-face\s*\{([^}]+)\}/,
+    )?.[1];
+    for (const gold of ["#ffeb8a", "#ffb300"]) expect(current).toContain(gold);
+    for (const blue of ["#7cc8ff", "#2f8ae6"])
+      expect(completed).toContain(blue);
+    expect(css).not.toContain("saturate(0.8)");
   });
   it("preserves all six original character assets byte for byte", () => {
     const hashes: Record<string, string> = {

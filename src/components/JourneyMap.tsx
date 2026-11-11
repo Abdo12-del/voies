@@ -388,9 +388,9 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                     x1="0"
                     x2={L.W}
                   >
-                    <stop stopColor="#f3e4ba" />
-                    <stop offset=".48" stopColor="#f9efd3" />
-                    <stop offset="1" stopColor="#fff4dc" />
+                    <stop stopColor="#f7dca4" />
+                    <stop offset=".48" stopColor="#fdf0d2" />
+                    <stop offset="1" stopColor="#fdf0d2" />
                   </linearGradient>
                 </defs>
                 <FarLayer L={L} />
@@ -402,8 +402,8 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                     strokeWidth={L.roadW + 12}
                     transform="translate(0 6)"
                   />
-                  <path d={road} stroke="#a79e74" strokeWidth={L.roadW + 5} />
-                  <path d={road} stroke="#e3d4a9" strokeWidth={L.roadW + 2} />
+                  <path d={road} stroke="#ad7c42" strokeWidth={L.roadW + 5} />
+                  <path d={road} stroke="#dcb978" strokeWidth={L.roadW + 2} />
                   <path
                     d={road}
                     stroke="url(#roadBase)"

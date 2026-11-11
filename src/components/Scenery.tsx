@@ -167,42 +167,42 @@ export function buildScenery(L: Layout, reserved: Rect[]) {
 }
 export type Scenery = ReturnType<typeof buildScenery>;
 
-/** Kept as reusable definitions from the original scene; extended rather than rasterized. */
+/** Original meadow artwork and saturated palette, extended with the horizontal-world landmarks. */
 export function SceneryDefs({ L }: { L: Layout }) {
   return (
     <>
       <linearGradient id="springGround" x2="0" y2="1">
-        <stop stopColor="#e2edc5" />
-        <stop offset="1" stopColor="#c2dda4" />
+        <stop stopColor="#97d56e" />
+        <stop offset="1" stopColor="#a3dc78" />
       </linearGradient>
       <linearGradient id="goldGround" x2="0" y2="1">
-        <stop stopColor="#f5e9bd" />
-        <stop offset="1" stopColor="#e4cf97" />
+        <stop stopColor="#f6d993" />
+        <stop offset="1" stopColor="#e8bf68" />
       </linearGradient>
       <linearGradient id="springSky" x2="0" y2="1">
-        <stop stopColor="#e0f2ef" />
-        <stop offset="1" stopColor="#f5f6df" />
+        <stop stopColor="#ccecff" />
+        <stop offset="1" stopColor="#f1fbff" />
       </linearGradient>
       <linearGradient id="goldSky" x2="0" y2="1">
-        <stop stopColor="#fae5cf" />
-        <stop offset="1" stopColor="#fff3d2" />
+        <stop stopColor="#ffd2ae" />
+        <stop offset="1" stopColor="#fff0c2" />
       </linearGradient>
       <linearGradient id="treeLeaves" x1="0" y1="0" x2=".8" y2="1">
-        <stop stopColor="#91bb77" />
-        <stop offset="1" stopColor="#51876c" />
+        <stop stopColor="#64c25c" />
+        <stop offset="1" stopColor="#35995a" />
       </linearGradient>
       <linearGradient id="goldLeaves" x1="0" y1="0" x2=".8" y2="1">
-        <stop stopColor="#e6c470" />
-        <stop offset="1" stopColor="#ad8547" />
+        <stop stopColor="#f2bf50" />
+        <stop offset="1" stopColor="#bd7e2d" />
       </linearGradient>
       <linearGradient id="roof" x2="0" y2="1">
-        <stop stopColor="#db9477" />
-        <stop offset="1" stopColor="#b96f56" />
+        <stop stopColor="#f39b62" />
+        <stop offset="1" stopColor="#d77342" />
       </linearGradient>
       <linearGradient id="water" x2="1" y2=".5">
-        <stop stopColor="#93ced0" />
-        <stop offset=".5" stopColor="#badfd5" />
-        <stop offset="1" stopColor="#81bec3" />
+        <stop stopColor="#4fb3e3" />
+        <stop offset=".5" stopColor="#7fd0f5" />
+        <stop offset="1" stopColor="#45a9db" />
       </linearGradient>
       <pattern
         id="groundGrain"
@@ -224,143 +224,123 @@ export function SceneryDefs({ L }: { L: Layout }) {
       <clipPath id="goldClip">
         <rect x={-200} width={L.splitX + 200} height={L.H} />
       </clipPath>
-      <g id="d-tree" stroke="#456750" strokeWidth="1.2" strokeLinejoin="round">
-        <ellipse
-          cx="0"
-          cy="-1"
-          rx="35"
-          ry="7"
-          fill="#355a40"
-          opacity=".14"
-          stroke="none"
-        />
-        <path d="M-6-44h12L8-3Q0 2-8-3Z" fill="#b28861" />
-        <path
-          d="m0-12 1-34m0 12-12-11m12 7 13-12"
-          fill="none"
-          stroke="#816749"
-        />
-        <path
-          d="M-32-43C-53-47-48-75-31-79c-4-29 29-36 41-21 20-8 34 4 30 21 22 5 18 34-1 38-13 11-27 8-39 3-10 7-21 4-32-5Z"
-          fill="url(#treeLeaves)"
-        />
-        <path
-          d="M-34-72q-5-13 9-20m6-5q12-10 24-2"
-          stroke="#c4dba4"
-          strokeWidth="3"
-          opacity=".65"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path d="M17-59q12 0 18-8" fill="none" opacity=".4" />
+      <g id="d-tree">
+        <ellipse cx={0} cy={-3} rx={34} ry={8} fill="rgba(30,70,20,.22)" />
+        <rect x={-7} y={-40} width={14} height={40} rx={5} fill="#9b6a3d" />
+        <rect x={-7} y={-40} width={5} height={40} rx={3} fill="#b07c4a" />
+        <circle cx={-22} cy={-56} r={22} fill="var(--leaf-deep, #3f9b49)" />
+        <circle cx={22} cy={-56} r={22} fill="var(--leaf-deep, #3f9b49)" />
+        <circle cx={0} cy={-74} r={30} fill="var(--leaf-mid, #46a84f)" />
+        <circle cx={-9} cy={-84} r={13} fill="var(--leaf-light, #64c25c)" />
+        <circle cx={14} cy={-66} r={8} fill="var(--leaf-highlight, #5bb955)" />
+        <circle cx={-24} cy={-60} r={7} fill="var(--leaf-highlight, #5bb955)" />
       </g>
-      <g id="d-pine" stroke="#456750" strokeWidth="1.2" strokeLinejoin="round">
-        <ellipse
-          cy="-1"
-          rx="28"
-          ry="6"
-          fill="#355a40"
-          opacity=".14"
-          stroke="none"
-        />
-        <path d="M-5-29H5V0H-5Z" fill="#aa805a" />
+
+      <g id="d-pine">
+        <ellipse cx={0} cy={-3} rx={26} ry={6} fill="rgba(30,70,20,.22)" />
+        <rect x={-5} y={-22} width={10} height={22} rx={3} fill="#8a5b33" />
         <path
-          d="m0-106 25 40H15l20 28H23l18 20H-41l18-20h-12l20-28h-10Z"
-          fill="url(#treeLeaves)"
+          d="M0 -100 L26 -56 L-26 -56 Z"
+          fill="var(--leaf-deep, #2f8f50)"
+          strokeLinejoin="round"
+          stroke="var(--leaf-deep, #2f8f50)"
+          strokeWidth={6}
         />
         <path
-          d="m-17-68 13-23m-18 47L-8-61m-16 34 13-17"
-          stroke="#b9d9a2"
-          opacity=".6"
-          strokeWidth="2"
+          d="M0 -78 L32 -30 L-32 -30 Z"
+          fill="var(--leaf-mid, #35995a)"
+          strokeLinejoin="round"
+          stroke="var(--leaf-mid, #35995a)"
+          strokeWidth={6}
         />
+        <path d="M0 -100 L-12 -78 L0 -80 Z" fill="var(--leaf-light, #4db36d)" />
+        <path d="M0 -78 L-14 -52 L0 -56 Z" fill="var(--leaf-light, #4db36d)" />
       </g>
-      <g id="d-bush" stroke="#54764f" strokeWidth="1.6">
-        <ellipse
-          cy="-1"
-          rx="44"
-          ry="6"
-          fill="#355a40"
-          opacity=".13"
-          stroke="none"
-        />
-        <path
-          d="M-43-8c-10-21 8-37 22-32 4-24 37-28 45-4 23-7 34 22 17 36Z"
-          fill="url(#treeLeaves)"
-        />
-        <path
-          d="M-30-27q6-11 17-9M-6-45q11-8 19 1"
-          stroke="#c2dba0"
-          fill="none"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <circle cx="17" cy="-20" r="2.5" fill="#d99379" stroke="none" />
-        <circle cx="25" cy="-17" r="2" fill="#d99379" stroke="none" />
+
+      <g id="d-bush">
+        <ellipse cx={0} cy={-4} rx={44} ry={9} fill="rgba(30,70,20,.2)" />
+        <circle cx={-24} cy={-24} r={22} fill="var(--leaf-deep, #4aa94a)" />
+        <circle cx={24} cy={-22} r={21} fill="var(--leaf-deep, #4aa94a)" />
+        <circle cx={0} cy={-36} r={28} fill="var(--leaf-mid, #52b350)" />
+        <circle cx={-8} cy={-48} r={12} fill="var(--leaf-light, #70c962)" />
+        <circle cx={16} cy={-36} r={7} fill="var(--leaf-light, #70c962)" />
+        <circle cx={-27} cy={-30} r={7} fill="var(--leaf-highlight, #68c25d)" />
       </g>
+
       <g id="d-rock">
-        <ellipse cy="0" rx="42" ry="6" fill="#355a40" opacity=".13" />
+        <ellipse cx={0} cy={-3} rx={42} ry={8} fill="rgba(30,70,20,.2)" />
         <path
-          d="M-40-4q-4-30 26-40 26-10 46 8 14 14 8 32Z"
-          fill="#a5b0a0"
-          stroke="#667a69"
-          strokeWidth="1.8"
+          d="M-40 -4 Q-44 -34 -14 -44 Q12 -54 32 -36 Q46 -22 40 -4 Z"
+          fill="#b9b2a5"
         />
-        <path d="m-30-19 21-21 22 2-13 21Z" fill="#c8cdb7" />
-        <path d="m0-17 13-21 18 7" fill="none" stroke="#8f9b88" />
+        <path
+          d="M-30 -20 Q-28 -38 -8 -42 Q8 -46 18 -38 Q-6 -36 -30 -20 Z"
+          fill="#d8d2c6"
+        />
+        <path d="M-40 -4 Q-20 -12 40 -4 Z" fill="#9d9587" />
       </g>
-      <g id="d-flowers" stroke="#648953" strokeWidth="2" strokeLinecap="round">
-        <path d="M-22-1v-27M4-1v-39M27-1v-21" />
-        <path d="m-22-8-10-7m36 3 12-8" />
+
+      <g id="d-flowers">
         {[
-          [-22, -28, "#e4a08d"],
-          [4, -40, "#fff9de"],
-          [27, -22, "#edc86c"],
-        ].map(([x, y, color], i) => (
-          <g
-            key={i}
-            transform={`translate(${x} ${y})`}
-            stroke="#a98e5b"
-            strokeWidth=".6"
-          >
+          [-22, -16, "#ff8fb1"],
+          [6, -26, "#ffd23f"],
+          [26, -12, "#ffffff"],
+        ].map(([x, y, c], i) => (
+          <g key={i} transform={`translate(${x} ${y})`}>
+            <path
+              d={`M0 0 L0 ${16 + Number(y) * -0.2}`}
+              stroke="var(--grass-b, #4c9e3f)"
+              strokeWidth={3}
+            />
             {[0, 72, 144, 216, 288].map((a) => (
-              <ellipse
+              <circle
                 key={a}
-                transform={`rotate(${a})`}
-                cy="-6"
-                rx="4.2"
-                ry="6"
-                fill={color as string}
+                cx={Math.cos((a * Math.PI) / 180) * 7}
+                cy={Math.sin((a * Math.PI) / 180) * 7}
+                r={6}
+                fill={c as string}
               />
             ))}
-            <circle r="3.3" fill="#d5ab51" />
+            <circle r={4.5} fill="#ffb02e" />
           </g>
         ))}
-      </g>
-      <g
-        id="d-tuft"
-        stroke="#67935b"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        fill="none"
-      >
-        <path d="M-19-1q-4-22-15-28M-3-2q-3-32 3-49M13-1q3-22 19-31" />
-      </g>
-      <g id="d-mushroom" stroke="#8f7050" strokeWidth="2">
         <ellipse
-          cy="0"
-          rx="30"
-          ry="6"
-          fill="#355a40"
-          opacity=".12"
-          stroke="none"
+          cx={-6}
+          cy={-3}
+          rx={10}
+          ry={4}
+          fill="var(--grass-b, #4c9e3f)"
         />
-        <path d="M-10-45h20L14-3Q0 3-14-3Z" fill="#fff4d9" />
-        <path d="M-43-43q3-53 43-53t43 53q-43 15-86 0Z" fill="#d68f77" />
-        <circle cx="-18" cy="-69" r="8" fill="#fff5da" stroke="none" />
-        <circle cx="13" cy="-80" r="6" fill="#fff5da" stroke="none" />
-        <circle cx="25" cy="-55" r="5" fill="#fff5da" stroke="none" />
+        <ellipse cx={14} cy={-3} rx={9} ry={4} fill="var(--grass-b, #4c9e3f)" />
       </g>
+
+      <g id="d-tuft">
+        <path
+          d="M-22 0 Q-24 -40 -6 -60 Q-12 -30 -8 0 Z"
+          fill="var(--grass-a, #5db552)"
+        />
+        <path
+          d="M-6 0 Q-2 -60 10 -90 Q8 -40 10 0 Z"
+          fill="var(--grass-b, #4ea846)"
+        />
+        <path
+          d="M8 0 Q20 -40 34 -56 Q22 -26 22 0 Z"
+          fill="var(--grass-c, #62bd57)"
+        />
+      </g>
+
+      <g id="d-mushroom">
+        <ellipse cx={0} cy={-3} rx={30} ry={7} fill="rgba(30,70,20,.2)" />
+        <rect x={-12} y={-46} width={24} height={46} rx={10} fill="#fff4de" />
+        <path
+          d="M-44 -40 Q-40 -96 0 -96 Q40 -96 44 -40 Q0 -30 -44 -40 Z"
+          fill="#ff6a5c"
+        />
+        <circle cx={-18} cy={-70} r={8} fill="#fff" />
+        <circle cx={14} cy={-80} r={6} fill="#fff" />
+        <circle cx={22} cy={-56} r={5} fill="#fff" />
+      </g>
+
       <g
         id="d-house"
         stroke="#7c7151"
@@ -517,17 +497,17 @@ export const FarLayer = memo(function FarLayer({ L }: { L: Layout }) {
           <g key={x}>
             <path
               d={`M${x} ${h + 42}q150-160 320-45 160-160 340 20v120H${x}Z`}
-              fill={x < L.splitX ? "#e3ce9c" : "#bcd6b2"}
-              stroke={x < L.splitX ? "#d9c18d" : "#accba7"}
+              fill={x < L.splitX ? "#dbaf58" : "#7dba62"}
+              stroke={x < L.splitX ? "#ca9c49" : "#69a953"}
               strokeWidth="1"
             />
             <path
               d={`M${x - 100} ${h + 64}q200-96 360-18 170-112 370 12v110H${x - 100}Z`}
-              fill={x < L.splitX ? "#e9d8aa" : "#cbdfb3"}
+              fill={x < L.splitX ? "#edc66e" : "#91ce70"}
             />
             <path
               d={`M${x} ${h + 96}q150-50 330-10 130-60 320 14v100H${x}Z`}
-              fill={x < L.splitX ? "#efdfb2" : "#d8e7bc"}
+              fill={x < L.splitX ? "#f4d486" : "#a4da7c"}
             />
             {i % 2 === 0 && (
               <use
@@ -566,8 +546,8 @@ export const GroundLayer = memo(function GroundLayer({ L }: { L: Layout }) {
           cy={L.H * (0.67 + (i % 3) * 0.11)}
           rx={115 + (i % 4) * 18}
           ry={24}
-          fill={i * 350 < L.splitX ? "#f5e8bd" : "#e4eecb"}
-          opacity=".4"
+          fill={i * 350 < L.splitX ? "#ffe6a1" : "#b4e48a"}
+          opacity=".55"
         />
       ))}
       {L.rivers.map((b, i) => {
@@ -579,7 +559,7 @@ export const GroundLayer = memo(function GroundLayer({ L }: { L: Layout }) {
           <g key={i} fill="none" strokeLinejoin="round" strokeLinecap="round">
             <polyline
               points={points}
-              stroke="#aac39a"
+              stroke="#7fb957"
               strokeWidth={L.compact ? 65 : 81}
             />
             <polyline
@@ -652,7 +632,7 @@ export function Bridge({ L }: { L: Layout }) {
               width={w}
               height={h}
               rx="4"
-              fill="#d0b086"
+              fill="#c98d52"
             />
             {Array.from({ length: 11 }, (_, n) => (
               <path
@@ -668,7 +648,7 @@ export function Bridge({ L }: { L: Layout }) {
                   width={w + 10}
                   height="6"
                   rx="3"
-                  fill="#b89361"
+                  fill="#8c5a2b"
                 />
                 {[-w / 2, 0, w / 2].map((x) => (
                   <rect
@@ -678,7 +658,7 @@ export function Bridge({ L }: { L: Layout }) {
                     width="6"
                     height="17"
                     rx="2"
-                    fill="#c5a175"
+                    fill="#a7703c"
                   />
                 ))}
               </g>
@@ -743,7 +723,7 @@ export function StartVillage({ L }: { L: Layout }) {
         stroke="#66855b"
       />
       <path d="M-11-131v-41" fill="none" />
-      <path d="M-10-171h42l-9 12 9 12h-42Z" fill="#7ea98d" stroke="#527b65" />
+      <path d="M-10-171h42l-9 12 9 12h-42Z" fill="#ffc93c" stroke="#a96a15" />
       <rect x="-74" y="-91" width="148" height="30" rx="9" fill="#fff4d4" />
       <text
         y="-71"

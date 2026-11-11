@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from "react";
-import { TOTAL_SESSIONS, getSession } from "../data/sessions";
+import { useEffect, useState, type FormEvent } from "react";
+import { getSession } from "../data/sessions";
 import {
+  addStudent,
   approveNext,
-  lastApprovalLabel,
-  resetJourney,
-  setChildName,
-  setPinHash,
+  logout,
+  refreshProgress,
+  selectStudent,
   undoLast,
   type ProgressState,
 } from "../lib/progress";
-import { hashPin, isValidPin } from "../lib/pin";
-import { CheckIcon, KeyIcon, LockIcon } from "./icons";
+import { LoginForm } from "./AuthPanel";
+import { Icon } from "./icons";
 import { Modal } from "./Modal";
 
 interface Props {
@@ -19,324 +19,425 @@ interface Props {
   onClose: () => void;
   onApproved: () => void;
 }
+type Confirm = {
+  action: "approve" | "undo";
+  id: string;
+  name: string;
+  count: number;
+} | null;
 
-type View = "auth" | "setup" | "home" | "confirm-approve" | "confirm-undo" | "confirm-reset" | "change-pin";
-
-const MAX_TRIES = 5;
-const COOLDOWN_MS = 30_000;
-
-/**
- * لوحة المدرّب/المسؤول — محمية برمز.
- * هي المكان الوحيد الذي يمكن منه اعتماد إكمال الحصة وفتح التي تليها.
- */
+/** The browser never assigns roles or edits counts: all mutations are verified again in Postgres. */
 export function TeacherPanel({ open, progress, onClose, onApproved }: Props) {
-  const [view, setView] = useState<View>("auth");
-  const [pin, setPin] = useState("");
-  const [pin2, setPin2] = useState("");
-  const [error, setError] = useState("");
-  const [name, setName] = useState(progress.childName);
-  const [toast, setToast] = useState("");
-  const tries = useRef(0);
-  const lockedUntil = useRef(0);
-
+  const [confirm, setConfirm] = useState<Confirm>(null);
+  const [adding, setAdding] = useState(false),
+    [name, setName] = useState("");
+  const [newCode, setNewCode] = useState<string | null>(null);
+  const [error, setError] = useState(""),
+    [toast, setToast] = useState("");
+  const [busy, setBusy] = useState(false);
+  const student = progress.students.find((s) => s.id === progress.studentId);
   useEffect(() => {
     if (open) {
-      setView(progress.pinHash ? "auth" : "setup");
-      setPin("");
-      setPin2("");
+      setConfirm(null);
+      setAdding(false);
+      setNewCode(null);
+      setName("");
       setError("");
       setToast("");
-      setName(progress.childName);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  const completed = progress.completed;
-  const currentId = completed < TOTAL_SESSIONS ? completed + 1 : null;
-  const current = currentId ? getSession(currentId) : null;
-  const next = currentId && currentId < TOTAL_SESSIONS ? getSession(currentId + 1) : null;
-  const lastDone = completed > 0 ? getSession(completed) : null;
-
-  async function submitAuth(e: React.FormEvent) {
-    e.preventDefault();
-    const now = Date.now();
-    if (now < lockedUntil.current) {
-      setError(`محاولات كثيرة. انتظر ${Math.ceil((lockedUntil.current - now) / 1000)} ثانية.`);
-      return;
-    }
-    if ((await hashPin(pin)) === progress.pinHash) {
-      tries.current = 0;
-      setPin("");
-      setError("");
-      setView("home");
-    } else {
-      tries.current += 1;
-      setPin("");
-      if (tries.current >= MAX_TRIES) {
-        lockedUntil.current = Date.now() + COOLDOWN_MS;
-        tries.current = 0;
-        setError("الرمز غير صحيح. أُوقفت المحاولة 30 ثانية.");
-      } else {
-        setError("الرمز غير صحيح، حاول مرة أخرى.");
-      }
-    }
-  }
-
-  async function submitNewPin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!isValidPin(pin)) return setError("الرمز من 4 إلى 8 أرقام.");
-    if (pin !== pin2) return setError("الرمزان غير متطابقين.");
-    setPinHash(await hashPin(pin));
-    setPin("");
-    setPin2("");
+  const create = async (event: FormEvent) => {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
     setError("");
-    setToast("تم حفظ رمز المدرّب ✓");
-    setView("home");
-  }
-
-  function doApprove() {
-    if (approveNext()) {
-      onApproved();
+    try {
+      const data = await addStudent(name);
+      setNewCode(data.login_code);
+      setAdding(false);
+      setName("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذّرت الإضافة.");
+    } finally {
+      setBusy(false);
     }
-  }
-
-  function flash(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2400);
-  }
+  };
+  const mutate = async () => {
+    if (!confirm || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      if (confirm.action === "approve")
+        await approveNext(confirm.id, confirm.count);
+      else await undoLast(confirm.id, confirm.count);
+      setConfirm(null);
+      if (confirm.action === "approve") onApproved();
+      else setToast("تم التراجع عن آخر اعتماد فقط.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذّر الاعتماد.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const close = () => {
+    if (!busy) onClose();
+  };
 
   return (
-    <Modal open={open} onClose={onClose} labelledBy="teacher-title" className="teacher">
-      <div className="teacher-head">
-        <span className="teacher-badge">
-          <KeyIcon size={18} /> لوحة المدرّب
-        </span>
-        <h2 id="teacher-title" className="teacher-title">
-          {view === "setup" ? "إنشاء رمز المدرّب" : view === "auth" ? "دخول المدرّب" : "متابعة رحلة الطفل"}
-        </h2>
-      </div>
-
-      {view === "setup" && (
-        <form className="teacher-form" onSubmit={submitNewPin}>
-          <p className="teacher-note">
-            هذه اللوحة للمدرّب أو المسؤول فقط. أنشئ رمزًا سريًا (4–8 أرقام) لا يعرفه الطفل؛ سيُطلب في كل مرة لاعتماد الحصص.
+    <Modal
+      open={open}
+      onClose={close}
+      labelledBy="teacher-title"
+      className={`teacher-panel ${progress.profile?.role === "teacher" ? "is-dashboard" : ""}`}
+      dismissible={!busy}
+    >
+      <span className="eyebrow">
+        <Icon name="teacher" size={19} /> مساحة المدرّب
+      </span>
+      <h2 id="teacher-title">
+        {progress.profile?.role === "teacher"
+          ? "خطوات صغيرة، إنجازات كبيرة"
+          : "دخول المدرّب"}
+      </h2>
+      {progress.mode === "demo" ? (
+        <div className="demo-note">
+          <span className="demo-label">
+            <Icon name="info" size={18} /> لوحة تجريبية للعرض فقط
+          </span>
+          <p>
+            الاعتماد وإضافة التلاميذ يتطلبان حساب مدرّب حقيقيًا بعد إعداد
+            Supabase. لا توجد كلمة مرور ينشئها أول زائر، ولا يمكن تغيير التقدّم
+            من هذه المعاينة.
           </p>
-          <PinField label="الرمز الجديد" value={pin} onChange={setPin} autoFocus />
-          <PinField label="تأكيد الرمز" value={pin2} onChange={setPin2} />
-          {error && <p className="form-error">{error}</p>}
-          <button className="btn btn-primary" type="submit">
-            حفظ الرمز والمتابعة
-          </button>
-        </form>
-      )}
-
-      {view === "auth" && (
-        <form className="teacher-form" onSubmit={submitAuth}>
-          <p className="teacher-note">أدخل رمز المدرّب لاعتماد إكمال الحصص.</p>
-          <PinField label="رمز المدرّب" value={pin} onChange={setPin} autoFocus />
-          {error && <p className="form-error">{error}</p>}
-          <button className="btn btn-primary" type="submit" disabled={pin.length < 4}>
-            دخول
-          </button>
-        </form>
-      )}
-
-      {view === "change-pin" && (
-        <form className="teacher-form" onSubmit={submitNewPin}>
-          <PinField label="الرمز الجديد" value={pin} onChange={setPin} autoFocus />
-          <PinField label="تأكيد الرمز" value={pin2} onChange={setPin2} />
-          {error && <p className="form-error">{error}</p>}
-          <div className="row-actions">
-            <button className="btn btn-primary" type="submit">
-              حفظ
-            </button>
-            <button className="btn btn-ghost" type="button" onClick={() => setView("home")}>
-              إلغاء
-            </button>
-          </div>
-        </form>
-      )}
-
-      {view === "home" && (
-        <div className="teacher-home">
-          {toast && <div className="teacher-toast">{toast}</div>}
-
-          <div className="teacher-status">
+          <div className="student-demo">
+            <span className="student-avatar">ت</span>
             <div>
-              <span className="ts-label">الحصص المكتملة</span>
-              <span className="ts-value">
-                {completed} / {TOTAL_SESSIONS}
-              </span>
+              <strong>تلميذ تجريبي</strong>
+              <p>
+                <bdi>0 من 32 حصة مكتملة</bdi>
+              </p>
             </div>
-            <div>
-              <span className="ts-label">الحصة الحالية</span>
-              <span className="ts-value">{current ? `${current.id}. ${current.title}` : "أتمّ الطفل الرحلة 🎉"}</span>
-            </div>
+            <Icon name="lock" size={22} />
           </div>
-
-          {current ? (
-            <button type="button" className="btn btn-approve" onClick={() => setView("confirm-approve")}>
-              <CheckIcon size={22} />
-              <span>
-                اعتماد إكمال الحصة {current.id}
-                <small>{next ? `وفتح الحصة ${next.id}` : "وإتمام الرحلة"}</small>
-              </span>
-            </button>
-          ) : (
-            <p className="teacher-note is-success">جميع الحصص الـ32 معتمدة. 🏆</p>
-          )}
-
-          <label className="field">
-            <span>اسم الطفل (يظهر في أعلى الخارطة — اختياري)</span>
-            <div className="row-actions">
-              <input
-                type="text"
-                value={name}
-                maxLength={30}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: سارة"
-              />
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setChildName(name);
-                  flash("تم حفظ الاسم ✓");
-                }}
-              >
-                حفظ
-              </button>
-            </div>
-          </label>
-
-          {lastApprovalLabel(progress) && (
-            <p className="teacher-last">
-              آخر اعتماد: <span>{lastApprovalLabel(progress)}</span>
+          <button type="button" className="btn btn-primary" onClick={onClose}>
+            العودة إلى الخارطة
+          </button>
+        </div>
+      ) : progress.profile?.role !== "teacher" ? (
+        <>
+          <LoginForm teacherOnly />
+          {progress.error && (
+            <p className="form-error" role="alert">
+              {progress.error}
             </p>
           )}
-
-          <div className="teacher-secondary">
-            <button type="button" className="btn btn-ghost btn-sm" disabled={!lastDone} onClick={() => setView("confirm-undo")}>
-              ↶ تراجع عن آخر اعتماد
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setError(""); setView("change-pin"); }}>
-              <KeyIcon size={16} /> تغيير الرمز
-            </button>
-            <button type="button" className="btn btn-danger-ghost btn-sm" onClick={() => setView("confirm-reset")}>
-              إعادة ضبط الرحلة
+        </>
+      ) : (
+        <>
+          <div className="teacher-toolbar">
+            <p className="muted">
+              أهلًا {progress.profile.name}، الاعتماد يفتح حصة واحدة فقط.
+            </p>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={busy}
+              onClick={() => {
+                setAdding(!adding);
+                setNewCode(null);
+                setConfirm(null);
+                setError("");
+              }}
+            >
+              <Icon name="plus" size={17} />
+              إضافة تلميذ
             </button>
           </div>
-
-          <button type="button" className="btn btn-ghost lock-panel" onClick={onClose}>
-            <LockIcon size={16} /> قفل اللوحة والعودة إلى الخارطة
-          </button>
-        </div>
-      )}
-
-      {view === "confirm-approve" && current && (
-        <div className="teacher-confirm">
-          <p className="confirm-q">هل أكمل الطفل هذه الحصة فعلًا؟</p>
-          <div className="confirm-card">
-            <span className="confirm-done">
-              ✓ الحصة {current.id}: {current.title}
-            </span>
-            {next ? (
-              <span className="confirm-next">
-                🔓 ستُفتح: الحصة {next.id}: {next.title}
+          {(error || progress.error) && (
+            <p className="form-error" role="alert">
+              {error || progress.error}
+            </p>
+          )}
+          {toast && (
+            <p className="success-note" role="status">
+              <Icon name="check" size={18} />
+              {toast}
+            </p>
+          )}
+          {adding ? (
+            <form className="add-student-form" onSubmit={create}>
+              <h3>رفيق جديد في الرحلة</h3>
+              <label className="field">
+                <span>اسم التلميذ</span>
+                <input
+                  value={name}
+                  maxLength={60}
+                  required
+                  autoComplete="off"
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <p className="muted">
+                سننشئ له رمز دخول خاصًا، وتبدأ رحلته بالحصة الأولى فقط.
+              </p>
+              <div className="row-actions">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={busy}
+                >
+                  {busy ? "نجهّز الرحلة…" : "إضافة وتوليد رمز الدخول"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setAdding(false)}
+                  disabled={busy}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          ) : newCode ? (
+            <div className="new-code">
+              <Icon name="key" size={34} />
+              <h3>رحلة جديدة جاهزة!</h3>
+              <p>رمز دخول التلميذ — يظهر هنا مرة واحدة</p>
+              <bdi dir="ltr" className="generated-code">
+                {newCode}
+              </bdi>
+              <p className="form-note">
+                احفظه وشاركه مع التلميذ فقط. يتيح الرمز قراءة تقدّمه ولا يمنحه
+                صلاحية الاعتماد.
+              </p>
+              <div className="row-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(newCode)
+                      .then(() => setToast("تم نسخ الرمز."))
+                      .catch(() => setError("انسخ الرمز الظاهر يدويًا."));
+                  }}
+                >
+                  <Icon name="copy" size={18} />
+                  نسخ الرمز
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setNewCode(null)}
+                >
+                  حفظت الرمز
+                </button>
+              </div>
+            </div>
+          ) : confirm ? (
+            <div className="teacher-confirm">
+              <span className="confirm-symbol">
+                <Icon
+                  name={confirm.action === "approve" ? "check" : "review"}
+                  size={32}
+                />
               </span>
-            ) : (
-              <span className="confirm-next">🏆 سيتم إتمام الرحلة كاملة</span>
-            )}
-            {current.id === 16 && <span className="confirm-next">🏅 وسيُمنح وسام المتحدث الواثق ويُفتح المستوى الثاني</span>}
-          </div>
-          <div className="row-actions">
-            <button type="button" className="btn btn-approve btn-approve--sm" onClick={doApprove}>
-              نعم، اعتمد وافتح التالية
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setView("home")}>
-              إلغاء
-            </button>
-          </div>
-        </div>
-      )}
-
-      {view === "confirm-undo" && lastDone && (
-        <div className="teacher-confirm">
-          <p className="confirm-q">التراجع عن اعتماد الحصة {lastDone.id}؟</p>
-          <p className="teacher-note">
-            ستعود الحصة {lastDone.id} «{lastDone.title}» حصةً حالية، وتُقفل الحصة التي بعدها.
-          </p>
-          <div className="row-actions">
+              <h3>
+                {confirm.action === "approve"
+                  ? `هل أكمل ${confirm.name} الحصة ${confirm.count + 1}؟`
+                  : `التراجع عن اعتماد الحصة ${confirm.count}؟`}
+              </h3>
+              <div className="confirm-card">
+                <strong>
+                  {
+                    getSession(
+                      confirm.action === "approve"
+                        ? confirm.count + 1
+                        : confirm.count,
+                    )?.title
+                  }
+                </strong>
+                <p>
+                  {confirm.action === "undo"
+                    ? "تُلغى آخر خطوة فقط، وتُغلق الحصة التالية من جديد."
+                    : confirm.count === 31
+                      ? "سيكتمل المستوى الثاني وتُمنح جائزة ختام الرحلة."
+                      : confirm.count === 15
+                        ? "سيُمنح وسام المستوى الأول وتُفتح الحصة 17، دون قفز."
+                        : `ستُفتح الحصة ${confirm.count + 2} فقط بعد هذا الاعتماد.`}
+                </p>
+              </div>
+              <div className="row-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy}
+                  onClick={() => {
+                    void mutate();
+                  }}
+                >
+                  {busy
+                    ? "نحفظ الاعتماد…"
+                    : confirm.action === "approve"
+                      ? "نعم، اعتمد الحصة"
+                      : "نعم، تراجع خطوة واحدة"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setConfirm(null);
+                    setError("");
+                  }}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="teacher-dashboard">
+              <section className="students-list" aria-label="تلاميذي">
+                <h3>
+                  تلاميذي <span>{progress.students.length}</span>
+                </h3>
+                {progress.students.length === 0 && (
+                  <p className="empty-state">
+                    لا تلاميذ بعد. أضف تلميذك الأول لنبدأ.
+                  </p>
+                )}
+                {progress.students.map((s) => (
+                  <button
+                    type="button"
+                    key={s.id}
+                    className={`student-row ${s.id === progress.studentId ? "active" : ""}`}
+                    aria-pressed={s.id === progress.studentId}
+                    onClick={() => {
+                      selectStudent(s.id);
+                      setError("");
+                    }}
+                  >
+                    <span className="student-avatar">{s.name.slice(0, 1)}</span>
+                    <span className="student-row-info">
+                      <strong>{s.name}</strong>
+                      <span className="student-mini-track">
+                        <i style={{ width: `${(s.completed / 32) * 100}%` }} />
+                      </span>
+                    </span>
+                    <bdi>{s.completed}/32</bdi>
+                  </button>
+                ))}
+              </section>
+              <section
+                className="student-detail"
+                aria-label="متابعة التلميذ المحدد"
+              >
+                {student ? (
+                  <>
+                    <span className="eyebrow">رحلة {student.name}</span>
+                    <h3>
+                      {student.completed === 32
+                        ? "اكتملت الحكاية بنجاح"
+                        : `الحصة ${student.completed + 1}`}
+                    </h3>
+                    <p className="student-session-title">
+                      {student.completed < 32
+                        ? getSession(student.completed + 1)?.title
+                        : "متحدث واثق ومؤثر"}
+                    </p>
+                    <p className="teacher-count">
+                      <bdi>{student.completed} من 32 حصة معتمدة</bdi>
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-approve"
+                      disabled={student.completed >= 32 || busy}
+                      onClick={() => {
+                        setConfirm({
+                          action: "approve",
+                          id: student.id,
+                          name: student.name,
+                          count: student.completed,
+                        });
+                        setError("");
+                      }}
+                    >
+                      <Icon
+                        name={student.completed === 32 ? "crown" : "check"}
+                        size={22}
+                      />
+                      {student.completed === 32
+                        ? "جميع الحصص معتمدة"
+                        : "اعتماد الحصة التالية"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      disabled={student.completed === 0 || busy}
+                      onClick={() => {
+                        setConfirm({
+                          action: "undo",
+                          id: student.id,
+                          name: student.name,
+                          count: student.completed,
+                        });
+                        setError("");
+                      }}
+                    >
+                      <Icon name="review" size={17} />
+                      التراجع عن آخر اعتماد
+                    </button>
+                    {student.updated_at && (
+                      <p className="form-note">
+                        آخر تحديث:{" "}
+                        <bdi>
+                          {new Date(student.updated_at).toLocaleDateString(
+                            "ar",
+                            { day: "numeric", month: "long" },
+                          )}
+                        </bdi>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="empty-detail">
+                    <Icon name="leaf" size={40} />
+                    <p>كل رحلة تبدأ بخطوة.</p>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+          <div className="teacher-footer">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-ghost btn-sm"
+              disabled={busy}
               onClick={() => {
-                undoLast();
-                flash("تم التراجع ✓");
-                setView("home");
+                void refreshProgress()
+                  .then(() => setToast("التقدّم محدّث."))
+                  .catch(() => setError("تعذّر التحديث."));
               }}
             >
-              نعم، تراجع
+              <Icon name="review" size={16} />
+              تحديث
             </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setView("home")}>
-              إلغاء
-            </button>
-          </div>
-        </div>
-      )}
-
-      {view === "confirm-reset" && (
-        <div className="teacher-confirm">
-          <p className="confirm-q">إعادة الرحلة من البداية؟</p>
-          <p className="teacher-note">ستُقفل جميع الحصص ما عدا الحصة الأولى، ويُمحى سجل الاعتمادات. (يبقى رمز المدرّب كما هو.)</p>
-          <div className="row-actions">
             <button
               type="button"
-              className="btn btn-danger"
+              className="btn btn-ghost btn-sm"
+              disabled={busy}
               onClick={() => {
-                resetJourney();
-                flash("أُعيد ضبط الرحلة ✓");
-                setView("home");
+                void logout()
+                  .then(onClose)
+                  .catch(() => setError("تعذّر تسجيل الخروج."));
               }}
             >
-              نعم، أعد الضبط
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setView("home")}>
-              إلغاء
+              <Icon name="logout" size={16} />
+              تسجيل خروج المدرّب
             </button>
           </div>
-        </div>
+        </>
       )}
     </Modal>
-  );
-}
-
-function PinField({
-  label,
-  value,
-  onChange,
-  autoFocus,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  autoFocus?: boolean;
-}) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <input
-        type="password"
-        inputMode="numeric"
-        autoComplete="off"
-        pattern="\d*"
-        maxLength={8}
-        value={value}
-        data-autofocus={autoFocus || undefined}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
-        className="pin-input"
-        dir="ltr"
-      />
-    </label>
   );
 }

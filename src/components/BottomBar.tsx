@@ -1,54 +1,71 @@
-import { getSession } from "../data/sessions";
-import { currentSessionId, type ProgressState } from "../lib/progress";
-import { KeyIcon, PinIcon, PlayIcon } from "./icons";
+import type { LevelId } from "../data/sessions";
+import { Icon } from "./icons";
 
 interface Props {
-  progress: ProgressState;
-  busy: boolean;
-  onStart: (id: number) => void;
+  visibleLevel: LevelId;
   onGoToCurrent: () => void;
+  onLevel: (id: LevelId) => void;
   onTeacher: () => void;
-  onFinale: () => void;
 }
 
-/** شريط التحكم السفلي على طريقة الألعاب: زر كبير لبدء الحصة الحالية */
-export function BottomBar({ progress, busy, onStart, onGoToCurrent, onTeacher, onFinale }: Props) {
-  const id = currentSessionId(progress.completed);
-  const session = id ? getSession(id) : null;
-
+/** Three controls only. Starting a lesson belongs exclusively to the current station's card. */
+export function BottomBar({
+  visibleLevel,
+  onGoToCurrent,
+  onLevel,
+  onTeacher,
+}: Props) {
   return (
     <nav className="game-bar" aria-label="التحكم في الرحلة">
-      <div className="game-bar-inner">
-        <button type="button" className="bar-side" onClick={onGoToCurrent} disabled={!session}>
-          <span className="bar-side-icon">
-            <PinIcon size={22} />
-          </span>
-          <span className="bar-side-text">محطتي</span>
-        </button>
-
-        {session ? (
-          <button type="button" className="bar-main" onClick={() => onStart(session.id)} disabled={busy}>
-            <span className="bar-main-title">
-              <PlayIcon size={20} /> ابدأ الحصة
-            </span>
-            <span className="bar-main-sub">
-              الحصة {session.id}: {session.title}
-            </span>
+      <button
+        type="button"
+        className="bar-side my-station"
+        onClick={onGoToCurrent}
+      >
+        <Icon name="pin" size={23} />
+        <span>محطتي</span>
+      </button>
+      <div
+        className="level-navigation"
+        role="group"
+        aria-label="موضعك في العالمين"
+      >
+        <div className="world-switch" role="group" aria-label="مبدّل المستوى">
+          <button
+            type="button"
+            onClick={() => onLevel(1)}
+            aria-pressed={visibleLevel === 1}
+            className={visibleLevel === 1 ? "active" : ""}
+          >
+            <Icon name="leaf" size={17} />
+            <span>المستوى الأول</span>
           </button>
-        ) : (
-          <button type="button" className="bar-main is-finale" onClick={onFinale}>
-            <span className="bar-main-title">🏆 أتممت الرحلة!</span>
-            <span className="bar-main-sub">32 / 32 حصة مكتملة</span>
+          <button
+            type="button"
+            onClick={() => onLevel(2)}
+            aria-pressed={visibleLevel === 2}
+            className={visibleLevel === 2 ? "active" : ""}
+          >
+            <Icon name="sparkles" size={17} />
+            <span>المستوى الثاني</span>
           </button>
-        )}
-
-        <button type="button" className="bar-side" onClick={onTeacher}>
-          <span className="bar-side-icon">
-            <KeyIcon size={21} />
+        </div>
+        <div className="world-position" aria-live="polite">
+          <i className={visibleLevel === 1 ? "active" : ""} />
+          <i className={visibleLevel === 2 ? "active" : ""} />
+          <span className="sr-only">
+            أنت تتصفح المستوى {visibleLevel === 1 ? "الأول" : "الثاني"}
           </span>
-          <span className="bar-side-text">المدرّب</span>
-        </button>
+        </div>
       </div>
+      <button
+        type="button"
+        className="bar-side teacher-button"
+        onClick={onTeacher}
+      >
+        <Icon name="teacher" size={24} />
+        <span>المدرّب</span>
+      </button>
     </nav>
   );
 }

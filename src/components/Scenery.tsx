@@ -1,11 +1,11 @@
 import { memo } from "react";
-import { rng, type Layout, type Rect, type Vec } from "../lib/mapLayout";
-
-/**
- * خلفية الخارطة المرسومة: المرج الأخضر (المستوى الأول) وأرض الأحلام البنفسجية (المستوى الثاني)،
- * مع النهر والجسر والأشجار والشجيرات والزهور والبالونات… كلها رسومات SVG خفيفة.
- * كل عنصر مرسوم في صندوق 100×100 ونقطة ارتكازه أسفل المنتصف (0,0).
- */
+import {
+  intersects,
+  rng,
+  type Layout,
+  type Rect,
+  type Vec,
+} from "../lib/mapLayout";
 
 type DecoType =
   | "tree"
@@ -15,488 +15,787 @@ type DecoType =
   | "flowers"
   | "tuft"
   | "mushroom"
-  | "ptree"
-  | "pbush"
-  | "balloons"
-  | "gift"
-  | "candy"
-  | "lolly"
-  | "sparkle"
-  | "pflowers"
-  | "mic"
-  | "cloud";
-
-interface DecoDef {
-  t: DecoType;
-  w: number;
-  size: [number, number];
-  /** ارتفاع مركز التصادم كنسبة من الحجم (للعناصر الطويلة) */
-  cy: number;
-  /** نصف قطر التصادم كنسبة من الحجم */
-  cr: number;
-}
-
-const ZONE1: DecoDef[] = [
-  { t: "tree", w: 3, size: [84, 108], cy: 0.55, cr: 0.36 },
-  { t: "pine", w: 1.6, size: [74, 96], cy: 0.5, cr: 0.3 },
-  { t: "bush", w: 4, size: [58, 80], cy: 0.3, cr: 0.42 },
-  { t: "rock", w: 1.6, size: [36, 54], cy: 0.3, cr: 0.42 },
-  { t: "flowers", w: 4, size: [30, 42], cy: 0.3, cr: 0.45 },
-  { t: "tuft", w: 3, size: [22, 32], cy: 0.3, cr: 0.45 },
-  { t: "mushroom", w: 1, size: [28, 38], cy: 0.4, cr: 0.4 },
-];
-
-const ZONE2: DecoDef[] = [
-  { t: "ptree", w: 2.6, size: [84, 108], cy: 0.55, cr: 0.36 },
-  { t: "pbush", w: 3.6, size: [58, 80], cy: 0.3, cr: 0.42 },
-  { t: "lolly", w: 1.6, size: [56, 76], cy: 0.55, cr: 0.32 },
-  { t: "balloons", w: 1.3, size: [62, 82], cy: 0.6, cr: 0.36 },
-  { t: "gift", w: 1.2, size: [40, 54], cy: 0.4, cr: 0.42 },
-  { t: "candy", w: 1.2, size: [40, 56], cy: 0.5, cr: 0.34 },
-  { t: "sparkle", w: 2.6, size: [18, 28], cy: 0.5, cr: 0.5 },
-  { t: "pflowers", w: 3.4, size: [30, 42], cy: 0.3, cr: 0.45 },
-  { t: "mic", w: 0.9, size: [50, 66], cy: 0.5, cr: 0.3 },
-];
-
-interface Deco {
+  | "house"
+  | "windmill"
+  | "fence"
+  | "pond"
+  | "direction"
+  | "butterfly";
+export interface Deco {
   t: DecoType;
   x: number;
   y: number;
-  s: number;
+  size: number;
+  gold: boolean;
   flip: boolean;
+  bounds: Rect;
 }
-
-interface Patch {
-  x: number;
-  y: number;
-  rx: number;
-  ry: number;
-  zone: 1 | 2;
-}
-
-interface Circle {
-  x: number;
-  y: number;
-  r: number;
-}
-
-function pick(defs: DecoDef[], r: number) {
-  const total = defs.reduce((a, d) => a + d.w, 0);
-  let acc = r * total;
-  for (const d of defs) {
-    acc -= d.w;
-    if (acc <= 0) return d;
+const DEFS: Array<{ t: DecoType; weight: number; size: [number, number] }> = [
+  { t: "tree", weight: 5, size: [100, 142] },
+  { t: "pine", weight: 2, size: [96, 128] },
+  { t: "bush", weight: 5, size: [56, 80] },
+  { t: "rock", weight: 2, size: [38, 62] },
+  { t: "flowers", weight: 6, size: [46, 68] },
+  { t: "tuft", weight: 4, size: [20, 32] },
+  { t: "mushroom", weight: 1.2, size: [24, 36] },
+  { t: "house", weight: 1.5, size: [118, 145] },
+  { t: "windmill", weight: 0.4, size: [148, 175] },
+  { t: "fence", weight: 1.2, size: [84, 110] },
+  { t: "pond", weight: 0.5, size: [150, 180] },
+  { t: "direction", weight: 0.6, size: [66, 82] },
+  { t: "butterfly", weight: 0.5, size: [20, 28] },
+];
+function pick(r: number) {
+  let target = r * DEFS.reduce((sum, d) => sum + d.weight, 0);
+  for (const def of DEFS) {
+    target -= def.weight;
+    if (target <= 0) return def;
   }
-  return defs[defs.length - 1];
+  return DEFS[0];
+}
+export function riverX(bridge: Vec, y: number) {
+  return bridge.x + Math.sin((y - bridge.y) / 74) * 22;
 }
 
-function inRect(x: number, y: number, r: number, R: Rect) {
-  return x + r > R.x && x - r < R.x + R.w && y + r > R.y && y - r < R.y + R.h;
-}
-
+/** Jittered stratified sampling, two density passes, exact AABBs + sampled Bézier clearance.
+ * The same bounds are exposed to the automated acceptance tests (not just eyeballed).
+ */
 export function buildScenery(L: Layout, reserved: Rect[]) {
-  const { W, H, samples, nodes, roadW, river, zoneSplitY } = L;
-  const rand = rng(Math.round(W) * 7 + 13);
+  const random = rng(Math.round(L.viewportW) * 7 + Math.round(L.H) * 11 + 13);
   const decos: Deco[] = [];
-  const placed: Circle[] = [];
-
-  const stationCircles: Circle[] = nodes.map((n) => ({
-    x: n.x,
-    y: n.y,
-    r: (n.kind === "milestone" ? L.milestoneSize : L.currentSize) / 2 + 26,
-  }));
-
-  const riverY = (x: number) => river.y + river.amp * Math.sin((x - river.bridge.x) / river.period);
-
-  const clear = (x: number, y: number, r: number, zone: 1 | 2) => {
-    if (x - r * 0.6 < 0 || x + r * 0.6 > W) return false;
-    // لا زينة فوق الطريق
-    const rr = roadW / 2 + r + 4;
-    for (let i = 0; i < samples.length; i += 2) {
-      const p = samples[i];
-      const dx = p.x - x;
-      const dy = p.y - y;
-      if (dx * dx + dy * dy < rr * rr) return false;
-    }
-    for (const c of stationCircles) {
-      const dx = c.x - x;
-      const dy = c.y - y;
-      const m = c.r + r;
-      if (dx * dx + dy * dy < m * m) return false;
-    }
-    for (const R of reserved) if (inRect(x, y, r, R)) return false;
-    if (zone === 1 && Math.abs(y - riverY(x)) < river.width / 2 + r + 6) return false;
-    // لا عناصر على حدّ المنطقتين مباشرة
-    if (Math.abs(y - zoneSplitY) < r + 10) return false;
-    for (const c of placed) {
-      const dx = c.x - x;
-      const dy = c.y - y;
-      const m = (c.r + r) * 0.92;
-      if (dx * dx + dy * dy < m * m) return false;
-    }
+  const horizon = L.H * 0.27;
+  const clear = (r: Rect) => {
+    if (
+      r.x < 4 ||
+      r.x + r.w > L.W - 4 ||
+      r.y < 83 ||
+      r.y + r.h < horizon + 40 ||
+      r.y + r.h > L.H - 8
+    )
+      return false;
+    if (reserved.some((box) => intersects(r, box, 9))) return false;
+    if (decos.some((d) => intersects(r, d.bounds, 7))) return false;
+    const padding = L.roadW / 2 + 12;
+    if (
+      L.samples.some(
+        (p) =>
+          p.x > r.x - padding &&
+          p.x < r.x + r.w + padding &&
+          p.y > r.y - padding &&
+          p.y < r.y + r.h + padding,
+      )
+    )
+      return false;
+    if (
+      L.rivers.some((b) => {
+        const nearestY = Math.max(r.y, Math.min(b.y, r.y + r.h));
+        const x = riverX(b, nearestY);
+        return r.x < x + 64 && r.x + r.w > x - 64;
+      })
+    )
+      return false;
     return true;
   };
-
-  // ── شبكة مرتّبة مع اهتزاز عشوائي ثابت ──
-  const step = L.wide ? 78 : 64;
-  for (let gy = 40; gy < H - 10; gy += step * 0.82) {
-    const row = Math.round(gy / step);
-    for (let gx = (row % 2) * (step / 2) + 10; gx < W; gx += step) {
-      const x = gx + (rand() - 0.5) * step * 0.8;
-      const y = gy + (rand() - 0.5) * step * 0.7;
-      const zone: 1 | 2 = y > zoneSplitY ? 1 : 2;
-      const def = pick(zone === 1 ? ZONE1 : ZONE2, rand());
-      const size = def.size[0] + rand() * (def.size[1] - def.size[0]);
-      const r = size * def.cr;
-      const cy = y - size * def.cy;
-      if (rand() > 0.86) continue;
-      if (!clear(x, cy, r, zone)) {
-        // جرّب عنصرًا صغيرًا في المكان نفسه
-        const small = zone === 1 ? (rand() > 0.5 ? ZONE1[4] : ZONE1[5]) : rand() > 0.5 ? ZONE2[6] : ZONE2[7];
-        const ss = small.size[0] + rand() * (small.size[1] - small.size[0]);
-        const sr = ss * small.cr;
-        const scy = y - ss * small.cy;
-        if (!clear(x, scy, sr, zone)) continue;
-        decos.push({ t: small.t, x, y, s: ss / 100, flip: rand() > 0.5 });
-        placed.push({ x, y: scy, r: sr });
-        continue;
+  const place = (t: DecoType, x: number, y: number, size: number) => {
+    const bounds = {
+      x: x - size * 0.53,
+      y: y - size * 1.09,
+      w: size * 1.06,
+      h: size * 1.17,
+    };
+    if (!clear(bounds)) return false;
+    decos.push({
+      t,
+      x,
+      y,
+      size,
+      bounds,
+      gold: x < L.splitX,
+      flip: random() > 0.5,
+    });
+    return true;
+  };
+  const first = L.nodes[0];
+  // Distinct landmarks, still subject to exactly the same collision checks as every flower.
+  place("windmill", first.x + 486, L.H - 35, L.compact ? 128 : 162);
+  place("house", first.x + 656, L.H * 0.7, 118);
+  place("tree", first.x + 320, L.H - 24, 118);
+  place("tree", first.x - 330, L.H - 24, 132);
+  place("pond", first.x - 530, L.H - 34, L.compact ? 128 : 178);
+  // Large silhouettes first; otherwise small flowers greedily consume every tree-sized pocket.
+  for (let x = 85; x < L.W - 60; x += L.compact ? 177 : 205) {
+    for (const y of [horizon + 108, L.H - 25, L.H * 0.79]) {
+      const r = random();
+      const type: DecoType =
+        r < 0.52 ? "tree" : r < 0.72 ? "pine" : r < 0.89 ? "house" : "fence";
+      place(
+        type,
+        x + (random() - 0.5) * 30,
+        y,
+        (type === "fence" ? 92 : 108) + random() * 24,
+      );
+    }
+  }
+  const step = L.compact ? 78 : 94;
+  for (let y = horizon + 80, row = 0; y < L.H - 12; y += step * 0.77, row++) {
+    for (let x = 30 + ((row % 2) * step) / 2; x < L.W; x += step) {
+      const px = x + (random() - 0.5) * step * 0.65;
+      const py = y + (random() - 0.5) * step * 0.5;
+      const def = pick(random());
+      const size =
+        (def.size[0] + random() * (def.size[1] - def.size[0])) *
+        (L.compact ? 0.86 : 1);
+      if (!place(def.t, px, py, size)) {
+        place(random() > 0.42 ? "flowers" : "tuft", px, py, 28 + random() * 20);
       }
-      decos.push({ t: def.t, x, y, s: size / 100, flip: rand() > 0.5 });
-      placed.push({ x, y: cy, r });
+    }
+  }
+  // Fill only genuinely empty pockets, never force an item onto the road or a label.
+  for (let y = horizon + 46; y < L.H - 18; y += 51) {
+    for (let x = 34; x < L.W - 20; x += 69) {
+      if (random() < 0.45)
+        place(
+          random() > 0.5 ? "flowers" : "tuft",
+          x + random() * 16,
+          y,
+          20 + random() * 16,
+        );
     }
   }
   decos.sort((a, b) => a.y - b.y);
-
-  // بقع العشب الفاتحة على الأرض
-  const patches: Patch[] = [];
-  const pr = rng(Math.round(W) + 99);
-  for (let y = 60; y < H; y += L.wide ? 150 : 120) {
-    const count = L.wide ? 3 : 2;
-    for (let i = 0; i < count; i++) {
-      const x = ((i + pr()) / count) * W;
-      const yy = y + (pr() - 0.5) * 90;
-      patches.push({
-        x,
-        y: yy,
-        rx: 50 + pr() * (L.wide ? 110 : 70),
-        ry: 18 + pr() * 26,
-        zone: yy > zoneSplitY ? 1 : 2,
-      });
-    }
-  }
-
-  // أوراق الزنبق على النهر
-  const pads: Vec[] = [];
-  for (let x = 30 + pr() * 60; x < W - 20; x += (L.wide ? 170 : 120) + pr() * 90) {
-    if (Math.abs(x - river.bridge.x) < roadW + 40) continue;
-    pads.push({ x, y: riverY(x) + (pr() - 0.5) * river.width * 0.4 });
-  }
-
-  // سحب ونجوم في سماء المستوى الثاني
-  const sky: Deco[] = [];
-  const sr = rng(Math.round(W) + 7);
-  for (let i = 0; i < (L.wide ? 6 : 3); i++) {
-    const x = 30 + sr() * (W - 60);
-    const y = 30 + sr() * 120;
-    sky.push({ t: "cloud", x, y, s: (L.wide ? 0.9 : 0.6) + sr() * 0.5, flip: sr() > 0.5 });
-  }
-
-  return { decos, patches, pads, sky, riverY };
+  return { decos, horizon };
 }
+export type Scenery = ReturnType<typeof buildScenery>;
 
-type Scenery = ReturnType<typeof buildScenery>;
-
-function riverPath(L: Layout, riverY: (x: number) => number) {
-  let d = `M -20 ${riverY(-20).toFixed(1)}`;
-  for (let x = 0; x <= L.W + 20; x += 12) d += ` L ${x} ${riverY(x).toFixed(1)}`;
-  return d;
-}
-
-export function zone2Shape(L: Layout) {
-  const { W, zoneSplitY: y } = L;
-  let d = `M 0 0 H ${W} V ${y}`;
-  const waves = Math.max(3, Math.round(W / 140));
-  const step = W / waves;
-  for (let i = 0; i < waves; i++) {
-    const x0 = W - i * step;
-    d += ` Q ${x0 - step / 2} ${y + (i % 2 ? -22 : 22)}, ${x0 - step} ${y}`;
-  }
-  return d + " Z";
-}
-
-/** الطبقة السفلية: الأرض والبقع والنهر (تُرسم تحت الطريق) */
-export const GroundLayer = memo(function GroundLayer({ L, S }: { L: Layout; S: Scenery }) {
+/** Kept as reusable definitions from the original scene; extended rather than rasterized. */
+export function SceneryDefs({ L }: { L: Layout }) {
   return (
-    <g className="ground">
-      <rect x={0} y={0} width={L.W} height={L.H} fill="url(#z1ground)" />
-      {S.patches
-        .filter((p) => p.zone === 1)
-        .map((p, i) => (
-          <ellipse key={`p1-${i}`} cx={p.x} cy={p.y} rx={p.rx} ry={p.ry} fill="#b4e48a" opacity={0.55} />
-        ))}
-      {/* النهر */}
-      <g className="river">
-        <path d={riverPath(L, S.riverY)} stroke="#d8f0a6" strokeWidth={L.river.width + 16} fill="none" />
-        <path d={riverPath(L, S.riverY)} stroke="#4fb3e3" strokeWidth={L.river.width} fill="none" />
-        <path d={riverPath(L, S.riverY)} stroke="#7fd0f5" strokeWidth={L.river.width - 16} fill="none" />
+    <>
+      <linearGradient id="springGround" x2="0" y2="1">
+        <stop stopColor="#e2edc5" />
+        <stop offset="1" stopColor="#c2dda4" />
+      </linearGradient>
+      <linearGradient id="goldGround" x2="0" y2="1">
+        <stop stopColor="#f5e9bd" />
+        <stop offset="1" stopColor="#e4cf97" />
+      </linearGradient>
+      <linearGradient id="springSky" x2="0" y2="1">
+        <stop stopColor="#e0f2ef" />
+        <stop offset="1" stopColor="#f5f6df" />
+      </linearGradient>
+      <linearGradient id="goldSky" x2="0" y2="1">
+        <stop stopColor="#fae5cf" />
+        <stop offset="1" stopColor="#fff3d2" />
+      </linearGradient>
+      <linearGradient id="treeLeaves" x1="0" y1="0" x2=".8" y2="1">
+        <stop stopColor="#91bb77" />
+        <stop offset="1" stopColor="#51876c" />
+      </linearGradient>
+      <linearGradient id="goldLeaves" x1="0" y1="0" x2=".8" y2="1">
+        <stop stopColor="#e6c470" />
+        <stop offset="1" stopColor="#ad8547" />
+      </linearGradient>
+      <linearGradient id="roof" x2="0" y2="1">
+        <stop stopColor="#db9477" />
+        <stop offset="1" stopColor="#b96f56" />
+      </linearGradient>
+      <linearGradient id="water" x2="1" y2=".5">
+        <stop stopColor="#93ced0" />
+        <stop offset=".5" stopColor="#badfd5" />
+        <stop offset="1" stopColor="#81bec3" />
+      </linearGradient>
+      <pattern
+        id="groundGrain"
+        width="72"
+        height="61"
+        patternUnits="userSpaceOnUse"
+      >
         <path
-          d={riverPath(L, S.riverY)}
-          stroke="#ffffff"
-          strokeWidth={3}
-          strokeDasharray="18 46"
-          strokeLinecap="round"
+          d="m9 12 2-4 2 4m30 34 2-3 2 3"
+          stroke="#5e8263"
+          strokeWidth="1"
+          opacity=".16"
           fill="none"
-          opacity={0.7}
-          className="river-ripple"
         />
-        {S.pads.map((p, i) => (
-          <g key={`pad-${i}`} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
-            <ellipse rx={13} ry={7} fill="#5cbf55" />
-            <path d="M0 0 L12 -3 L12 3 Z" fill="#7fd0f5" />
+      </pattern>
+      <clipPath id="springClip">
+        <rect x={L.splitX} width={L.W - L.splitX + 200} height={L.H} />
+      </clipPath>
+      <clipPath id="goldClip">
+        <rect x={-200} width={L.splitX + 200} height={L.H} />
+      </clipPath>
+      <g id="d-tree" stroke="#456750" strokeWidth="1.2" strokeLinejoin="round">
+        <ellipse
+          cx="0"
+          cy="-1"
+          rx="35"
+          ry="7"
+          fill="#355a40"
+          opacity=".14"
+          stroke="none"
+        />
+        <path d="M-6-44h12L8-3Q0 2-8-3Z" fill="#b28861" />
+        <path
+          d="m0-12 1-34m0 12-12-11m12 7 13-12"
+          fill="none"
+          stroke="#816749"
+        />
+        <path
+          d="M-32-43C-53-47-48-75-31-79c-4-29 29-36 41-21 20-8 34 4 30 21 22 5 18 34-1 38-13 11-27 8-39 3-10 7-21 4-32-5Z"
+          fill="url(#treeLeaves)"
+        />
+        <path
+          d="M-34-72q-5-13 9-20m6-5q12-10 24-2"
+          stroke="#c4dba4"
+          strokeWidth="3"
+          opacity=".65"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path d="M17-59q12 0 18-8" fill="none" opacity=".4" />
+      </g>
+      <g id="d-pine" stroke="#456750" strokeWidth="1.2" strokeLinejoin="round">
+        <ellipse
+          cy="-1"
+          rx="28"
+          ry="6"
+          fill="#355a40"
+          opacity=".14"
+          stroke="none"
+        />
+        <path d="M-5-29H5V0H-5Z" fill="#aa805a" />
+        <path
+          d="m0-106 25 40H15l20 28H23l18 20H-41l18-20h-12l20-28h-10Z"
+          fill="url(#treeLeaves)"
+        />
+        <path
+          d="m-17-68 13-23m-18 47L-8-61m-16 34 13-17"
+          stroke="#b9d9a2"
+          opacity=".6"
+          strokeWidth="2"
+        />
+      </g>
+      <g id="d-bush" stroke="#54764f" strokeWidth="1.6">
+        <ellipse
+          cy="-1"
+          rx="44"
+          ry="6"
+          fill="#355a40"
+          opacity=".13"
+          stroke="none"
+        />
+        <path
+          d="M-43-8c-10-21 8-37 22-32 4-24 37-28 45-4 23-7 34 22 17 36Z"
+          fill="url(#treeLeaves)"
+        />
+        <path
+          d="M-30-27q6-11 17-9M-6-45q11-8 19 1"
+          stroke="#c2dba0"
+          fill="none"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <circle cx="17" cy="-20" r="2.5" fill="#d99379" stroke="none" />
+        <circle cx="25" cy="-17" r="2" fill="#d99379" stroke="none" />
+      </g>
+      <g id="d-rock">
+        <ellipse cy="0" rx="42" ry="6" fill="#355a40" opacity=".13" />
+        <path
+          d="M-40-4q-4-30 26-40 26-10 46 8 14 14 8 32Z"
+          fill="#a5b0a0"
+          stroke="#667a69"
+          strokeWidth="1.8"
+        />
+        <path d="m-30-19 21-21 22 2-13 21Z" fill="#c8cdb7" />
+        <path d="m0-17 13-21 18 7" fill="none" stroke="#8f9b88" />
+      </g>
+      <g id="d-flowers" stroke="#648953" strokeWidth="2" strokeLinecap="round">
+        <path d="M-22-1v-27M4-1v-39M27-1v-21" />
+        <path d="m-22-8-10-7m36 3 12-8" />
+        {[
+          [-22, -28, "#e4a08d"],
+          [4, -40, "#fff9de"],
+          [27, -22, "#edc86c"],
+        ].map(([x, y, color], i) => (
+          <g
+            key={i}
+            transform={`translate(${x} ${y})`}
+            stroke="#a98e5b"
+            strokeWidth=".6"
+          >
+            {[0, 72, 144, 216, 288].map((a) => (
+              <ellipse
+                key={a}
+                transform={`rotate(${a})`}
+                cy="-6"
+                rx="4.2"
+                ry="6"
+                fill={color as string}
+              />
+            ))}
+            <circle r="3.3" fill="#d5ab51" />
           </g>
         ))}
       </g>
+      <g
+        id="d-tuft"
+        stroke="#67935b"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        fill="none"
+      >
+        <path d="M-19-1q-4-22-15-28M-3-2q-3-32 3-49M13-1q3-22 19-31" />
+      </g>
+      <g id="d-mushroom" stroke="#8f7050" strokeWidth="2">
+        <ellipse
+          cy="0"
+          rx="30"
+          ry="6"
+          fill="#355a40"
+          opacity=".12"
+          stroke="none"
+        />
+        <path d="M-10-45h20L14-3Q0 3-14-3Z" fill="#fff4d9" />
+        <path d="M-43-43q3-53 43-53t43 53q-43 15-86 0Z" fill="#d68f77" />
+        <circle cx="-18" cy="-69" r="8" fill="#fff5da" stroke="none" />
+        <circle cx="13" cy="-80" r="6" fill="#fff5da" stroke="none" />
+        <circle cx="25" cy="-55" r="5" fill="#fff5da" stroke="none" />
+      </g>
+      <g
+        id="d-house"
+        stroke="#7c7151"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      >
+        <ellipse
+          cy="1"
+          rx="48"
+          ry="7"
+          fill="#355a40"
+          opacity=".15"
+          stroke="none"
+        />
+        <path d="M-38-61h76v58h-76Z" fill="#fff1d0" />
+        <path d="M-5-59h43v56H-5Z" fill="#ebd4a4" stroke="none" />
+        <path d="M20-91h10v28H20Z" fill="#c7a277" />
+        <path d="m-50-57 50-45 50 45Z" fill="url(#roof)" />
+        <path d="m-45-61 43-34 41 34" fill="none" stroke="#f1bba0" />
+        <rect x="6" y="-35" width="18" height="32" rx="8" fill="#8aab9d" />
+        <rect x="-28" y="-40" width="19" height="18" rx="3" fill="#bddbd2" />
+        <path d="M-19-40v18m-9-9h19M15-16h2" />
+        <path d="M3-1h24v4H3Z" fill="#a88d69" />
+        <path d="M-30-18h23v4h-23Z" fill="#a88d69" />
+        <path
+          d="M-31-16q7-15 15-2 10-12 13 2"
+          fill="#799c61"
+          stroke="#688759"
+        />
+      </g>
+      <g
+        id="d-windmill"
+        stroke="#7c7151"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      >
+        <ellipse
+          cy="1"
+          rx="39"
+          ry="6"
+          fill="#355a40"
+          opacity=".14"
+          stroke="none"
+        />
+        <path d="m-14-76-12 73h52L14-76Z" fill="#f3e8c5" />
+        <path d="m-2-76-6 73h34L14-76Z" fill="#dfcfa5" stroke="none" />
+        <path d="m-22-75 22-24 22 24Z" fill="url(#roof)" />
+        <path d="M-8-1v-20a8 8 0 0 1 16 0v20" fill="#9ab4a1" />
+        <g className="windmill-sails">
+          <path
+            d="m0-67-28-29-8 10 36 19-29 28 10 8L0-67l28 29 8-10L0-67l29-28-10-8Z"
+            fill="#fff9df"
+          />
+          <path
+            d="m0-67-30-23m30 23-23 30m23-30 30 23m-30-23 23-30"
+            fill="none"
+          />
+          <circle cy="-67" r="4" fill="#a37a54" />
+        </g>
+      </g>
+      <g id="d-fence" stroke="#8b7954" strokeWidth="1.5" strokeLinejoin="round">
+        <ellipse
+          cy="0"
+          rx="48"
+          ry="5"
+          fill="#355a40"
+          opacity=".1"
+          stroke="none"
+        />
+        <path d="M-46-40h92v8h-92Zm0 20h92v8h-92Z" fill="#dac29a" />
+        <path
+          d="m-38 0-1-55 5-7 5 7v55Zm33 0V-55l5-7 5 7V0Zm34 0V-55l5-7 5 7V0Z"
+          fill="#f4dfb8"
+        />
+      </g>
+      <g id="d-pond" strokeWidth="1.1">
+        <path
+          d="M-49-27q-4-22 26-25 35-26 66 4 24 20-10 36-60 17-82-15Z"
+          fill="#b2cb8f"
+          stroke="#99b67b"
+        />
+        <path
+          d="M-43-28q0-15 27-18 29-17 51 2 21 19-7 26-51 12-71-10Z"
+          fill="url(#water)"
+          stroke="#8bb4a4"
+        />
+        <path
+          d="M-28-32h25m11 5h20m-32 5H8"
+          stroke="#edf6de"
+          strokeLinecap="round"
+        />
+        <ellipse cx="23" cy="-39" rx="9" ry="4" fill="#8ba76e" stroke="none" />
+        <path d="m25-40 4-3" stroke="#f2edcf" />
+        <path d="m-39-42-3-15m5 17 2-10" stroke="#769563" />
+        <circle cx="-42" cy="-57" r="2" fill="#b99c68" stroke="none" />
+      </g>
+      <g
+        id="d-direction"
+        stroke="#88704c"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      >
+        <ellipse
+          cy="0"
+          rx="23"
+          ry="4"
+          fill="#355a40"
+          opacity=".14"
+          stroke="none"
+        />
+        <path d="M-4-85h8V0h-8Z" fill="#b89666" />
+        <path d="M-39-72h63l19 14-19 14h-63Z" fill="#f3dfab" />
+        <path d="M-21-63h43m-36 10h30" stroke="#998453" strokeWidth="2" />
+      </g>
+      <g id="d-butterfly" stroke="#8a795f" strokeWidth="1.7">
+        <g className="butterfly-wings">
+          <path
+            d="M0-38q-45-44-43-8 0 16 32 13-22 25-2 29 16 3 13-34Z"
+            fill="#edc08b"
+          />
+          <path
+            d="M0-38q45-44 43-8 0 16-32 13 22 25 2 29-16 3-13-34Z"
+            fill="#e6a798"
+          />
+        </g>
+        <path d="M0-42v30m0-30-5-8m5 8 5-8" fill="none" />
+      </g>
+      <g id="d-cloud" fill="#fffef0" stroke="#d3e2cf" strokeWidth=".6">
+        <path d="M-47-10c-14-11-4-28 9-25-3-23 30-32 39-12 19-17 45-4 39 15 23-3 31 20 14 25-17 4-85 4-101-3Z" />
+      </g>
+    </>
+  );
+}
 
-      {/* أرض المستوى الثاني */}
-      <path d={zone2Shape(L)} fill="url(#z2ground)" />
-      <path d={zone2Shape(L)} fill="none" stroke="#9a83ea" strokeWidth={0} />
-      {S.patches
-        .filter((p) => p.zone === 2)
-        .map((p, i) => (
-          <ellipse key={`p2-${i}`} cx={p.x} cy={p.y} rx={p.rx} ry={p.ry} fill="#c7b8fa" opacity={0.6} />
+export const FarLayer = memo(function FarLayer({ L }: { L: Layout }) {
+  const h = L.H * 0.27;
+  const chunks = Array.from(
+    { length: Math.ceil(L.W / 660) + 2 },
+    (_, i) => i * 660 - 400,
+  );
+  return (
+    <g className="far-landscape">
+      <rect width={L.W} height={L.H} fill="url(#springSky)" />
+      <rect width={L.splitX} height={L.H} fill="url(#goldSky)" />
+      <circle
+        cx={L.splitX - 520}
+        cy={h * 0.45}
+        r="45"
+        fill="#f5d69a"
+        opacity=".65"
+      />
+      <g className="parallax-hills">
+        {chunks.map((x, i) => (
+          <g key={x}>
+            <path
+              d={`M${x} ${h + 42}q150-160 320-45 160-160 340 20v120H${x}Z`}
+              fill={x < L.splitX ? "#e3ce9c" : "#bcd6b2"}
+              stroke={x < L.splitX ? "#d9c18d" : "#accba7"}
+              strokeWidth="1"
+            />
+            <path
+              d={`M${x - 100} ${h + 64}q200-96 360-18 170-112 370 12v110H${x - 100}Z`}
+              fill={x < L.splitX ? "#e9d8aa" : "#cbdfb3"}
+            />
+            <path
+              d={`M${x} ${h + 96}q150-50 330-10 130-60 320 14v100H${x}Z`}
+              fill={x < L.splitX ? "#efdfb2" : "#d8e7bc"}
+            />
+            {i % 2 === 0 && (
+              <use
+                href="#d-cloud"
+                transform={`translate(${x + 260} ${h * 0.47}) scale(1.1 .8)`}
+                className="cloud-drift"
+              />
+            )}
+            <path
+              d={`m${x + 120} ${h * 0.53}q5-7 11 0 5-7 11 0m38-15q4-6 9 0 4-6 9 0`}
+              stroke="#75958b"
+              strokeWidth="1.6"
+              fill="none"
+              opacity=".65"
+              className="bird-glide"
+            />
+          </g>
         ))}
-      {S.sky.map((d, i) => (
-        <use key={`sky-${i}`} href="#d-cloud" transform={`translate(${d.x.toFixed(1)} ${d.y.toFixed(1)}) scale(${d.s.toFixed(2)})`} />
-      ))}
+      </g>
     </g>
   );
 });
 
-/** الجسر الخشبي فوق النهر (يُرسم فوق الطريق) */
-export function Bridge({ L }: { L: Layout }) {
-  const { bridge, width } = L.river;
-  const w = L.roadW + 18;
-  const h = width + 30;
-  const planks = [];
-  for (let y = -h / 2 + 4; y < h / 2 - 4; y += 9) planks.push(y);
+export const GroundLayer = memo(function GroundLayer({ L }: { L: Layout }) {
+  const y = L.H * 0.27 + 58;
+  const groundPath = `M0 ${y} Q${L.W * 0.25} ${y - 36} ${L.W * 0.5} ${y + 4} T${L.W} ${y} V${L.H}H0Z`;
   return (
-    <g className="bridge" transform={`translate(${bridge.x.toFixed(1)} ${bridge.y.toFixed(1)})`}>
-      <rect x={-w / 2 + 2} y={-h / 2 + 6} width={w} height={h} rx={6} fill="rgba(30,60,90,.25)" />
-      <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={6} fill="#c98d52" />
-      {planks.map((y) => (
-        <line key={y} x1={-w / 2 + 3} x2={w / 2 - 3} y1={y} y2={y} stroke="#a7703c" strokeWidth={2} />
+    <g>
+      <path d={groundPath} fill="url(#springGround)" />
+      <path d={groundPath} fill="url(#goldGround)" clipPath="url(#goldClip)" />
+      <path d={groundPath} fill="url(#groundGrain)" />
+      {Array.from({ length: Math.ceil(L.W / 350) }, (_, i) => (
+        <ellipse
+          key={i}
+          cx={i * 350 + 130}
+          cy={L.H * (0.67 + (i % 3) * 0.11)}
+          rx={115 + (i % 4) * 18}
+          ry={24}
+          fill={i * 350 < L.splitX ? "#f5e8bd" : "#e4eecb"}
+          opacity=".4"
+        />
       ))}
-      <rect x={-w / 2 - 5} y={-h / 2 - 4} width={8} height={h + 8} rx={4} fill="#8c5a2b" />
-      <rect x={w / 2 - 3} y={-h / 2 - 4} width={8} height={h + 8} rx={4} fill="#8c5a2b" />
-      {[-h / 2 - 6, h / 2 - 4].map((y) => (
-        <g key={y}>
-          <rect x={-w / 2 - 8} y={y} width={14} height={12} rx={4} fill="#7a4b22" />
-          <rect x={w / 2 - 6} y={y} width={14} height={12} rx={4} fill="#7a4b22" />
-        </g>
-      ))}
+      {L.rivers.map((b, i) => {
+        const points = Array.from({ length: 18 }, (_, n) => {
+          const py = y + (n * (L.H - y + 40)) / 17;
+          return `${riverX(b, py).toFixed(1)},${py.toFixed(1)}`;
+        }).join(" ");
+        return (
+          <g key={i} fill="none" strokeLinejoin="round" strokeLinecap="round">
+            <polyline
+              points={points}
+              stroke="#aac39a"
+              strokeWidth={L.compact ? 65 : 81}
+            />
+            <polyline
+              points={points}
+              stroke="url(#water)"
+              strokeWidth={L.compact ? 52 : 66}
+            />
+            <polyline
+              points={points}
+              stroke="#edf8e6"
+              strokeWidth="2"
+              strokeDasharray="12 51"
+              opacity=".7"
+              className="river-ripple"
+            />
+            {[0.67, 0.85].map((k) => (
+              <g
+                key={k}
+                transform={`translate(${riverX(b, L.H * k)} ${L.H * k})`}
+              >
+                <ellipse rx="11" ry="5" fill="#88aa78" stroke="none" />
+                <path d="m0 0 11-2" stroke="#d9e9c2" strokeWidth="2" />
+              </g>
+            ))}
+          </g>
+        );
+      })}
+    </g>
+  );
+});
+
+/** Horizontal planks and raised rails; rotation follows the tangent where road meets water. */
+export function Bridge({ L }: { L: Layout }) {
+  return (
+    <g>
+      {L.rivers.map((b, i) => {
+        const near = L.samples.filter((p) => Math.abs(p.x - b.x) < 30);
+        const angle =
+          near.length > 1
+            ? (Math.atan(
+                (near[0].y - near[near.length - 1].y) /
+                  (near[0].x - near[near.length - 1].x),
+              ) *
+                180) /
+              Math.PI
+            : 0;
+        const w = L.compact ? 108 : 132,
+          h = L.roadW + 8;
+        return (
+          <g
+            key={i}
+            transform={`translate(${b.x} ${b.y}) rotate(${angle})`}
+            stroke="#8f7951"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          >
+            <rect
+              x={-w / 2}
+              y={-h / 2 + 8}
+              width={w}
+              height={h}
+              rx="5"
+              fill="#496747"
+              opacity=".18"
+              stroke="none"
+            />
+            <rect
+              x={-w / 2}
+              y={-h / 2}
+              width={w}
+              height={h}
+              rx="4"
+              fill="#d0b086"
+            />
+            {Array.from({ length: 11 }, (_, n) => (
+              <path
+                key={n}
+                d={`M${-w / 2 + (n * w) / 10} ${-h / 2 + 2}v${h - 4}`}
+              />
+            ))}
+            {[-1, 1].map((s) => (
+              <g key={s}>
+                <rect
+                  x={-w / 2 - 5}
+                  y={(s * h) / 2 - 4}
+                  width={w + 10}
+                  height="6"
+                  rx="3"
+                  fill="#b89361"
+                />
+                {[-w / 2, 0, w / 2].map((x) => (
+                  <rect
+                    key={x}
+                    x={x - 3}
+                    y={(s * h) / 2 - 13}
+                    width="6"
+                    height="17"
+                    rx="2"
+                    fill="#c5a175"
+                  />
+                ))}
+              </g>
+            ))}
+          </g>
+        );
+      })}
     </g>
   );
 }
 
-/** الطبقة العليا: الأشجار والشجيرات والزينة (فوق الطريق، لكنها لا تلامسه) */
 export const DecoLayer = memo(function DecoLayer({ S }: { S: Scenery }) {
   return (
     <g className="decos">
       {S.decos.map((d, i) => (
-        <use
+        <g
           key={i}
-          href={`#d-${d.t}`}
-          transform={`translate(${d.x.toFixed(1)} ${d.y.toFixed(1)}) scale(${(d.flip ? -d.s : d.s).toFixed(3)} ${d.s.toFixed(3)})`}
-        />
+          className={d.gold ? "gold-deco" : undefined}
+          style={d.gold ? { color: "#b78f4b" } : undefined}
+        >
+          <use
+            href={`#d-${d.t}`}
+            transform={`translate(${d.x.toFixed(1)} ${d.y.toFixed(1)}) scale(${(d.flip ? -d.size : d.size) / 100} ${d.size / 100})`}
+          />
+        </g>
       ))}
     </g>
   );
 });
 
-/** تعريفات رسومات الزينة */
-export function SceneryDefs({ L }: { L: Layout }) {
+export function StartVillage({ L }: { L: Layout }) {
+  const { x, y } = L.start;
   return (
-    <>
-      <linearGradient id="z1ground" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#97d56e" />
-        <stop offset="1" stopColor="#a3dc78" />
-      </linearGradient>
-      <linearGradient id="z2ground" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={L.zoneSplitY}>
-        <stop offset="0" stopColor="#a993ef" />
-        <stop offset="1" stopColor="#b6a3f4" />
-      </linearGradient>
+    <g
+      transform={`translate(${x} ${y})`}
+      stroke="#7e7752"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    >
+      <ellipse
+        cy="15"
+        rx="64"
+        ry="13"
+        fill="#43684a"
+        opacity=".16"
+        stroke="none"
+      />
+      <path
+        d="M-52 13v-89q0-48 52-48t52 48v89H37v-89q0-32-37-32t-37 32v89Z"
+        fill="#c9ae7b"
+      />
+      <path
+        d="M-49-20v-57q0-42 49-42t49 42v57"
+        fill="none"
+        stroke="#e6d4a2"
+        strokeWidth="4"
+      />
+      <path d="M-63-2h30v15h-30Zm96 0h30v15H33Z" fill="#b6b58a" />
+      <path
+        d="M-54-86q-20 11-9 24 16 2 12-16m102-13q20 11 9 24-16 2-12-16"
+        fill="#82a267"
+        stroke="#66855b"
+      />
+      <path d="M-11-131v-41" fill="none" />
+      <path d="M-10-171h42l-9 12 9 12h-42Z" fill="#7ea98d" stroke="#527b65" />
+      <rect x="-74" y="-91" width="148" height="30" rx="9" fill="#fff4d4" />
+      <text
+        y="-71"
+        textAnchor="middle"
+        fill="#53654c"
+        stroke="none"
+        fontFamily="Tajawal"
+        fontSize="16"
+        fontWeight="700"
+        direction="rtl"
+      >
+        نقطة الانطلاق
+      </text>
+      <path d="M-14-40q14-6 28 0M-12-34h24" stroke="#9f8b5d" opacity=".4" />
+    </g>
+  );
+}
 
-      {/* ظل أرضي مشترك */}
-      <ellipse id="d-shadow" cx={0} cy={-3} rx={40} ry={8} fill="rgba(30,70,20,.2)" />
-
-      <g id="d-tree">
-        <ellipse cx={0} cy={-3} rx={34} ry={8} fill="rgba(30,70,20,.22)" />
-        <rect x={-7} y={-40} width={14} height={40} rx={5} fill="#9b6a3d" />
-        <rect x={-7} y={-40} width={5} height={40} rx={3} fill="#b07c4a" />
-        <circle cx={-22} cy={-56} r={22} fill="#3f9b49" />
-        <circle cx={22} cy={-56} r={22} fill="#3f9b49" />
-        <circle cx={0} cy={-74} r={30} fill="#46a84f" />
-        <circle cx={-9} cy={-84} r={13} fill="#64c25c" />
-        <circle cx={14} cy={-66} r={8} fill="#5bb955" />
-        <circle cx={-24} cy={-60} r={7} fill="#5bb955" />
-      </g>
-
-      <g id="d-pine">
-        <ellipse cx={0} cy={-3} rx={26} ry={6} fill="rgba(30,70,20,.22)" />
-        <rect x={-5} y={-22} width={10} height={22} rx={3} fill="#8a5b33" />
-        <path d="M0 -100 L26 -56 L-26 -56 Z" fill="#2f8f50" strokeLinejoin="round" stroke="#2f8f50" strokeWidth={6} />
-        <path d="M0 -78 L32 -30 L-32 -30 Z" fill="#35995a" strokeLinejoin="round" stroke="#35995a" strokeWidth={6} />
-        <path d="M0 -100 L-12 -78 L0 -80 Z" fill="#4db36d" />
-        <path d="M0 -78 L-14 -52 L0 -56 Z" fill="#4db36d" />
-      </g>
-
-      <g id="d-bush">
-        <ellipse cx={0} cy={-4} rx={44} ry={9} fill="rgba(30,70,20,.2)" />
-        <circle cx={-24} cy={-24} r={22} fill="#4aa94a" />
-        <circle cx={24} cy={-22} r={21} fill="#4aa94a" />
-        <circle cx={0} cy={-36} r={28} fill="#52b350" />
-        <circle cx={-8} cy={-48} r={12} fill="#70c962" />
-        <circle cx={16} cy={-36} r={7} fill="#70c962" />
-        <circle cx={-27} cy={-30} r={7} fill="#68c25d" />
-      </g>
-
-      <g id="d-rock">
-        <ellipse cx={0} cy={-3} rx={42} ry={8} fill="rgba(30,70,20,.2)" />
-        <path d="M-40 -4 Q-44 -34 -14 -44 Q12 -54 32 -36 Q46 -22 40 -4 Z" fill="#b9b2a5" />
-        <path d="M-30 -20 Q-28 -38 -8 -42 Q8 -46 18 -38 Q-6 -36 -30 -20 Z" fill="#d8d2c6" />
-        <path d="M-40 -4 Q-20 -12 40 -4 Z" fill="#9d9587" />
-      </g>
-
-      <g id="d-flowers">
-        {[
-          [-22, -16, "#ff8fb1"],
-          [6, -26, "#ffd23f"],
-          [26, -12, "#ffffff"],
-        ].map(([x, y, c], i) => (
-          <g key={i} transform={`translate(${x} ${y})`}>
-            <path d={`M0 0 L0 ${16 + Number(y) * -0.2}`} stroke="#4c9e3f" strokeWidth={3} />
-            {[0, 72, 144, 216, 288].map((a) => (
-              <circle key={a} cx={Math.cos((a * Math.PI) / 180) * 7} cy={Math.sin((a * Math.PI) / 180) * 7} r={6} fill={c as string} />
-            ))}
-            <circle r={4.5} fill="#ffb02e" />
-          </g>
-        ))}
-        <ellipse cx={-6} cy={-3} rx={10} ry={4} fill="#4c9e3f" />
-        <ellipse cx={14} cy={-3} rx={9} ry={4} fill="#4c9e3f" />
-      </g>
-
-      <g id="d-tuft">
-        <path d="M-22 0 Q-24 -40 -6 -60 Q-12 -30 -8 0 Z" fill="#5db552" />
-        <path d="M-6 0 Q-2 -60 10 -90 Q8 -40 10 0 Z" fill="#4ea846" />
-        <path d="M8 0 Q20 -40 34 -56 Q22 -26 22 0 Z" fill="#62bd57" />
-      </g>
-
-      <g id="d-mushroom">
-        <ellipse cx={0} cy={-3} rx={30} ry={7} fill="rgba(30,70,20,.2)" />
-        <rect x={-12} y={-46} width={24} height={46} rx={10} fill="#fff4de" />
-        <path d="M-44 -40 Q-40 -96 0 -96 Q40 -96 44 -40 Q0 -30 -44 -40 Z" fill="#ff6a5c" />
-        <circle cx={-18} cy={-70} r={8} fill="#fff" />
-        <circle cx={14} cy={-80} r={6} fill="#fff" />
-        <circle cx={22} cy={-56} r={5} fill="#fff" />
-      </g>
-
-      {/* ── المستوى الثاني ── */}
-      <g id="d-ptree">
-        <ellipse cx={0} cy={-3} rx={34} ry={8} fill="rgba(60,30,110,.22)" />
-        <rect x={-7} y={-40} width={14} height={40} rx={5} fill="#8a6a9e" />
-        <circle cx={-22} cy={-56} r={22} fill="#8b6fe0" />
-        <circle cx={22} cy={-56} r={22} fill="#8b6fe0" />
-        <circle cx={0} cy={-74} r={30} fill="#977ce8" />
-        <circle cx={-9} cy={-84} r={13} fill="#b7a2f6" />
-        <circle cx={14} cy={-66} r={8} fill="#ad98f3" />
-        <circle cx={-6} cy={-60} r={5} fill="#ff9fc4" />
-        <circle cx={18} cy={-86} r={4} fill="#ff9fc4" />
-      </g>
-
-      <g id="d-pbush">
-        <ellipse cx={0} cy={-4} rx={44} ry={9} fill="rgba(60,30,110,.2)" />
-        <circle cx={-24} cy={-24} r={22} fill="#8d72e3" />
-        <circle cx={24} cy={-22} r={21} fill="#8d72e3" />
-        <circle cx={0} cy={-36} r={28} fill="#9a80ea" />
-        <circle cx={-8} cy={-48} r={12} fill="#bca9f7" />
-        <circle cx={16} cy={-36} r={7} fill="#bca9f7" />
-      </g>
-
-      <g id="d-lolly">
-        <ellipse cx={0} cy={-3} rx={18} ry={5} fill="rgba(60,30,110,.2)" />
-        <rect x={-3.5} y={-58} width={7} height={58} rx={3} fill="#fff" />
-        <circle cx={0} cy={-74} r={24} fill="#ff8fb8" />
-        <path d="M0 -74 m-14 0 a14 14 0 1 1 28 0 a9 9 0 1 1 -18 0 a4 4 0 1 1 8 0" stroke="#fff" strokeWidth={5} fill="none" />
-      </g>
-
-      <g id="d-balloons">
-        <path d="M-16 -50 Q-6 -20 0 0 M18 -58 Q8 -24 0 0 M2 -72 Q-4 -30 0 0" stroke="#ffffff" strokeWidth={2} fill="none" />
-        <ellipse cx={-18} cy={-66} rx={15} ry={18} fill="#ffd23f" />
-        <ellipse cx={20} cy={-72} rx={15} ry={18} fill="#ff8fb1" />
-        <ellipse cx={2} cy={-88} rx={16} ry={19} fill="#7cc7ff" />
-        <ellipse cx={-23} cy={-72} rx={4} ry={6} fill="#fff" opacity={0.6} />
-        <ellipse cx={15} cy={-78} rx={4} ry={6} fill="#fff" opacity={0.6} />
-        <ellipse cx={-3} cy={-95} rx={4} ry={6} fill="#fff" opacity={0.6} />
-      </g>
-
-      <g id="d-gift">
-        <ellipse cx={0} cy={-3} rx={40} ry={8} fill="rgba(60,30,110,.22)" />
-        <rect x={-34} y={-58} width={68} height={56} rx={6} fill="#ff8fb1" />
-        <rect x={-38} y={-70} width={76} height={18} rx={5} fill="#ffa5c3" />
-        <rect x={-7} y={-70} width={14} height={68} fill="#ffd23f" />
-        <path d="M0 -70 Q-26 -96 -22 -76 Q-18 -68 0 -70 Q18 -68 22 -76 Q26 -96 0 -70 Z" fill="#ffd23f" />
-      </g>
-
-      <g id="d-candy">
-        <ellipse cx={0} cy={-3} rx={20} ry={5} fill="rgba(60,30,110,.2)" />
-        <path d="M6 0 L6 -70 Q6 -96 -16 -96 Q-34 -96 -34 -76" stroke="#ffffff" strokeWidth={14} fill="none" strokeLinecap="round" />
-        <path
-          d="M6 0 L6 -70 Q6 -96 -16 -96 Q-34 -96 -34 -76"
-          stroke="#ff6f91"
-          strokeWidth={14}
-          fill="none"
-          strokeDasharray="10 10"
-        />
-      </g>
-
-      <g id="d-sparkle">
-        <path d="M0 -100 Q6 -56 50 -50 Q6 -44 0 0 Q-6 -44 -50 -50 Q-6 -56 0 -100 Z" fill="#fff6b8" />
-      </g>
-
-      <g id="d-pflowers">
-        {[
-          [-22, -16, "#ffffff"],
-          [6, -26, "#ff9fc4"],
-          [26, -12, "#ffe27a"],
-        ].map(([x, y, c], i) => (
-          <g key={i} transform={`translate(${x} ${y})`}>
-            <path d="M0 0 L0 14" stroke="#7a5bc9" strokeWidth={3} />
-            {[0, 72, 144, 216, 288].map((a) => (
-              <circle key={a} cx={Math.cos((a * Math.PI) / 180) * 7} cy={Math.sin((a * Math.PI) / 180) * 7} r={6} fill={c as string} />
-            ))}
-            <circle r={4.5} fill="#8b5cf6" />
-          </g>
-        ))}
-      </g>
-
-      {/* ميكروفون على حامل — رمز البرنامج */}
-      <g id="d-mic">
-        <ellipse cx={0} cy={-3} rx={26} ry={6} fill="rgba(60,30,110,.22)" />
-        <rect x={-20} y={-8} width={40} height={8} rx={4} fill="#5b4a8a" />
-        <rect x={-3} y={-70} width={6} height={64} rx={3} fill="#6d5ca3" />
-        <rect x={-13} y={-100} width={26} height={36} rx={13} fill="#e9e4f7" />
-        <rect x={-13} y={-100} width={26} height={36} rx={13} fill="url(#micMesh)" />
-        <rect x={-15} y={-70} width={30} height={7} rx={3.5} fill="#ffc93c" />
-      </g>
-      <pattern id="micMesh" width="6" height="6" patternUnits="userSpaceOnUse">
-        <circle cx="3" cy="3" r="1.2" fill="#b8aedb" />
-      </pattern>
-
-      <g id="d-cloud">
-        <ellipse cx={0} cy={-20} rx={46} ry={16} fill="#ffffff" opacity={0.75} />
-        <circle cx={-14} cy={-30} r={18} fill="#ffffff" opacity={0.75} />
-        <circle cx={12} cy={-34} r={22} fill="#ffffff" opacity={0.75} />
-      </g>
-    </>
+export function WorldGate({ L }: { L: Layout }) {
+  return (
+    <g
+      transform={`translate(${L.gate.x} ${L.gate.y})`}
+      stroke="#92825c"
+      strokeWidth="1.4"
+    >
+      <ellipse
+        cy="11"
+        rx="67"
+        ry="12"
+        fill="#5f6245"
+        opacity=".14"
+        stroke="none"
+      />
+      {[-1, 1].map((s) => (
+        <g key={s} transform={`translate(${s * 58} 0)`}>
+          <rect x="-9" y="-54" width="18" height="65" rx="5" fill="#dfd1a0" />
+          <circle cy="-61" r="13" fill="#f3e6b8" />
+          <path d="m-5-61 5-6 5 6-5 6Z" fill="#b9a76e" stroke="none" />
+        </g>
+      ))}
+      <path
+        d="M-49-41q49-48 98 0"
+        fill="none"
+        stroke="#cfb980"
+        strokeWidth="9"
+      />
+      <path
+        d="M-49-41q49-48 98 0"
+        fill="none"
+        stroke="#f0deb0"
+        strokeWidth="4"
+      />
+    </g>
   );
 }

@@ -12,6 +12,9 @@ import "@fontsource/baloo-bhaijaan-2/latin-800.css";
 import "./styles.css";
 import "./map.css";
 import App from "./App";
+import { initializeProgress } from "./lib/progress";
+
+initializeProgress();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

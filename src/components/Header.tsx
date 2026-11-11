@@ -1,62 +1,93 @@
-import { TOTAL_SESSIONS, getLevel, getSession } from "../data/sessions";
-import { currentLevel, currentSessionId, type ProgressState } from "../lib/progress";
-import { MicIcon } from "./icons";
+import { getLevel } from "../data/sessions";
+import { currentLevel, type ProgressState } from "../lib/progress";
+import { Icon } from "./icons";
 
-interface Props {
+export function Header({
+  progress,
+  onAccount,
+}: {
   progress: ProgressState;
-}
-
-export function Header({ progress }: Props) {
-  const { completed, childName } = progress;
-  const level = getLevel(currentLevel(completed));
-  const currentId = currentSessionId(completed);
-  const current = currentId ? getSession(currentId) : null;
-  const pct = Math.round((completed / TOTAL_SESSIONS) * 100);
-
+  onAccount: () => void;
+}) {
+  const level = getLevel(currentLevel(progress.completed));
+  const status =
+    progress.mode === "demo"
+      ? "وضع تجريبي"
+      : progress.profile
+        ? progress.connection === "offline"
+          ? "المزامنة غير متصلة"
+          : progress.profile.name
+        : "دخول التلميذ";
   return (
     <header className="app-header">
-      <div className="header-inner">
-        <div className="brand">
-          <span className="brand-mic" aria-hidden="true">
-            <MicIcon size={28} />
-          </span>
-          <div className="brand-text">
-            <span className="brand-program">المتحدث الصغير</span>
-            <h1 className="brand-title">{childName ? `رحلة ${childName} مع المتحدث الصغير` : "رحلتي مع المتحدث الصغير"}</h1>
-          </div>
+      <div className="brand">
+        <span className="brand-mark">
+          <Icon name="mic" size={29} />
+          <i />
+        </span>
+        <div className="brand-text">
+          <span className="brand-eyebrow">صوت صغير، أثر كبير</span>
+          <h1>رحلتي مع المتحدث الصغير</h1>
         </div>
-
-        <div className="header-stats">
-          <div className={`stat-chip level-chip level-${level.id}`}>
-            <span className="stat-label">المستوى الحالي</span>
-            <span className="stat-value">
-              {level.id === 1 ? "الأول" : "الثاني"} · {level.name}
-            </span>
-          </div>
-          <div className="stat-chip">
-            <span className="stat-label">الحصة الحالية</span>
-            <span className="stat-value">{current ? `الحصة ${current.id}` : "أتممت الرحلة 🎉"}</span>
-          </div>
+      </div>
+      <div className={`header-level level-${level.id}`}>
+        <span className="level-leaf">
+          <Icon name={level.id === 1 ? "leaf" : "sparkles"} size={24} />
+        </span>
+        <div>
+          <span>{level.shortName}</span>
+          <strong>{level.name}</strong>
         </div>
-
-        <div className="header-progress">
-          <div className="progress-row">
-            <span className="progress-text">
-              الحصص المكتملة: <b className="progress-count">{completed} / {TOTAL_SESSIONS}</b>
-            </span>
-          </div>
-          <div
-            className="progress-bar"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={TOTAL_SESSIONS}
-            aria-valuenow={completed}
-            aria-label={`أكملت ${completed} من ${TOTAL_SESSIONS} حصة`}
-          >
-            <div className="progress-fill" style={{ width: `${pct}%` }} />
-            <div className="progress-mid" title="نهاية المستوى الأول" />
-          </div>
+      </div>
+      <div className="header-progress">
+        <div className="progress-caption">
+          <bdi>أنجزت {progress.completed} من 32 حصة</bdi>
+          <span>{Math.round((progress.completed / 32) * 100)}٪</span>
         </div>
+        <div
+          className="journey-progress"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={32}
+          aria-valuenow={progress.completed}
+          aria-label="تقدّم رحلتي"
+          aria-valuetext={`أنجزت ${progress.completed} من 32 حصة`}
+        >
+          {[1, 2].map((part) => (
+            <div key={part} className={`progress-part part-${part}`}>
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${(Math.max(0, Math.min(16, progress.completed - (part - 1) * 16)) / 16) * 100}%`,
+                  }}
+                />
+              </div>
+              <span
+                className={`progress-award ${progress.completed >= part * 16 ? "achieved" : ""}`}
+              >
+                <Icon name={part === 1 ? "medal" : "crown"} size={21} />
+              </span>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={`account-status ${progress.mode === "demo" ? "is-demo" : ""}`}
+          onClick={onAccount}
+        >
+          <Icon
+            name={
+              progress.mode === "demo"
+                ? "info"
+                : progress.profile
+                  ? "wifi"
+                  : "key"
+            }
+            size={13}
+          />
+          <span>{status}</span>
+        </button>
       </div>
     </header>
   );

@@ -1,7 +1,6 @@
-/**
- * تخطيط خارطة الرحلة على طريقة خرائط مراحل الألعاب:
- * الطريق يبدأ من الأسفل ويصعد إلى الأعلى بشكل ثعباني (S)،
- * محطتان في كل صف على الهاتف، وأربع محطات على الحاسوب واللوحي.
+/** Horizontal RTL world geometry. All coordinates are physical SVG coordinates;
+ * native scrolling is deliberately LTR, so RTL scrollLeft browser quirks never leak into navigation.
+ * The existing Bézier/sampling and seeded density approach is shared by rendering and collision tests.
  */
 import type { LevelId } from "../data/sessions";
 
@@ -9,226 +8,309 @@ export interface Vec {
   x: number;
   y: number;
 }
-
-export interface MapNode extends Vec {
-  kind: "station" | "milestone";
-  /** رقم الحصة (للمحطات فقط) */
-  id: number;
-  level: LevelId;
-  /** اتجاه السير الأفقي عند هذه النقطة: -1 من اليمين إلى اليسار، 1 من اليسار إلى اليمين */
-  dir: 1 | -1;
-  /** هل المحطة في طرف الصف (عند منعطف الطريق)؟ */
-  rowEnd: boolean;
-}
-
-export interface Seg {
-  a: Vec;
-  c1: Vec;
-  c2: Vec;
-  b: Vec;
-}
-
 export interface Rect {
   x: number;
   y: number;
   w: number;
   h: number;
 }
-
+export interface Seg {
+  a: Vec;
+  c1: Vec;
+  c2: Vec;
+  b: Vec;
+}
+export interface MapNode extends Vec {
+  kind: "station" | "milestone";
+  id: number;
+  level: LevelId;
+}
 export interface Layout {
   W: number;
   H: number;
-  wide: boolean;
-  N: number;
-  rowH: number;
+  viewportW: number;
+  compact: boolean;
+  spacing: number;
   roadW: number;
   stationSize: number;
-  currentSize: number;
   milestoneSize: number;
   labelW: number;
+  labelH: number;
+  roadCenter: number;
+  amplitude: number;
+  cardY: number;
+  cardW: number;
+  cardH: number;
   nodes: MapNode[];
   start: Vec;
+  end: Vec;
+  gate: Vec;
+  splitX: number;
   segs: Seg[];
   samples: Vec[];
-  zoneSplitY: number;
-  river: { y: number; bridge: Vec; amp: number; period: number; width: number };
-  /** منطقة لافتة المستوى الأول والأخت الصغيرة (أسفل الخارطة) */
-  startArea: Rect;
-  /** منطقة بوابة المستوى الثاني (لافتة + ليلى وسامي) */
-  gateArea: Rect;
+  rivers: Vec[];
+  signs: Rect[];
 }
 
-const WOBBLE = [0, 12, -8, 9, -11, 6];
-
-export function computeLayout(W: number): Layout {
-  const wide = W >= 680;
-  const N = wide ? 4 : 2;
-  const rowH = wide ? (W >= 1000 ? 200 : 214) : 178;
-  const roadW = wide ? 56 : 46;
-  const stationSize = wide ? 78 : 64;
-  const currentSize = wide ? 92 : 76;
-  const milestoneSize = wide ? 118 : 98;
-
-  const lane = Math.min(W, wide ? 1180 : 560);
-  const laneLeft = (W - lane) / 2;
-  const reach = 0.45 * rowH + roadW / 2 + 12;
-  const xMin = Math.max(laneLeft + lane * 0.12, reach);
-  const xMax = W - xMin;
-  const xs = Array.from({ length: N }, (_, j) => xMin + (j * (xMax - xMin)) / (N - 1));
-  const spacing = (xMax - xMin) / (N - 1);
-  const labelW = wide ? Math.min(230, spacing - 26) : Math.min(230, W * 0.58);
-
-  const startH = wide ? 400 : 390;
-  const msGap = rowH * (wide ? 1.2 : 1.28);
-  const gateH = wide ? 500 : 500;
-  const topPad = wide ? 220 : 200;
-  const R = 16 / N;
-  const riverRow = wide ? 1 : 3;
-  const riverGap = wide ? 84 : 104;
-
-  // ── المواضع بالارتفاع من أسفل الخارطة (b)، ثم تُقلب إلى y ──
-  type BNode = Omit<MapNode, "y"> & { b: number };
-  const bn: BNode[] = [];
-  let b = startH;
-  let g = 0;
-  let riverB = 0;
-  let gateBottomB = 0;
-  let gateTopB = 0;
-  let splitB = 0;
-
-  for (const level of [1, 2] as LevelId[]) {
-    for (let r = 0; r < R; r++) {
-      const dir: 1 | -1 = g % 2 === 0 ? -1 : 1;
-      for (let k = 0; k < N; k++) {
-        const id = (level - 1) * 16 + r * N + k + 1;
-        const x = dir === -1 ? xs[N - 1 - k] : xs[k];
-        bn.push({
-          kind: "station",
-          id,
-          level,
-          x,
-          b: b + WOBBLE[id % WOBBLE.length] * (wide ? 1 : 0.6),
-          dir,
-          rowEnd: k === 0 || k === N - 1,
-        });
-      }
-      g++;
-      if (r < R - 1) {
-        if (level === 1 && r === riverRow) {
-          riverB = b + (rowH + riverGap) / 2;
-          b += rowH + riverGap;
-        } else {
-          b += rowH;
-        }
-      }
+export function computeLayout(viewportW: number, height = 640): Layout {
+  const H = Math.max(260, Math.round(height));
+  const compact = viewportW < 640;
+  const spacing = compact ? 144 : viewportW < 1000 ? 188 : 204;
+  const stationSize = compact ? 84 : 80;
+  const milestoneSize = compact ? 106 : 120;
+  const labelW = spacing - (compact ? 10 : 18);
+  const labelH = compact ? 80 : 66;
+  const roadW = compact ? 42 : 50;
+  const roadCenter = Math.min(420, H * 0.4);
+  const amplitude = compact ? Math.min(26, H * 0.04) : Math.min(62, H * 0.065);
+  const cardH = compact ? 164 : 152;
+  const cardW = compact ? 248 : 304;
+  const cardY = Math.min(
+    H - cardH - 18,
+    roadCenter + amplitude + stationSize / 2 + labelH + 44,
+  );
+  const firstD = Math.max(viewportW / 2 + 48, compact ? 610 : 740);
+  const distances: Array<Omit<MapNode, "x"> & { d: number }> = [];
+  const medalGap = spacing + 90;
+  let d = firstD;
+  const waveY = (i: number) =>
+    roadCenter + Math.cos((i * Math.PI) / 2) * amplitude;
+  let gateD = 0;
+  for (const level of [1, 2] as const) {
+    for (let i = 0; i < 16; i++) {
+      distances.push({
+        kind: "station",
+        id: (level - 1) * 16 + i + 1,
+        level,
+        d: d + i * spacing,
+        y: waveY(i),
+      });
     }
-    b += msGap;
-    bn.push({ kind: "milestone", id: 0, level, x: W / 2, b, dir: g % 2 === 0 ? -1 : 1, rowEnd: false });
-    g++;
+    d += 15 * spacing + medalGap;
+    distances.push({ kind: "milestone", id: 0, level, d, y: roadCenter });
     if (level === 1) {
-      gateBottomB = b + (wide ? 150 : 128);
-      splitB = b + milestoneSize / 2 + (wide ? 60 : 52);
-      b += gateH;
-      gateTopB = b - (wide ? 112 : 110);
+      gateD = d + (compact ? 220 : 280);
+      d = gateD + (compact ? 220 : 280);
     }
   }
-
-  const H = Math.round(b + topPad);
-  const Y = (bb: number) => H - bb;
-
-  const nodes: MapNode[] = bn.map(({ b: bb, ...n }) => ({ ...n, y: Y(bb) }));
-  const start: Vec = { x: nodes[0].x, y: H + 12 };
-
-  // ── مقاطع الطريق (منحنيات بيزييه بمماسات أفقية عند المحطات) ──
-  const minX = roadW / 2 + 6;
-  const maxX = W - roadW / 2 - 6;
-  const clampX = (x: number) => Math.max(minX, Math.min(maxX, x));
-  const tangents: Vec[] = [{ x: 0, y: -1 }, ...nodes.map((n) => ({ x: n.dir, y: 0 }))];
-  const pts: Vec[] = [start, ...nodes];
-  const segs: Seg[] = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const A = pts[i];
-    const B = pts[i + 1];
-    const tA = tangents[i];
-    const tB = tangents[i + 1];
-    const dist = Math.hypot(B.x - A.x, B.y - A.y);
-    const dot = tA.x * tB.x + tA.y * tB.y;
-    const k = dot < -0.5 ? 0.6 * Math.abs(B.y - A.y) : dot > 0.5 ? 0.42 * dist : 0.55 * dist;
-    segs.push({
-      a: A,
-      c1: { x: clampX(A.x + tA.x * k), y: A.y + tA.y * k },
-      c2: { x: clampX(B.x - tB.x * k), y: B.y - tB.y * k },
-      b: B,
-    });
+  const W = Math.ceil(d + Math.max(viewportW / 2 + 64, 350));
+  const nodes: MapNode[] = distances.map(({ d: distance, ...node }) => ({
+    ...node,
+    x: W - distance,
+  }));
+  const first = nodes[0];
+  const start = { x: first.x + (compact ? 260 : 320), y: first.y - 4 };
+  const end = { x: W - d, y: roadCenter };
+  const gate = { x: W - gateD, y: roadCenter };
+  const points: Vec[] = [start];
+  for (const node of nodes) {
+    points.push(node);
+    if (node.kind === "milestone" && node.level === 1) points.push(gate);
   }
-
-  const samples: Vec[] = [];
-  for (const s of segs) {
-    for (let t = 0; t <= 1; t += 1 / 30) samples.push(bezier(s, t));
-  }
-
-  // ── النهر يعبر منعطف الطريق بين صفّين، وعليه جسر خشبي ──
-  const riverSeg = segs[(riverRow + 1) * N];
-  const bridge = bezier(riverSeg, 0.5);
-  const river = { y: Y(riverB), bridge, amp: wide ? 12 : 8, period: wide ? 90 : 60, width: wide ? 54 : 46 };
-  river.y = bridge.y;
-
-  // ── منطقة البداية: على يسار الطريق الصاعد إلى المحطة الأولى ──
-  const st1 = nodes[0];
-  const startArea: Rect = wide
-    ? { x: 24, y: Y(startH - 128), w: Math.max(300, st1.x - 150), h: startH - 128 - 14 }
-    : { x: 10, y: Y(startH - 132), w: st1.x - roadW / 2 - 18, h: startH - 132 - 14 };
-
-  // ── بوابة المستوى الثاني: بين محطة الإنجاز الأولى وأول صف في المستوى الثاني ──
-  const loopSeg = segs[16 + 1];
-  const loopReach = Math.min(...[0.25, 0.5, 0.75].map((t) => bezier(loopSeg, t).x));
-  const gx0 = loopReach + roadW / 2 + 14;
-  const gx1 = W - (wide ? gx0 : 10);
-  const gateArea: Rect = { x: gx0, y: Y(gateTopB), w: gx1 - gx0, h: gateTopB - gateBottomB };
-
-  return {
+  // Monotone X cubic Hermite interpolation; tangents are continuous at every join.
+  const slopes = points.map((_p, i) =>
+    i === 0 || i === points.length - 1
+      ? 0
+      : (points[i + 1].y - points[i - 1].y) /
+        (points[i + 1].x - points[i - 1].x),
+  );
+  const segs: Seg[] = points.slice(0, -1).map((a, i) => {
+    const b = points[i + 1];
+    const dx = (b.x - a.x) / 3;
+    return {
+      a,
+      b,
+      c1: { x: a.x + dx, y: a.y + slopes[i] * dx },
+      c2: { x: b.x - dx, y: b.y - slopes[i + 1] * dx },
+    };
+  });
+  const samples = segs.flatMap((seg) =>
+    Array.from({ length: 31 }, (_, i) => bezier(seg, i / 30)),
+  );
+  const signs = [
+    {
+      x: start.x + 100,
+      y: Math.max(90, roadCenter - 122),
+      w: compact ? 236 : 278,
+      h: 118,
+    },
+    { x: gate.x - 16, y: cardY + 2, w: compact ? 176 : 226, h: 118 },
+  ];
+  const partial: Layout = {
     W,
     H,
-    wide,
-    N,
-    rowH,
-    roadW,
+    viewportW,
+    compact,
+    spacing,
     stationSize,
-    currentSize,
     milestoneSize,
     labelW,
+    labelH,
+    roadW,
+    roadCenter,
+    amplitude,
+    cardY,
+    cardW,
+    cardH,
     nodes,
     start,
+    end,
+    gate,
+    splitX: gate.x,
     segs,
     samples,
-    zoneSplitY: Y(splitB),
-    river,
-    startArea,
-    gateArea,
+    signs,
+    rivers: [],
   };
+  partial.rivers = [4, 23].map((id) => {
+    const a = nodes.find((n) => n.kind === "station" && n.id === id)!;
+    const b = nodes.find((n) => n.kind === "station" && n.id === id + 1)!;
+    const x = (a.x + b.x) / 2;
+    return { x, y: roadYAt(partial, x) };
+  });
+  return partial;
 }
 
 export function bezier(s: Seg, t: number): Vec {
   const u = 1 - t;
-  const a = u * u * u;
-  const b = 3 * u * u * t;
-  const c = 3 * u * t * t;
-  const d = t * t * t;
   return {
-    x: a * s.a.x + b * s.c1.x + c * s.c2.x + d * s.b.x,
-    y: a * s.a.y + b * s.c1.y + c * s.c2.y + d * s.b.y,
+    x:
+      u ** 3 * s.a.x +
+      3 * u ** 2 * t * s.c1.x +
+      3 * u * t ** 2 * s.c2.x +
+      t ** 3 * s.b.x,
+    y:
+      u ** 3 * s.a.y +
+      3 * u ** 2 * t * s.c1.y +
+      3 * u * t ** 2 * s.c2.y +
+      t ** 3 * s.b.y,
   };
 }
 
 export function segsToPath(segs: Seg[]): string {
   if (!segs.length) return "";
   const f = (n: number) => Math.round(n * 10) / 10;
-  let d = `M ${f(segs[0].a.x)} ${f(segs[0].a.y)}`;
-  for (const s of segs) d += ` C ${f(s.c1.x)} ${f(s.c1.y)}, ${f(s.c2.x)} ${f(s.c2.y)}, ${f(s.b.x)} ${f(s.b.y)}`;
-  return d;
+  return (
+    `M ${f(segs[0].a.x)} ${f(segs[0].a.y)}` +
+    segs
+      .map(
+        (s) =>
+          ` C ${f(s.c1.x)} ${f(s.c1.y)}, ${f(s.c2.x)} ${f(s.c2.y)}, ${f(s.b.x)} ${f(s.b.y)}`,
+      )
+      .join("")
+  );
 }
 
-/** مولّد أعداد شبه عشوائية ثابت (حتى لا تتغير الزينة بين مرة وأخرى) */
+export function roadYAt(L: Layout, x: number): number {
+  const s = L.segs.find((seg) => x <= seg.a.x && x >= seg.b.x);
+  if (!s) return x > L.start.x ? L.start.y : L.end.y;
+  let lo = 0,
+    hi = 1;
+  for (let i = 0; i < 14; i++) {
+    const mid = (lo + hi) / 2;
+    if (bezier(s, mid).x > x) lo = mid;
+    else hi = mid;
+  }
+  return bezier(s, (lo + hi) / 2).y;
+}
+
+export function labelRect(n: MapNode, L: Layout): Rect {
+  const w = n.kind === "milestone" ? (L.compact ? 200 : 232) : L.labelW;
+  const h = n.kind === "milestone" ? 54 : L.labelH;
+  const nearby = L.samples.filter((p) => Math.abs(p.x - n.x) < w / 2 + 8);
+  const minY = Math.min(
+    n.y - L.stationSize / 2,
+    ...nearby.map((p) => p.y - L.roadW / 2),
+  );
+  const maxY = Math.max(
+    n.y + (n.kind === "milestone" ? L.milestoneSize / 2 : L.stationSize / 2),
+    ...nearby.map((p) => p.y + L.roadW / 2),
+  );
+  const above = n.kind === "station" && n.id % 2 === 0;
+  return { x: n.x - w / 2, y: above ? minY - 16 - h : maxY + 18, w, h };
+}
+
+export function currentCardRect(n: Vec, L: Layout): Rect {
+  return { x: n.x - L.cardW / 2, y: L.cardY, w: L.cardW, h: L.cardH };
+}
+export function sisterRect(L: Layout): Rect {
+  const n = L.nodes[0],
+    h = L.compact ? 104 : 116;
+  return { x: n.x + 82, y: n.y - 64 - h, w: h * (365 / 720), h };
+}
+export function sisterSpeechRect(L: Layout): Rect {
+  const r = sisterRect(L);
+  return {
+    x: L.compact ? r.x - 150 : r.x + r.w + 14,
+    y: r.y - 10,
+    w: L.compact ? 136 : 158,
+    h: 46,
+  };
+}
+export function guideRect(n: Vec, L: Layout): Rect {
+  const h = L.compact ? 118 : 142;
+  return {
+    x: n.x + L.cardW / 2 + (L.compact ? 10 : 18),
+    y: L.cardY + L.cardH - h - 4,
+    w: h * (310 / 720),
+    h,
+  };
+}
+export function samiRect(n: Vec, L: Layout): Rect {
+  const h = L.compact ? 126 : 140;
+  return {
+    x: n.x - (h * (552 / 720)) / 2,
+    y: L.cardY + L.cardH - h - 4,
+    w: h * (552 / 720),
+    h,
+  };
+}
+export function intersects(a: Rect, b: Rect, gap = 0): boolean {
+  return (
+    a.x < b.x + b.w + gap &&
+    a.x + a.w + gap > b.x &&
+    a.y < b.y + b.h + gap &&
+    a.y + a.h + gap > b.y
+  );
+}
+export function reservedRects(L: Layout, currentId: number | null): Rect[] {
+  const boxes: Rect[] = [
+    ...L.nodes.map((n) => ({
+      x:
+        n.x -
+        (n.kind === "milestone" ? L.milestoneSize : L.stationSize) / 2 -
+        12,
+      y:
+        n.y -
+        (n.kind === "milestone" ? L.milestoneSize : L.stationSize) / 2 -
+        34,
+      w: (n.kind === "milestone" ? L.milestoneSize : L.stationSize) + 24,
+      h: (n.kind === "milestone" ? L.milestoneSize : L.stationSize) + 58,
+    })),
+    ...L.nodes
+      .filter((n) => n.kind !== "station" || n.id !== currentId)
+      .map((n) => labelRect(n, L)),
+    ...L.signs.map((r) => ({ ...r, h: r.h + 32 })),
+    { x: L.start.x - 72, y: L.start.y - 130, w: 144, h: 164 },
+    { x: L.gate.x - 70, y: L.gate.y - 60, w: 140, h: 110 },
+    sisterRect(L),
+    sisterSpeechRect(L),
+    ...L.nodes.filter((n) => n.kind === "milestone").map((n) => samiRect(n, L)),
+  ];
+  const current = L.nodes.find(
+    (n) => n.kind === "station" && n.id === currentId,
+  );
+  if (current)
+    boxes.push(currentCardRect(current, L), guideRect(current, L), {
+      x: current.x - 12,
+      y: current.y + L.stationSize / 2,
+      w: 24,
+      h: Math.max(0, L.cardY - current.y - L.stationSize / 2),
+    });
+  return boxes;
+}
+
+/** Stable pseudo-random generator: resizing never causes flickering random placement. */
 export function rng(seed: number) {
   let a = seed >>> 0;
   return () => {

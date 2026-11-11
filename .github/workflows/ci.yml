@@ -1,0 +1,73 @@
+name: Journey checks and production deployment
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: journey-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Types, PostgreSQL security, layout and browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # Chromium and its required Linux libraries are distributed through npm.
+      # No Chrome CDN download, production credentials, or real students are used.
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: journey-acceptance
+          path: |
+            playwright-report/
+            test-results/
+            artifacts/screenshots/
+            artifacts/axe-*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  production:
+    name: Deploy main to the existing Vercel project
+    needs: checks
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      VERCEL_ORG_ID: team_ssxLvu0P5kqI1WBQfdYaALpr
+      VERCEL_PROJECT_ID: prj_1cXiTiZ6Lnb06jk5g0ZexCQ324Vr
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require an explicitly configured deployment credential
+        shell: bash
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo '::error::Add VERCEL_TOKEN in GitHub Actions secrets (never in source or chat). See docs/deployment.md. Automatic deployment is not configured until this secret is set.'
+            exit 1
+          fi
+      # Vercel builds with the public VITE_SUPABASE_* variables already configured
+      # on this exact project. Service-role keys must never be VITE variables.
+      - name: Deploy and wait for Vercel's build
+        run: npx --yes vercel@65.14.0 deploy --prod --yes --token="$VERCEL_TOKEN"

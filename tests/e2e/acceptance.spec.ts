@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { mockSupabase } from "./supabase-fixture";
+import { seedClassroom } from "./classroom-fixture";
 
 const sizes = [
   [1920, 1080],
@@ -18,13 +18,13 @@ for (const [width, height] of sizes)
   for (const count of counts)
     test(`${width}×${height}, ${count} completed`, async ({ page }) => {
       await page.setViewportSize({ width, height });
-      await mockSupabase(page, count);
+      await seedClassroom(page, count);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto("/");
       await page.evaluate(() => document.fonts.ready);
       // The award dialog intentionally makes the map/header inert. Include the hidden
-      // progressbar while waiting for the authoritative count, then dismiss the award.
+      // progressbar while waiting for the saved classroom count, then dismiss the award.
       await expect(
         page.getByRole("progressbar", { includeHidden: true }),
       ).toHaveAttribute("aria-valuenow", String(count));
@@ -210,7 +210,7 @@ test("wheel, drag, both arrows, keyboard, world switch and My station", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await mockSupabase(page, 7);
+  await seedClassroom(page, 7);
   await page.goto("/");
   const map = page.locator(".map-viewport");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
@@ -263,118 +263,134 @@ test("wheel, drag, both arrows, keyboard, world switch and My station", async ({
   await expect(page.locator('[data-station-button="9"]')).toBeFocused();
 });
 
-test("locked deep links, child panels and lessons never change progress", async ({
+test("lessons open without accounts; browsing and locked links never complete a lesson", async ({
   page,
 }) => {
-  const fixture = await mockSupabase(page, 0);
-  await page.goto("/#/lesson/12");
+  await seedClassroom(page, 0);
+  const external: string[] = [];
+  page.on("request", (request) => {
+    if (/supabase|journey-auth|\/auth\//i.test(request.url()))
+      external.push(request.url());
+  });
+  await page.goto("/#/lesson/12?mode=review");
   await expect(page.getByRole("dialog")).toBeVisible();
-  expect(await page.locator(".lesson").count()).toBe(0);
+  await expect(page.locator(".lesson")).toHaveCount(0);
   await page
     .getByRole("button", { name: "العودة إلى محطتي", exact: true })
     .click();
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
-  await expect(page.locator(".lesson")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "هدفي اليوم", exact: true }),
   ).toBeVisible();
-  expect(
-    await page
-      .getByRole("button", { name: /إكمال|اعتماد|فتح التالية/ })
-      .count(),
-  ).toBe(0);
+  await expect(
+    page.locator('input[type="password"], input[type="email"]'),
+  ).toHaveCount(0);
   await page
     .getByRole("button", { name: "العودة إلى رحلتي", exact: true })
     .click();
-  await page.getByRole("button", { name: "المدرّب", exact: true }).click();
-  await expect(page.getByLabel("البريد الإلكتروني")).toBeVisible();
-  expect(
-    await page
-      .getByRole("button", { name: "اعتماد الحصة التالية", exact: true })
-      .count(),
-  ).toBe(0);
-  expect(
-    fixture.calls.filter(
-      (c) => c.path.includes("rpc/") || c.method === "PATCH",
-    ),
-  ).toEqual([]);
-  expect(fixture.completed).toBe(0);
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuenow",
+    "0",
+  );
+  await page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "إنهاء الحصة وفتح التالية", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator('input[type="password"], input[type="email"]'),
+  ).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(
-    page.getByRole("button", { name: "المدرّب", exact: true }),
+    page.getByRole("button", { name: "إدارة الحصص", exact: true }),
   ).toBeFocused();
+  expect(external).toEqual([]);
 });
 
-test("teacher email/password, confirmation, one-step approval, undo, student list and code generation", async ({
+test("simple completion, one-step undo, persistence and confirmed reset without accounts", async ({
   page,
 }) => {
-  const fixture = await mockSupabase(page, 7, "guest");
+  await seedClassroom(page, 7, ["ليان", "سامي"]);
   await page.goto("/");
-  await page.getByRole("button", { name: "المدرّب", exact: true }).click();
-  await page.getByLabel("البريد الإلكتروني").fill("teacher@example.com");
-  await page.getByLabel("كلمة المرور").fill("fixture-password");
-  await page.getByRole("button", { name: "دخول آمن", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "اعتماد الحصة التالية", exact: true }),
-  ).toBeVisible();
+  const manage = () =>
+    page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
+  await manage();
   await page
-    .getByRole("button", { name: "اعتماد الحصة التالية", exact: true })
-    .click();
-  expect(fixture.completed).toBe(7);
-  await page
-    .getByRole("button", { name: "نعم، اعتمد الحصة", exact: true })
+    .getByRole("button", { name: "إنهاء الحصة وفتح التالية", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("progressbar")).toHaveAttribute(
     "aria-valuenow",
     "8",
   );
-  expect(fixture.completed).toBe(8);
-  expect(
-    fixture.calls.filter((c) => c.path.endsWith("approve_next_session")),
-  ).toHaveLength(1);
-  await page.getByRole("button", { name: "المدرّب", exact: true }).click();
-  await page
-    .getByRole("button", { name: "التراجع عن آخر اعتماد", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "نعم، تراجع خطوة واحدة", exact: true })
-    .click();
-  expect(fixture.completed).toBe(7);
-  await page.getByRole("button", { name: "إضافة تلميذ", exact: true }).click();
-  await page.getByLabel("اسم التلميذ").fill("سامي");
-  await page
-    .getByRole("button", { name: "إضافة وتوليد رمز الدخول", exact: true })
-    .click();
-  await expect(page.locator(".generated-code")).toHaveText("JKMN2-PQRS3");
-  await page.getByRole("button", { name: "حفظت الرمز", exact: true }).click();
-  await expect(page.getByRole("button", { name: /سامي 0\/32/ })).toBeVisible();
-});
-
-test("child code login uses an Auth session, and Realtime opens exactly the next station", async ({
-  page,
-}) => {
-  const fixture = await mockSupabase(page, 0, "guest");
-  await page.goto("/");
-  await page.getByRole("button", { name: "دخول التلميذ", exact: true }).click();
-  await page.getByLabel("رمز الدخول").fill("ABCD2-EFGH3");
-  await page.getByRole("button", { name: "دخول آمن", exact: true }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.locator(".account-status")).toHaveText("ليان");
-  await fixture.approveAsTeacher();
-  await expect(page.locator('[data-station="2"]')).toHaveClass(/is-current/);
-  await expect(page.locator('[data-station="3"]')).toHaveClass(/is-locked/);
+  await page.reload();
   await expect(page.getByRole("progressbar")).toHaveAttribute(
     "aria-valuenow",
-    "1",
+    "8",
   );
-  await expect(page.locator(".is-unlocking")).toHaveCount(0);
+  await manage();
+  await page
+    .getByRole("button", { name: "التراجع عن آخر حصة", exact: true })
+    .click();
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuenow",
+    "7",
+  );
+  await manage();
+  await page
+    .getByRole("button", { name: "بدء رحلة جديدة", exact: true })
+    .click();
+  await page.getByRole("button", { name: "إلغاء", exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuenow",
+    "7",
+  );
+  await manage();
+  await page
+    .getByRole("button", { name: "بدء رحلة جديدة", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "نعم، رحلة جديدة", exact: true })
+    .click();
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuenow",
+    "0",
+  );
+  await page.getByRole("button", { name: "مَن يتحدث؟", exact: true }).click();
+  await expect(page.locator(".names-list li")).toHaveCount(2);
+});
+
+test("finishing the sixteenth lesson celebrates once, including after reload", async ({
+  page,
+}) => {
+  await seedClassroom(page, 15);
+  await page.goto("/");
+  await page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
+  await page
+    .getByRole("button", { name: "إنهاء الحصة وفتح التالية", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "أحسنت! أتممت المستوى الأول",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "هيا إلى العالم الثاني", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("progressbar")).toHaveAttribute(
+    "aria-valuenow",
+    "16",
+  );
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("Arabic accessibility, contrast and keyboard focus trap", async ({
   page,
 }) => {
-  await mockSupabase(page, 7);
+  await seedClassroom(page, 7);
   await page.goto("/");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   await page.evaluate(() => document.fonts.ready);
@@ -391,7 +407,7 @@ test("Arabic accessibility, contrast and keyboard focus trap", async ({
       nodes: v.nodes.map((n) => n.target),
     })),
   ).toEqual([]);
-  await page.getByRole("button", { name: "المدرّب", exact: true }).click();
+  await page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
   await page.keyboard.press("Shift+Tab");
   expect(
     await page
@@ -406,7 +422,7 @@ test("Arabic accessibility, contrast and keyboard focus trap", async ({
   ).toBe(true);
   await page.keyboard.press("Escape");
   await expect(
-    page.getByRole("button", { name: "المدرّب", exact: true }),
+    page.getByRole("button", { name: "إدارة الحصص", exact: true }),
   ).toBeFocused();
 });
 
@@ -418,7 +434,7 @@ test("touch swipe stays horizontal on a phone", async ({ browser }) => {
     reducedMotion: "reduce",
   });
   const page = await context.newPage();
-  await mockSupabase(page, 7);
+  await seedClassroom(page, 7);
   await page.goto("/");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   const map = page.locator(".map-viewport"),

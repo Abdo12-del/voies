@@ -233,7 +233,7 @@ img {
 .progress-award.achieved {
   color: #9b680a;
 }
-.account-status {
+.speaker-launch {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,13 +251,10 @@ img {
   line-height: 1.4;
   text-align: start;
 }
-.account-status span {
+.speaker-launch span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.account-status.is-demo {
-  color: #745e32;
 }
 .game-bar {
   position: absolute;
@@ -296,7 +293,7 @@ img {
   justify-self: start;
   color: #1767b8;
 }
-.teacher-button {
+.lessons-button {
   justify-self: end;
   color: #3c4b6e;
 }
@@ -377,7 +374,7 @@ img {
   .header-progress {
     width: 202px;
   }
-  .account-status {
+  .speaker-launch {
     max-width: 116px;
   }
 }
@@ -433,7 +430,7 @@ img {
   .progress-track {
     height: 5px;
   }
-  .account-status {
+  .speaker-launch {
     max-width: 114px;
     padding: 8px;
     border-radius: 15px;
@@ -624,13 +621,6 @@ img {
 .field input:disabled {
   background: #eef2f7;
 }
-.code-input {
-  text-align: center;
-  letter-spacing: 3px;
-  font-weight: 700 !important;
-  font-family: monospace !important;
-  font-size: 24px !important;
-}
 .character {
   display: block;
   object-fit: contain;
@@ -639,6 +629,10 @@ img {
 }
 .character.is-flipped {
   transform: scaleX(-1);
+}
+/* A dialog owns attention. Freeze scenery behind it, not the portal/wheel. */
+#root[inert] * {
+  animation-play-state: paused !important;
 }
 .modal-root {
   position: fixed;
@@ -711,347 +705,18 @@ img {
   background: #eef2f7;
   color: #536278;
 }
-.account-panel,
 .station-sheet {
   text-align: center;
 }
-.account-panel > .eyebrow,
 .station-sheet > .eyebrow,
 .celebrate > .eyebrow {
   justify-content: center;
 }
-.account-panel > .dialog-emblem,
 .station-sheet > .dialog-emblem {
   margin-inline: auto;
 }
-.account-panel > .modal-close,
 .station-sheet > .modal-close {
   top: 14px;
-}
-.auth-tabs {
-  display: flex;
-  border: 1px solid #c4e1fb;
-  background: #e3f2ff;
-  border-radius: 12px;
-  padding: 4px;
-  gap: 6px;
-  margin: 20px 0;
-}
-.auth-tabs > button {
-  min-height: 43px;
-  border: 0;
-  border-radius: 9px;
-  flex: 1;
-  background: transparent;
-  color: #3c4b6e;
-  font-weight: 700;
-  font-size: 16px;
-}
-.auth-tabs > button.active {
-  background: #ffffff;
-  color: #1767b8;
-  box-shadow: 0 3px 0 #b3d5f2;
-}
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 17px;
-  text-align: start;
-}
-.auth-form > .btn {
-  margin-top: 3px;
-}
-.auth-form .muted {
-  font-size: 16px;
-}
-.account-summary {
-  display: grid;
-  gap: 15px;
-}
-.demo-note {
-  display: flex;
-  flex-direction: column;
-  gap: 17px;
-  color: #5d6b84;
-  font-size: 17px;
-  line-height: 1.8;
-}
-.demo-note > .btn {
-  align-self: stretch;
-  margin-top: 7px;
-}
-.demo-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #705b2e;
-  font-size: 14px;
-  background: #f4eedb;
-  border-radius: 9px;
-  padding: 8px;
-}
-.student-demo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  text-align: start;
-  padding: 16px;
-  border: 1px solid #d2e3f5;
-  border-radius: 14px;
-  background: #f3f8ff;
-}
-.student-demo > svg {
-  margin-inline-start: auto;
-}
-.student-demo p {
-  font-size: 14px;
-  color: #5d6b84;
-}
-.student-avatar {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 41px;
-  height: 43px;
-  border-radius: 13px;
-  background: #e3f2ff;
-  color: #1767b8;
-  font-family: var(--display);
-  font-size: 23px;
-  font-weight: 600;
-}
-.teacher-panel.is-dashboard {
-  width: min(790px, 100%);
-}
-.teacher-panel > .eyebrow {
-  margin-bottom: 8px;
-}
-.teacher-panel > h2 {
-  font-size: 28px;
-  margin-bottom: 10px;
-}
-.teacher-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 9px 0 20px;
-}
-.teacher-toolbar > .muted {
-  font-size: 15px;
-}
-.teacher-toolbar .btn {
-  flex-shrink: 0;
-}
-.teacher-dashboard {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 23px;
-  margin-top: 16px;
-}
-.students-list > h3 {
-  font-size: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 5px 11px;
-  color: #3c4b6e;
-}
-.students-list > h3 > span {
-  font-family: Tajawal;
-  font-size: 14px;
-  width: 25px;
-  height: 25px;
-  background: #e3f2ff;
-  border-radius: 8px;
-  text-align: center;
-  padding-top: 2px;
-}
-.student-row {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px 10px;
-  border: 1px solid transparent;
-  border-radius: 14px;
-  background: transparent;
-  text-align: start;
-  margin-bottom: 6px;
-}
-.student-row.active {
-  border-color: #a3cdf0;
-  background: #eaf5ff;
-}
-.student-row:hover {
-  background: #eaf5ff;
-}
-.student-row-info {
-  flex: 1;
-  min-width: 0;
-}
-.student-row-info strong {
-  font-size: 16px;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.student-row > bdi {
-  font-size: 13px;
-  color: #3c4b6e;
-}
-.student-mini-track {
-  height: 4px;
-  background: #dce6f2;
-  display: block;
-  position: relative;
-  border-radius: 4px;
-  margin-top: 6px;
-  overflow: hidden;
-}
-.student-mini-track i {
-  display: block;
-  height: 100%;
-  background: #2b8be6;
-  border-radius: 4px;
-}
-.student-detail {
-  padding: 22px;
-  border-radius: 17px;
-  border: 1px solid #d2e3f5;
-  background: #f3f8ff;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: stretch;
-}
-.student-detail > .eyebrow {
-  margin: 0;
-}
-.student-detail > h3 {
-  font-size: 26px;
-  color: #1b2a4e;
-}
-.student-session-title {
-  font-size: 18px;
-  line-height: 1.6;
-  color: #3c4b6e;
-}
-.teacher-count {
-  font-size: 14px;
-  color: #5d6b84;
-  padding: 9px 0 3px;
-}
-.btn-approve {
-  font-size: 16px;
-  margin-top: 3px;
-}
-.teacher-footer {
-  margin-top: 23px;
-  padding-top: 14px;
-  border-top: 1px solid #e4e8d0;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-.teacher-panel .form-error {
-  margin: 12px 0;
-}
-.empty-state,
-.empty-detail {
-  padding: 30px 14px;
-  color: #617151;
-  text-align: center;
-  font-size: 15px;
-}
-.empty-detail > svg {
-  margin-bottom: 14px;
-}
-.add-student-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 22px;
-  background: #f7f7e8;
-  border: 1px solid #e3e8cd;
-  border-radius: 16px;
-}
-.add-student-form > h3 {
-  font-size: 24px;
-}
-.new-code {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: center;
-  background: #f4f5e4;
-  border: 1px solid #dfe7ca;
-  border-radius: 18px;
-  padding: 26px;
-}
-.new-code > svg {
-  color: #7c995e;
-}
-.new-code > h3 {
-  font-size: 26px;
-}
-.new-code > p {
-  font-size: 16px;
-  color: #5b6c4b;
-}
-.generated-code {
-  display: block;
-  font-family: monospace;
-  font-size: 32px;
-  color: #446642;
-  font-weight: 700;
-  letter-spacing: 4px;
-  background: #fffdf2;
-  border-radius: 12px;
-  padding: 13px 18px;
-  border: 1px dashed #bfd0a7;
-}
-.teacher-confirm {
-  text-align: center;
-  padding: 20px 6px;
-}
-.confirm-symbol {
-  width: 64px;
-  height: 64px;
-  display: grid;
-  place-items: center;
-  border-radius: 22px;
-  background: #eaf0d9;
-  margin: 0 auto 15px;
-  color: #628753;
-}
-.teacher-confirm h3 {
-  font-size: 26px;
-}
-.confirm-card {
-  display: grid;
-  gap: 10px;
-  padding: 20px;
-  background: #f4f4e2;
-  border: 1px solid #e1e5c9;
-  border-radius: 15px;
-  margin: 22px 0;
-  text-align: start;
-}
-.confirm-card > strong {
-  font-size: 20px;
-  color: #466244;
-}
-.confirm-card p {
-  font-size: 16px;
-  color: #5e704e;
-  line-height: 1.8;
-}
-.teacher-confirm > .row-actions {
-  justify-content: center;
 }
 .station-sheet > .muted {
   margin: 17px 0 24px;
@@ -1361,66 +1026,8 @@ img {
   .muted {
     font-size: 16px;
   }
-  .teacher-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .teacher-toolbar > .btn {
-    align-self: start;
-  }
-  .teacher-panel > h2 {
-    font-size: 24px;
-    padding-inline-end: 12px;
-  }
-  .teacher-dashboard {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  .students-list {
-    max-height: 205px;
-    overflow: auto;
-  }
-  .students-list > h3 {
-    position: sticky;
-    top: 0;
-    background: #ffffff;
-    z-index: 1;
-  }
-  .student-detail {
-    padding: 19px;
-  }
-  .teacher-footer {
-    gap: 4px;
-  }
-  .teacher-footer .btn {
-    font-size: 12px;
-    gap: 5px;
-    padding-inline: 5px;
-  }
-  .new-code {
-    padding: 22px 13px;
-  }
-  .generated-code {
-    font-size: 26px;
-    letter-spacing: 2px;
-    padding: 12px 10px;
-  }
-  .teacher-confirm {
-    padding: 15px 0;
-  }
-  .teacher-confirm h3 {
-    font-size: 23px;
-  }
   .row-actions > .btn {
     flex-grow: 1;
-  }
-  .confirm-card {
-    padding: 16px;
-    margin-block: 17px;
-  }
-  .confirm-card > strong {
-    font-size: 18px;
   }
   .celebrate {
     padding: 27px 24px;

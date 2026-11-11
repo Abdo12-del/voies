@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AuthPanel } from "./components/AuthPanel";
 import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { LessonView } from "./components/LessonView";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
+import { SpeakerWheel } from "./components/SpeakerWheel";
 import { TeacherPanel } from "./components/TeacherPanel";
 import type { LevelId } from "./data/sessions";
 import {
+  approveNext,
   clearPendingCelebration,
   clearPendingUnlock,
   statusOf,
@@ -37,7 +38,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseHash);
   const [sheet, setSheet] = useState<SheetTarget>(null);
   const [teacherOpen, setTeacherOpen] = useState(false),
-    [authOpen, setAuthOpen] = useState(false);
+    [speakerOpen, setSpeakerOpen] = useState(false);
   const [celebrating, setCelebrating] = useState<LevelId | null>(null);
   const [visibleLevel, setVisibleLevel] = useState<LevelId>(1);
   const [unlockingId, setUnlockingId] = useState<number | null>(null),
@@ -52,6 +53,9 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
   const goMap = useCallback(() => {
+    // Update React in the same batch as completion. Waiting for hashchange can
+    // otherwise let the review redirect reclaim the just-finished lesson.
+    setRoute({ name: "map" });
     window.location.hash = "";
   }, []);
   const goToCurrent = useCallback(() => {
@@ -59,14 +63,9 @@ export default function App() {
     map.current?.goToCurrent();
   }, []);
 
-  // Guard both before rendering and on every authoritative progress/auth update.
+  // Sequential navigation is a classroom convenience, not an account permission.
   useEffect(() => {
-    if (route.name !== "lesson" || progress.loading) return;
-    if (progress.mode === "cloud" && !progress.profile) {
-      goMap();
-      setAuthOpen(true);
-      return;
-    }
+    if (route.name !== "lesson") return;
     const status = statusOf(route.id, progress.completed);
     if (status === "locked") {
       goMap();
@@ -75,23 +74,11 @@ export default function App() {
       window.location.replace(`#/lesson/${route.id}?mode=review`);
     else if (status === "current" && route.mode === "review")
       window.location.replace(`#/lesson/${route.id}`);
-  }, [
-    route,
-    progress.completed,
-    progress.loading,
-    progress.mode,
-    progress.profile,
-    goMap,
-  ]);
+  }, [route, progress.completed, goMap]);
 
   const startLesson = (id: number) => {
-    if (progress.loading) return;
     if (statusOf(id, progress.completed) === "locked") {
       setSheet({ kind: "station", id });
-      return;
-    }
-    if (progress.mode === "cloud" && !progress.profile) {
-      setAuthOpen(true);
       return;
     }
     setSheet(null);
@@ -115,7 +102,7 @@ export default function App() {
       route.name !== "map" ||
       !progress.pendingCelebration ||
       teacherOpen ||
-      authOpen ||
+      speakerOpen ||
       celebrating
     )
       return;
@@ -132,7 +119,7 @@ export default function App() {
     route.name,
     progress.pendingCelebration,
     teacherOpen,
-    authOpen,
+    speakerOpen,
     celebrating,
   ]);
   const closeCelebration = () => {
@@ -156,7 +143,7 @@ export default function App() {
       !id ||
       route.name !== "map" ||
       teacherOpen ||
-      authOpen ||
+      speakerOpen ||
       celebrating ||
       progress.pendingCelebration
     )
@@ -188,69 +175,73 @@ export default function App() {
     progress.pendingUnlock,
     progress.pendingCelebration,
     teacherOpen,
-    authOpen,
+    speakerOpen,
     celebrating,
   ]);
 
-  if (
+  const lesson =
     route.name === "lesson" &&
-    !progress.loading &&
-    (progress.mode === "demo" || progress.profile) &&
     statusOf(route.id, progress.completed) !== "locked"
-  ) {
-    return (
-      <div className="app lesson-app">
-        <LessonView
-          id={route.id}
-          mode={
-            statusOf(route.id, progress.completed) === "completed"
-              ? "review"
-              : "learn"
-          }
-          onBack={goMap}
-        />
-      </div>
-    );
-  }
+      ? route
+      : null;
   return (
-    <div className="app">
-      <Header progress={progress} onAccount={() => setAuthOpen(true)} />
-      <JourneyMap
-        ref={map}
-        progress={progress}
-        unlockingId={unlockingId}
-        justCompletedId={justCompletedId}
-        zone2Entering={zone2Entering}
-        onOpenStation={openStation}
-        onStart={startLesson}
-        onOpenMilestone={(level) => setSheet({ kind: "milestone", level })}
-        onVisibleLevel={setVisibleLevel}
-      />
-      <BottomBar
-        visibleLevel={visibleLevel}
-        onGoToCurrent={goToCurrent}
-        onLevel={(id) => map.current?.goToLevel(id)}
-        onTeacher={() => setTeacherOpen(true)}
-      />
-      <StationSheet
-        target={sheet}
-        progress={progress}
-        onClose={() => setSheet(null)}
-        onStart={startLesson}
-        onGoToCurrent={goToCurrent}
-      />
-      <TeacherPanel
-        open={teacherOpen}
-        progress={progress}
-        onClose={() => setTeacherOpen(false)}
-        onApproved={() => setTeacherOpen(false)}
-      />
-      <AuthPanel
-        open={authOpen}
-        onClose={() => setAuthOpen(false)}
-        progress={progress}
-      />
-      <Celebration level={celebrating} onClose={closeCelebration} />
-    </div>
+    <>
+      {lesson ? (
+        <div className="app lesson-app">
+          <LessonView
+            id={lesson.id}
+            mode={
+              statusOf(lesson.id, progress.completed) === "completed"
+                ? "review"
+                : "learn"
+            }
+            onBack={goMap}
+            onPickSpeaker={() => setSpeakerOpen(true)}
+            onComplete={() => {
+              if (approveNext(progress.completed)) goMap();
+            }}
+          />
+        </div>
+      ) : (
+        <div className="app">
+          <Header
+            progress={progress}
+            onPickSpeaker={() => setSpeakerOpen(true)}
+          />
+          <JourneyMap
+            ref={map}
+            progress={progress}
+            unlockingId={unlockingId}
+            justCompletedId={justCompletedId}
+            zone2Entering={zone2Entering}
+            onOpenStation={openStation}
+            onStart={startLesson}
+            onOpenMilestone={(level) => setSheet({ kind: "milestone", level })}
+            onVisibleLevel={setVisibleLevel}
+          />
+          <BottomBar
+            visibleLevel={visibleLevel}
+            onGoToCurrent={goToCurrent}
+            onLevel={(id) => map.current?.goToLevel(id)}
+            onManageLessons={() => setTeacherOpen(true)}
+          />
+          <StationSheet
+            target={sheet}
+            progress={progress}
+            onClose={() => setSheet(null)}
+            onStart={startLesson}
+            onGoToCurrent={goToCurrent}
+          />
+          <TeacherPanel
+            open={teacherOpen}
+            progress={progress}
+            onClose={() => setTeacherOpen(false)}
+            onApproved={() => setTeacherOpen(false)}
+          />
+          <Celebration level={celebrating} onClose={closeCelebration} />
+        </div>
+      )}
+      <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
+    </>
   );
 }

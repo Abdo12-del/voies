@@ -5,7 +5,7 @@ interface Props {
   visibleLevel: LevelId;
   onGoToCurrent: () => void;
   onLevel: (id: LevelId) => void;
-  onTeacher: () => void;
+  onManageLessons: () => void;
 }
 
 /** Three floating controls, not a footer strip. Lesson start stays on the current station. */
@@ -13,7 +13,7 @@ export function BottomBar({
   visibleLevel,
   onGoToCurrent,
   onLevel,
-  onTeacher,
+  onManageLessons,
 }: Props) {
   return (
     <nav className="game-bar" aria-label="التحكم في الرحلة">
@@ -62,12 +62,13 @@ export function BottomBar({
       </div>
       <button
         type="button"
-        className="bar-side teacher-button"
-        data-hud="teacher"
-        onClick={onTeacher}
+        className="bar-side lessons-button"
+        data-hud="lessons"
+        aria-label="إدارة الحصص"
+        onClick={onManageLessons}
       >
-        <Icon name="teacher" size={24} />
-        <span>المدرّب</span>
+        <Icon name="book" size={23} />
+        <span>الحصص</span>
       </button>
     </nav>
   );

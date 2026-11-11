@@ -23,10 +23,19 @@ export type IconName =
   | "copy"
   | "info"
   | "wifi"
-  | "mouse";
+  | "mouse"
+  | "wheel";
 
 /** One rounded, two-pixel SVG family, including a distinct illustration for every session. */
 const drawings: Record<IconName, ReactNode> = {
+  wheel: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 3v7m0 4v7M3 12h7m4 0h7M5.6 5.6l5 5m2.8 2.8 5 5m0-12.8-5 5m-2.8 2.8-5 5" />
+      <path d="m10 1 2 3 2-3" />
+    </>
+  ),
   hand: (
     <>
       <path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-3a1.5 1.5 0 0 1 3 0v6a7 7 0 0 1-12 5l-4-5a1.6 1.6 0 0 1 2.4-2Z" />

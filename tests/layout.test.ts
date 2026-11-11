@@ -26,7 +26,7 @@ const viewports = [
 ];
 const states = [0, 7, 16, 20, 32];
 
-describe("unchanged curriculum and teacher-only sequencing", () => {
+describe("unchanged curriculum and classroom sequencing", () => {
   it("preserves every original title, ID, level and order", () => {
     expect(
       SESSIONS.map(({ id, level, title }) => ({ id, level, title })),

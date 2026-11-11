@@ -5,20 +5,12 @@ import { Icon } from "./icons";
 /** Two light, floating HUD groups; the landscape continues behind them. */
 export function Header({
   progress,
-  onAccount,
+  onPickSpeaker,
 }: {
   progress: ProgressState;
-  onAccount: () => void;
+  onPickSpeaker: () => void;
 }) {
   const level = getLevel(currentLevel(progress.completed));
-  const status =
-    progress.mode === "demo"
-      ? "وضع تجريبي"
-      : progress.profile
-        ? progress.connection === "offline"
-          ? "المزامنة غير متصلة"
-          : progress.profile.name
-        : "دخول التلميذ";
   return (
     <header className="app-header" aria-label="معلومات الرحلة">
       <div className="brand" data-hud="identity">
@@ -34,10 +26,10 @@ export function Header({
           </div>
         </div>
       </div>
-      <div className="header-tools" data-hud="progress-and-account">
+      <div className="header-tools" data-hud="progress-and-wheel">
         <div className="header-progress">
           <div className="progress-caption">
-            <bdi>أنجزت {progress.completed} من 32 حصة</bdi>
+            <bdi>أنجزنا {progress.completed} من 32 حصة</bdi>
           </div>
           <div
             className="journey-progress"
@@ -46,7 +38,7 @@ export function Header({
             aria-valuemax={32}
             aria-valuenow={progress.completed}
             aria-label="تقدّم رحلتي"
-            aria-valuetext={`أنجزت ${progress.completed} من 32 حصة`}
+            aria-valuetext={`أنجزنا ${progress.completed} من 32 حصة`}
           >
             {[1, 2].map((part) => (
               <div key={part} className={`progress-part part-${part}`}>
@@ -69,22 +61,13 @@ export function Header({
         </div>
         <button
           type="button"
-          className={`account-status ${progress.mode === "demo" ? "is-demo" : ""}`}
-          onClick={onAccount}
-          aria-label={status}
-          title={status}
+          className="speaker-launch"
+          onClick={onPickSpeaker}
+          aria-label="مَن يتحدث؟"
+          title="أسماء الطلبة وعجلة اختيار المتحدث"
         >
-          <Icon
-            name={
-              progress.mode === "demo"
-                ? "info"
-                : progress.profile
-                  ? "wifi"
-                  : "key"
-            }
-            size={18}
-          />
-          <span>{status}</span>
+          <Icon name="wheel" size={20} />
+          <span>مَن يتحدث؟</span>
         </button>
       </div>
     </header>

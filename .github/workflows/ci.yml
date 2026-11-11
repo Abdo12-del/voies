@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   checks:
-    name: Types, PostgreSQL security, layout and browser acceptance
+    name: Types, classroom tools, layout and browser acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

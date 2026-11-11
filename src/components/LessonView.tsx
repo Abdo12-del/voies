@@ -7,9 +7,17 @@ interface Props {
   id: number;
   mode: "learn" | "review";
   onBack: () => void;
+  onPickSpeaker: () => void;
+  onComplete: () => void;
 }
 
-export function LessonView({ id, mode, onBack }: Props) {
+export function LessonView({
+  id,
+  mode,
+  onBack,
+  onPickSpeaker,
+  onComplete,
+}: Props) {
   const session = getSession(id)!,
     level = getLevel(session.level),
     review = mode === "review";
@@ -24,6 +32,13 @@ export function LessonView({ id, mode, onBack }: Props) {
           <button type="button" className="btn btn-ghost" onClick={onBack}>
             <Icon name="back" size={19} />
             العودة إلى الخارطة
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary lesson-wheel-button"
+            onClick={onPickSpeaker}
+          >
+            <Icon name="wheel" size={20} /> مَن يتحدث؟
           </button>
           <span className="lesson-mode">
             <Icon name={review ? "review" : "leaf"} size={18} />
@@ -76,17 +91,32 @@ export function LessonView({ id, mode, onBack }: Props) {
         </section>
         <footer className="lesson-foot">
           <div className="lesson-approval-note">
-            <Icon name={review ? "check" : "lock"} size={22} />
+            <Icon name={review ? "check" : "book"} size={22} />
             <p>
               {review
-                ? "اعتمد مدرّبك هذه الحصة من قبل. المراجعة لا تغيّر تقدّمك."
-                : "بعد إتمام نشاطك، يعتمد المدرّب الحصة من حسابه. لا تُفتح المحطة التالية من هذه الشاشة."}
+                ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
+                : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
             </p>
           </div>
-          <button type="button" className="btn btn-primary" onClick={onBack}>
-            العودة إلى رحلتي
-            <Icon name="chevron-left" size={19} />
-          </button>
+          <div className="row-actions">
+            {!review && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onComplete}
+              >
+                <Icon name="check" size={20} /> إنهاء الحصة
+              </button>
+            )}
+            <button
+              type="button"
+              className={`btn ${review ? "btn-primary" : "btn-ghost"}`}
+              onClick={onBack}
+            >
+              العودة إلى رحلتي
+              <Icon name="chevron-left" size={19} />
+            </button>
+          </div>
         </footer>
       </div>
     </main>

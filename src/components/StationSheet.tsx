@@ -51,7 +51,7 @@ export function StationSheet({
         <p className="muted">
           {achieved
             ? info.desc
-            : "جائزتك تنتظرك هنا. واصل محطاتك بالترتيب، وسيعتمد المدرّب كل خطوة تنجزها."}
+            : "جائزتنا تنتظرنا هنا. نواصل الحصص معًا، خطوة بعد خطوة."}
         </p>
         <button type="button" className="btn btn-primary" onClick={onClose}>
           {achieved ? "إنجاز أفتخر به" : "سأصل إليها"}
@@ -82,7 +82,7 @@ export function StationSheet({
       <h2 id="sheet-title">{session.title}</h2>
       <p className="muted">
         {status === "locked"
-          ? "هذه المحطة لم تُفتح بعد. عندما يعتمد مدرّبك إكمال الحصة السابقة، تضيء محطتك التالية."
+          ? "هذه المحطة لم تُفتح بعد. بعد إنهاء الحصة الحالية من إدارة الحصص، تضيء المحطة التالية."
           : status === "completed"
             ? "خطوة أنجزتها بالفعل. يمكنك العودة إليها للمراجعة."
             : "بطاقة محطتك الحالية تنتظرك على الخارطة."}

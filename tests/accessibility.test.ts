@@ -8,7 +8,8 @@ import { computeLayout } from "../src/lib/mapLayout";
 
 const css =
   readFileSync(new URL("../src/styles.css", import.meta.url), "utf8") +
-  readFileSync(new URL("../src/map.css", import.meta.url), "utf8");
+  readFileSync(new URL("../src/map.css", import.meta.url), "utf8") +
+  readFileSync(new URL("../src/classroom.css", import.meta.url), "utf8");
 function color(selector: string, property = "color") {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const blocks = [
@@ -82,7 +83,7 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
   it("keeps small header, lesson and dialog text legible", () => {
     for (const selector of [
       ".header-level strong",
-      ".account-status",
+      ".speaker-launch",
       ".eyebrow",
       ".form-note",
       ".lesson-number",

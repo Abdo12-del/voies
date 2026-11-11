@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { writeFileSync } from "node:fs";
-import { mockSupabase } from "./supabase-fixture";
+import { seedClassroom } from "./classroom-fixture";
 
-test("legacy localStorage and review hashes cannot unlock a child's lesson", async ({
+test("legacy individual-account storage does not replace the local classroom journey", async ({
   page,
 }) => {
-  const fixture = await mockSupabase(page, 7);
+  await seedClassroom(page, 7);
   await page.addInitScript(() => {
     localStorage.setItem(
       "almutahadith.progress.v1",
@@ -34,19 +34,13 @@ test("legacy localStorage and review hashes cannot unlock a child's lesson", asy
     "aria-valuenow",
     "7",
   );
-  expect(fixture.completed).toBe(7);
-  expect(
-    fixture.calls.filter(
-      (c) => c.method === "PATCH" || c.path.includes("/rpc/"),
-    ),
-  ).toEqual([]);
 });
 
-test("award, golden world, locked dialog, lesson and teacher form pass accessibility checks", async ({
+test("award, golden world, locked dialog, lesson and classroom controls pass accessibility checks", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
-  await mockSupabase(page, 16);
+  await seedClassroom(page, 16);
   await page.goto("/");
   const violations: Record<string, unknown[]> = {};
   const check = async (name: string) => {
@@ -82,6 +76,6 @@ test("award, golden world, locked dialog, lesson and teacher form pass accessibi
   await page
     .getByRole("button", { name: "العودة إلى رحلتي", exact: true })
     .click();
-  await page.getByRole("button", { name: "المدرّب", exact: true }).click();
-  await check("teacher-login");
+  await page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
+  await check("classroom-controls");
 });

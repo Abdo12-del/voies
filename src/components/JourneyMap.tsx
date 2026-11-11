@@ -175,8 +175,8 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
     );
 
     useLayoutEffect(() => {
-      if (!L || progress.loading) return;
-      const key = `${L.W}:${L.H}:${progress.studentId ?? "guest"}`;
+      if (!L) return;
+      const key = `${L.W}:${L.H}`;
       if (bootstrapped.current === key) return;
       bootstrapped.current = key;
       const target = L.nodes.find((n) =>
@@ -191,14 +191,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
         target.x - L.viewportW / 2 + (reducedMotion() ? 0 : 34);
       const animation = requestAnimationFrame(() => center(target));
       return () => cancelAnimationFrame(animation);
-    }, [
-      L,
-      progress.studentId,
-      progress.loading,
-      progress.pendingCelebration,
-      currentId,
-      center,
-    ]);
+    }, [L, progress.pendingCelebration, currentId, center]);
 
     useEffect(() => {
       const el = viewport.current;
@@ -515,7 +508,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                         type="button"
                         className="milestone-btn"
                         onClick={() => onOpenMilestone(n.level)}
-                        aria-label={`${title}، ${achieved ? "مكتمل" : "مغلق حتى اعتماد حصص المستوى"}`}
+                        aria-label={`${title}، ${achieved ? "مكتمل" : "مغلق حتى إتمام حصص المستوى"}`}
                       >
                         <span className="milestone-badge">
                           <Icon
@@ -576,7 +569,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                       type="button"
                       className="btn btn-start current-start"
                       onClick={() => onStart(current.id)}
-                      disabled={!!unlockingId || progress.loading}
+                      disabled={!!unlockingId}
                     >
                       <Icon name="play" size={17} />
                       <span>ابدأ الحصة</span>
@@ -630,14 +623,10 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
         >
           <Icon name="chevron-right" size={23} />
         </button>
-        {progress.loading && (
-          <div className="map-loading" role="status">
-            نحضّر رحلتك…
-          </div>
-        )}
+
         <span className="sr-only" aria-live="polite">
           {unlockingId
-            ? `اعتمد المدرّب الحصة السابقة. المحطة ${unlockingId} متاحة الآن.`
+            ? `أنهينا الحصة السابقة. المحطة ${unlockingId} متاحة الآن.`
             : ""}
         </span>
       </main>

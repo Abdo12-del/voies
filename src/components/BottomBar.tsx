@@ -8,7 +8,7 @@ interface Props {
   onTeacher: () => void;
 }
 
-/** Three controls only. Starting a lesson belongs exclusively to the current station's card. */
+/** Three floating controls, not a footer strip. Lesson start stays on the current station. */
 export function BottomBar({
   visibleLevel,
   onGoToCurrent,
@@ -20,6 +20,7 @@ export function BottomBar({
       <button
         type="button"
         className="bar-side my-station"
+        data-hud="my-station"
         onClick={onGoToCurrent}
       >
         <Icon name="pin" size={23} />
@@ -27,6 +28,7 @@ export function BottomBar({
       </button>
       <div
         className="level-navigation"
+        data-hud="worlds"
         role="group"
         aria-label="موضعك في العالمين"
       >
@@ -61,6 +63,7 @@ export function BottomBar({
       <button
         type="button"
         className="bar-side teacher-button"
+        data-hud="teacher"
         onClick={onTeacher}
       >
         <Icon name="teacher" size={24} />

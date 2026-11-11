@@ -600,22 +600,10 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
             </div>
           )}
         </div>
-        <div className="map-heading">
-          <span>
-            <i /> خارطة الرحلة
-          </span>
-          <h2>كل خطوة، حكاية جديدة</h2>
-        </div>
-        <div className="map-help" aria-hidden="true">
-          <Icon name="mouse" size={25} />
-          <div>
-            اسحب الخارطة واكتشف طريقك
-            <small>أو استخدم عجلة الفأرة والأسهم</small>
-          </div>
-        </div>
         <button
           type="button"
           className="map-arrow map-arrow-left"
+          data-hud="previous-view"
           aria-label="تقدّم يسارًا في الخارطة"
           disabled={edges.left}
           onClick={() =>
@@ -630,6 +618,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
         <button
           type="button"
           className="map-arrow map-arrow-right"
+          data-hud="next-view"
           aria-label="ارجع يمينًا في الخارطة"
           disabled={edges.right}
           onClick={() =>

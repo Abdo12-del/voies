@@ -30,20 +30,14 @@ export interface Deco {
   flip: boolean;
   bounds: Rect;
 }
+// Small ground accents only; large landmarks get their own, widely spaced pass.
 const DEFS: Array<{ t: DecoType; weight: number; size: [number, number] }> = [
-  { t: "tree", weight: 5, size: [100, 142] },
-  { t: "pine", weight: 2, size: [96, 128] },
-  { t: "bush", weight: 5, size: [56, 80] },
-  { t: "rock", weight: 2, size: [38, 62] },
-  { t: "flowers", weight: 6, size: [46, 68] },
-  { t: "tuft", weight: 4, size: [20, 32] },
-  { t: "mushroom", weight: 1.2, size: [24, 36] },
-  { t: "house", weight: 1.5, size: [118, 145] },
-  { t: "windmill", weight: 0.4, size: [148, 175] },
-  { t: "fence", weight: 1.2, size: [84, 110] },
-  { t: "pond", weight: 0.5, size: [150, 180] },
-  { t: "direction", weight: 0.6, size: [66, 82] },
-  { t: "butterfly", weight: 0.5, size: [20, 28] },
+  { t: "bush", weight: 1, size: [48, 64] },
+  { t: "rock", weight: 1, size: [32, 44] },
+  { t: "flowers", weight: 3, size: [30, 42] },
+  { t: "tuft", weight: 6, size: [22, 32] },
+  { t: "mushroom", weight: 0.5, size: [24, 30] },
+  { t: "butterfly", weight: 0.2, size: [18, 24] },
 ];
 function pick(r: number) {
   let target = r * DEFS.reduce((sum, d) => sum + d.weight, 0);
@@ -57,7 +51,7 @@ export function riverX(bridge: Vec, y: number) {
   return bridge.x + Math.sin((y - bridge.y) / 74) * 22;
 }
 
-/** Jittered stratified sampling, two density passes, exact AABBs + sampled Bézier clearance.
+/** Calm, seeded scenery: one sparse landmark pass and one light grass-detail pass.
  * The same bounds are exposed to the automated acceptance tests (not just eyeballed).
  */
 export function buildScenery(L: Layout, reserved: Rect[]) {
@@ -68,9 +62,9 @@ export function buildScenery(L: Layout, reserved: Rect[]) {
     if (
       r.x < 4 ||
       r.x + r.w > L.W - 4 ||
-      r.y < 83 ||
+      r.y < L.hudTop + 24 ||
       r.y + r.h < horizon + 40 ||
-      r.y + r.h > L.H - 8
+      r.y + r.h > L.H - L.hudBottom + 12
     )
       return false;
     if (reserved.some((box) => intersects(r, box, 9))) return false;
@@ -116,50 +110,31 @@ export function buildScenery(L: Layout, reserved: Rect[]) {
     return true;
   };
   const first = L.nodes[0];
-  // Distinct landmarks, still subject to exactly the same collision checks as every flower.
-  place("windmill", first.x + 486, L.H - 35, L.compact ? 128 : 162);
-  place("house", first.x + 656, L.H * 0.7, 118);
-  place("tree", first.x + 320, L.H - 24, 118);
-  place("tree", first.x - 330, L.H - 24, 132);
-  place("pond", first.x - 530, L.H - 34, L.compact ? 128 : 178);
-  // Large silhouettes first; otherwise small flowers greedily consume every tree-sized pocket.
-  for (let x = 85; x < L.W - 60; x += L.compact ? 177 : 205) {
-    for (const y of [horizon + 108, L.H - 25, L.H * 0.79]) {
-      const r = random();
-      const type: DecoType =
-        r < 0.52 ? "tree" : r < 0.72 ? "pine" : r < 0.89 ? "house" : "fence";
-      place(
-        type,
-        x + (random() - 0.5) * 30,
-        y,
-        (type === "fence" ? 92 : 108) + random() * 24,
-      );
-    }
+  const foregroundY = L.H - L.hudBottom - 24;
+  // Keep a few recognizable landmarks without a row of competing silhouettes.
+  place("windmill", first.x + 486, foregroundY, L.compact ? 118 : 148);
+  place("tree", first.x - 330, foregroundY, 112);
+  place("pond", first.x - 550, foregroundY - 14, L.compact ? 118 : 156);
+  for (let x = 85; x < L.W - 60; x += L.compact ? 340 : 420) {
+    const r = random();
+    const type: DecoType = r < 0.52 ? "tree" : r < 0.83 ? "pine" : "house";
+    place(type, x + (random() - 0.5) * 32, foregroundY, 100 + random() * 22);
   }
-  const step = L.compact ? 78 : 94;
-  for (let y = horizon + 80, row = 0; y < L.H - 12; y += step * 0.77, row++) {
+  // No dense fallback/fill pass: breathing room is intentional. Preserve the
+  // original filled grass shapes and bright palette rather than fading the art.
+  const step = L.compact ? 112 : 138;
+  for (
+    let y = horizon + 80, row = 0;
+    y < foregroundY;
+    y += step * 0.88, row++
+  ) {
     for (let x = 30 + ((row % 2) * step) / 2; x < L.W; x += step) {
-      const px = x + (random() - 0.5) * step * 0.65;
-      const py = y + (random() - 0.5) * step * 0.5;
+      if (random() > 0.66) continue;
+      const px = x + (random() - 0.5) * step * 0.6;
+      const py = y + (random() - 0.5) * step * 0.45;
       const def = pick(random());
-      const size =
-        (def.size[0] + random() * (def.size[1] - def.size[0])) *
-        (L.compact ? 0.86 : 1);
-      if (!place(def.t, px, py, size)) {
-        place(random() > 0.42 ? "flowers" : "tuft", px, py, 28 + random() * 20);
-      }
-    }
-  }
-  // Fill only genuinely empty pockets, never force an item onto the road or a label.
-  for (let y = horizon + 46; y < L.H - 18; y += 51) {
-    for (let x = 34; x < L.W - 20; x += 69) {
-      if (random() < 0.45)
-        place(
-          random() > 0.5 ? "flowers" : "tuft",
-          x + random() * 16,
-          y,
-          20 + random() * 16,
-        );
+      const size = def.size[0] + random() * (def.size[1] - def.size[0]);
+      place(def.t, px, py, size);
     }
   }
   decos.sort((a, b) => a.y - b.y);
@@ -539,14 +514,14 @@ export const GroundLayer = memo(function GroundLayer({ L }: { L: Layout }) {
       <path d={groundPath} fill="url(#springGround)" />
       <path d={groundPath} fill="url(#goldGround)" clipPath="url(#goldClip)" />
       <path d={groundPath} fill="url(#groundGrain)" />
-      {Array.from({ length: Math.ceil(L.W / 350) }, (_, i) => (
+      {Array.from({ length: Math.ceil(L.W / 550) }, (_, i) => (
         <ellipse
           key={i}
-          cx={i * 350 + 130}
+          cx={i * 550 + 130}
           cy={L.H * (0.67 + (i % 3) * 0.11)}
           rx={115 + (i % 4) * 18}
           ry={24}
-          fill={i * 350 < L.splitX ? "#ffe6a1" : "#b4e48a"}
+          fill={i * 550 < L.splitX ? "#ffe6a1" : "#b4e48a"}
           opacity=".55"
         />
       ))}

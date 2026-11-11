@@ -55,10 +55,7 @@ describe("unchanged curriculum and teacher-only sequencing", () => {
 
 for (const [w, h] of viewports)
   describe(`horizontal layout ${w}×${h}`, () => {
-    const L = computeLayout(
-      w,
-      h - (w < 640 ? 218 : w < 901 ? 220 : w >= 1700 ? 214 : 198),
-    );
+    const L = computeLayout(w, h);
     it("has monotone right-to-left cubic segments, two awards, internal endpoints and correct spacing", () => {
       expect(L.W).toBeGreaterThan(w);
       expect(L.nodes.filter((n) => n.kind === "station")).toHaveLength(32);
@@ -142,7 +139,15 @@ for (const [w, h] of viewports)
             ).toBe(false);
         const reserved = reservedRects(L, id),
           S = buildScenery(L, reserved);
-        expect(S.decos.length).toBeGreaterThan(90);
+        expect(S.decos.length).toBeGreaterThan(45);
+        const decoratedArea = S.decos.reduce(
+          (area, d) => area + d.bounds.w * d.bounds.h,
+          0,
+        );
+        expect(
+          decoratedArea / (L.W * L.H),
+          "quiet scenery coverage",
+        ).toBeLessThan(0.1);
         expect(S.decos.some((d) => d.t === "tree")).toBe(true);
         for (const d of S.decos)
           for (const box of reserved)

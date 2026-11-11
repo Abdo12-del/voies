@@ -65,12 +65,16 @@ for (const [width, height] of sizes)
       }
       const geometry = await page.evaluate(() => {
         const map = document.querySelector<HTMLElement>(".map-viewport")!;
-        const top = document
-          .querySelector(".app-header")!
-          .getBoundingClientRect().bottom;
-        const bottom = document
-          .querySelector(".game-bar")!
-          .getBoundingClientRect().top;
+        const scene = document
+          .querySelector(".map-shell")!
+          .getBoundingClientRect();
+        const hud = Array.from(
+          document.querySelectorAll<HTMLElement>("[data-hud]"),
+        ).filter(
+          (el) =>
+            el.getBoundingClientRect().width &&
+            el.getBoundingClientRect().height,
+        );
         const boxes = Array.from(
           document.querySelectorAll<HTMLElement>(
             "[data-label],[data-collision],.station,.milestone",
@@ -89,17 +93,70 @@ for (const [width, height] of sizes)
               collisions.push(`${boxes[i].className}/${boxes[j].className}`);
           }
         }
+        const hudCollisions: string[] = [];
+        for (const tool of hud) {
+          const target = tool.getBoundingClientRect();
+          for (const box of boxes)
+            if (overlap(target, box.getBoundingClientRect()))
+              hudCollisions.push(`${tool.dataset.hud}/${box.className}`);
+        }
+        const hudOverlaps: string[] = [];
+        for (let i = 0; i < hud.length; i++)
+          for (let j = i + 1; j < hud.length; j++)
+            if (
+              overlap(
+                hud[i].getBoundingClientRect(),
+                hud[j].getBoundingClientRect(),
+              )
+            )
+              hudOverlaps.push(`${hud[i].dataset.hud}/${hud[j].dataset.hud}`);
+        const sceneryOcclusions: string[] = [];
+        for (const deco of document.querySelectorAll("svg .decos > g"))
+          for (const tool of hud)
+            if (
+              overlap(
+                deco.getBoundingClientRect(),
+                tool.getBoundingClientRect(),
+              )
+            )
+              sceneryOcclusions.push(tool.dataset.hud!);
         const title = document.querySelector<HTMLElement>(".current-card h2");
         return {
           documentOverflow:
             document.documentElement.scrollHeight > innerHeight ||
             document.body.scrollHeight > innerHeight,
           mapOverflow: map.scrollHeight > map.clientHeight,
+          sceneEdges: [scene.x, scene.y, scene.width, scene.height],
+          noBars: [".app-header", ".game-bar"].every((selector) => {
+            const style = getComputedStyle(document.querySelector(selector)!);
+            return (
+              style.position === "absolute" &&
+              style.backgroundColor === "rgba(0, 0, 0, 0)" &&
+              style.backgroundImage === "none" &&
+              style.boxShadow === "none" &&
+              style.borderTopWidth === "0px" &&
+              style.borderBottomWidth === "0px"
+            );
+          }),
+          hudCollisions,
+          hudOverlaps,
+          sceneryOcclusions,
+          hudClipped: hud
+            .filter((el) => {
+              const r = el.getBoundingClientRect();
+              return (
+                r.left < -1 ||
+                r.right > innerWidth + 1 ||
+                r.top < -1 ||
+                r.bottom > innerHeight + 1
+              );
+            })
+            .map((el) => el.dataset.hud),
           collisions,
           clipped: boxes
             .filter((b) => {
               const r = b.getBoundingClientRect();
-              return r.top < top - 1 || r.bottom > bottom + 1;
+              return r.top < -1 || r.bottom > innerHeight + 1;
             })
             .map((b) => b.className),
           titleOverflow: title
@@ -130,6 +187,13 @@ for (const [width, height] of sizes)
       });
       expect(geometry.documentOverflow).toBe(false);
       expect(geometry.mapOverflow).toBe(false);
+      expect(geometry.sceneEdges).toEqual([0, 0, width, height]);
+      expect(geometry.noBars).toBe(true);
+      expect(geometry.hudCollisions).toEqual([]);
+      expect(geometry.hudOverlaps).toEqual([]);
+      expect(geometry.hudClipped).toEqual([]);
+      expect(geometry.sceneryOcclusions).toEqual([]);
+      await expect(page.locator(".map-heading, .map-help")).toHaveCount(0);
       expect(geometry.collisions).toEqual([]);
       expect(geometry.clipped).toEqual([]);
       expect(geometry.titleOverflow).toBe(false);
@@ -152,6 +216,18 @@ test("wheel, drag, both arrows, keyboard, world switch and My station", async ({
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   const position = () => map.evaluate((el) => el.scrollLeft);
   const original = await position();
+  // Transparent gaps between floating HUD groups belong to the landscape,
+  // rather than an invisible header strip that eats pointer/wheel events.
+  expect(
+    await page.evaluate(
+      () => !!document.elementFromPoint(683, 40)?.closest(".map-viewport"),
+    ),
+  ).toBe(true);
+  await page.mouse.move(683, 40);
+  await page.mouse.wheel(0, 180);
+  await expect.poll(position).toBeLessThan(original - 100);
+  await page.getByRole("button", { name: "محطتي", exact: true }).click();
+  await expect.poll(position).toBeCloseTo(original, 0);
   await page.mouse.move(660, 350);
   await page.mouse.wheel(0, 330);
   await expect.poll(position).toBeLessThan(original - 100);

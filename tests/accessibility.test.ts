@@ -81,9 +81,7 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
   });
   it("keeps small header, lesson and dialog text legible", () => {
     for (const selector of [
-      ".brand-eyebrow",
-      ".header-level > div > span",
-      ".progress-caption > span",
+      ".header-level strong",
       ".account-status",
       ".eyebrow",
       ".form-note",
@@ -134,6 +132,26 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
     for (const blue of ["#7cc8ff", "#2f8ae6"])
       expect(completed).toContain(blue);
     expect(css).not.toContain("saturate(0.8)");
+  });
+  it("keeps the full-screen landscape behind transparent floating HUD containers, never header/footer strips", () => {
+    for (const selector of ["app-header", "game-bar"]) {
+      const rule = css.match(
+        new RegExp(`\\n\\.${selector}\\s*\\{([^}]+)\\}`),
+      )?.[1];
+      expect(rule, selector).toMatch(/position:\s*absolute;/);
+      expect(rule, selector).toMatch(/background:\s*transparent;/);
+      expect(rule, selector).toMatch(/border:\s*0;/);
+      expect(rule, selector).toMatch(/box-shadow:\s*none;/);
+      expect(rule, selector).toMatch(/pointer-events:\s*none;/);
+    }
+    expect(css).toMatch(
+      /\.map-shell\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;/,
+    );
+    expect(css).not.toContain("grid-template-rows: auto minmax(0, 1fr) auto");
+    for (const sky of ["#ccecff", "#ffd2ae"]) {
+      readable(".brand h1", sky);
+      readable(".header-level strong", sky);
+    }
   });
   it("preserves all six original character assets byte for byte", () => {
     const hashes: Record<string, string> = {

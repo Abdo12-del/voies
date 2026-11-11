@@ -30,6 +30,9 @@ export interface Layout {
   H: number;
   viewportW: number;
   compact: boolean;
+  /** Invisible safe zones for floating tools, not space removed from the scene. */
+  hudTop: number;
+  hudBottom: number;
   spacing: number;
   roadW: number;
   stationSize: number;
@@ -55,18 +58,29 @@ export interface Layout {
 export function computeLayout(viewportW: number, height = 640): Layout {
   const H = Math.max(260, Math.round(height));
   const compact = viewportW < 640;
+  const shortPhone = compact && H < 760;
+  const hudTop = compact ? (shortPhone ? 124 : 154) : 104;
+  const hudBottom = compact ? (shortPhone ? 86 : 96) : 98;
   const spacing = compact ? 144 : viewportW < 1000 ? 188 : 204;
-  const stationSize = compact ? 84 : 80;
+  const stationSize = compact ? (shortPhone ? 76 : 84) : 80;
   const milestoneSize = compact ? 106 : 120;
   const labelW = spacing - (compact ? 10 : 18);
-  const labelH = compact ? 80 : 66;
+  const labelH = compact ? (shortPhone ? 72 : 80) : 66;
   const roadW = compact ? 42 : 50;
-  const roadCenter = Math.min(420, H * 0.4);
-  const amplitude = compact ? Math.min(26, H * 0.04) : Math.min(62, H * 0.065);
-  const cardH = compact ? 164 : 152;
+  const amplitude = compact
+    ? Math.min(shortPhone ? 20 : 26, H * 0.04)
+    : Math.min(62, H * 0.065);
+  const cardH = compact ? (shortPhone ? 148 : 164) : 152;
   const cardW = compact ? 248 : 304;
+  // Full-screen coordinates: the grass/sky continues underneath the tools,
+  // while stations, titles and the one current card stay clear of them.
+  const roadCenter = Math.min(
+    430,
+    hudTop + (H - hudTop - hudBottom) * 0.37,
+    H - hudBottom - cardH - amplitude - stationSize / 2 - labelH - 20,
+  );
   const cardY = Math.min(
-    H - cardH - 18,
+    H - cardH - hudBottom,
     roadCenter + amplitude + stationSize / 2 + labelH + 44,
   );
   const firstD = Math.max(viewportW / 2 + 48, compact ? 610 : 740);
@@ -141,6 +155,8 @@ export function computeLayout(viewportW: number, height = 640): Layout {
     H,
     viewportW,
     compact,
+    hudTop,
+    hudBottom,
     spacing,
     stationSize,
     milestoneSize,

@@ -5,6 +5,7 @@
   "installCommand": "npm ci",
   "outputDirectory": "dist",
   "git": { "deploymentEnabled": true },
+  "github": { "autoJobCancelation": false },
   "headers": [
     {
       "source": "/(.*)",

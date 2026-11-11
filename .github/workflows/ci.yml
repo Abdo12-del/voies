@@ -31,8 +31,11 @@ jobs:
       # Chromium and its required Linux libraries are distributed through npm.
       # No Chrome CDN download, production credentials, or real students are used.
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - name: Upload browser evidence (best effort)
+        uses: actions/upload-artifact@v4
         if: always()
+        timeout-minutes: 2
+        continue-on-error: true
         with:
           name: journey-acceptance
           path: |

@@ -155,7 +155,12 @@ test("the wheel is available while teaching a lesson, and completion stays one s
   await expect(
     page.getByRole("button", { name: "مَن يتحدث؟", exact: true }),
   ).toBeFocused();
-  await page.getByRole("button", { name: "إنهاء الحصة", exact: true }).click();
+  // زر «إنهاء الحصة» يظهر في شريحة النهاية فقط؛ عبور الشرائح لا يُنهي الحصة.
+  const finish = page.getByRole("button", { name: "إنهاء الحصة", exact: true });
+  await expect(finish).toHaveCount(0);
+  while (!(await finish.isVisible()))
+    await page.getByRole("button", { name: "التالي", exact: true }).click();
+  await finish.click();
   await expect(page.getByRole("progressbar")).toHaveAttribute(
     "aria-valuenow",
     "1",

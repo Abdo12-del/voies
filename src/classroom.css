@@ -356,15 +356,6 @@
   .names-list {
     max-height: 220px;
   }
-  .lesson-top {
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
-  .lesson-top .lesson-mode {
-    max-width: none;
-    flex-basis: 100%;
-    padding-top: 4px;
-  }
   .class-current {
     padding: 17px;
   }

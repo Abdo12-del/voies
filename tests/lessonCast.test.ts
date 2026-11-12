@@ -67,7 +67,7 @@ describe("شخصيات المتحدث في عرض الحصة", () => {
   });
 
   it("صور الشخصيات WebP شفافة بارتفاع 720px وبنسبة مطابقة للسجل وحجم خفيف", () => {
-    expect(lessonKeys.length).toBe(8);
+    expect(lessonKeys.length).toBe(9);
     for (const key of lessonKeys) {
       const c = CHARACTERS[key];
       const info = webpInfo(c.src);
@@ -84,6 +84,6 @@ describe("شخصيات المتحدث في عرض الحصة", () => {
       lessonKeys.map((key) => [key, CHARACTERS[key].origin]),
     );
     expect(origins.lailaEncourage).toBe("generated");
-    expect(lessonKeys.filter((key) => origins[key] === "drive").length).toBe(7);
+    expect(lessonKeys.filter((key) => origins[key] === "drive").length).toBe(8);
   });
 });

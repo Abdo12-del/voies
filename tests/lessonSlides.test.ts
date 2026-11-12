@@ -19,7 +19,9 @@ const words = (text: string) =>
 
 const sectionSlides = (slides: LessonSlide[], kind: "activity" | "challenge") =>
   slides.filter(
-    (slide): slide is Extract<LessonSlide, { kind: "activity" | "challenge" }> =>
+    (
+      slide,
+    ): slide is Extract<LessonSlide, { kind: "activity" | "challenge" }> =>
       slide.kind === kind,
   );
 
@@ -59,9 +61,10 @@ describe("تقسيم الحصص إلى شرائح العرض", () => {
   it("يُبقي محتوى الحصص الحالية في شريحة واحدة لكل قسم بخط كبير مريح", () => {
     for (const session of SESSIONS) {
       const slides = buildSlides(session);
-      // كل الحصص الـ32 الحالية: عنوان، نشاط، تحدٍ، نهاية = أربع شرائح
+      // كل الحصص الـ32 الحالية: غلاف، هدفي اليوم، نشاط، تحدٍ، نهاية = خمس شرائح
       expect(slides.map((s) => s.kind)).toEqual([
         "title",
+        "goal",
         "activity",
         "challenge",
         "end",

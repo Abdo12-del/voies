@@ -33,6 +33,8 @@ function slideName(slide: LessonSlide, sessionTitle: string): string {
   switch (slide.kind) {
     case "title":
       return sessionTitle;
+    case "goal":
+      return "هدفي اليوم";
     case "end":
       return "نهاية الحصة";
     default:
@@ -47,6 +49,82 @@ const prefersReducedMotion = () =>
 /** ترتيب الظهور المتدرّج: العنوان ← الأيقونة ← النص ← الشخصية. */
 const step = (i: number) => ({ "--i": i }) as CSSProperties;
 
+/** عنوان بلونين: الكلمة الأخيرة بلون التمييز («نجرّب **معًا**»). النص نفسه لا يتغيّر. */
+function Accent({ text }: { text: string }) {
+  const cut = text.lastIndexOf(" ");
+  if (cut < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, cut + 1)}
+      <span className="accent">{text.slice(cut + 1)}</span>
+    </>
+  );
+}
+
+type Tone = "loud" | "calm";
+/** إيقاع العرض: صاخبة ← هادئة ← نصف صاخبة ← هادئة ← صاخبة. */
+const TONE: Record<LessonSlide["kind"], Tone> = {
+  title: "loud",
+  goal: "calm",
+  activity: "calm",
+  challenge: "calm",
+  end: "loud",
+};
+
+/** نُقط الزخرفة: صغيرة وعلى الأطراف، بعيدة عن عمود النص (النسب مئوية من البطاقة). */
+const DOTS: Record<
+  Tone,
+  [top: number, left: number, size: number, color: string][]
+> = {
+  loud: [
+    [8, 46, 14, "#ffc93c"],
+    [16, 4, 10, "#ff8fb1"],
+    [84, 49, 12, "#7fe3d6"],
+    [5, 90, 9, "#ffffff"],
+    [91, 3, 15, "#ffc93c"],
+    [55, 1.6, 8, "#d7c2ff"],
+    [93, 72, 9, "#ffffff"],
+  ],
+  calm: [
+    [6, 42, 13, "#f0568c"],
+    [14, 3, 10, "#20b2a6"],
+    [88, 46, 11, "#ffc93c"],
+    [4, 88, 9, "#8f6bd8"],
+    [92, 4, 14, "#1e78c5"],
+    [52, 1.4, 8, "#ffc93c"],
+  ],
+};
+
+/** زخرفة الشريحة من موضوع التحدث: موجات صوت، فقاعة كلام، مسار متقطع، نُقط. */
+function SlideDecor({ tone }: { tone: Tone }) {
+  return (
+    <div className="slide-deco" aria-hidden="true">
+      {DOTS[tone].map(([top, left, size, color], n) => (
+        <i
+          key={n}
+          className="deco-dot"
+          style={{
+            top: `${top}%`,
+            left: `${left}%`,
+            width: size,
+            height: size,
+            background: color,
+          }}
+        />
+      ))}
+      <svg className="deco-waves" viewBox="0 0 60 60">
+        <path d="M20 18a16 16 0 0 1 0 24M30 11a26 26 0 0 1 0 38M40 4a36 36 0 0 1 0 52" />
+      </svg>
+      <svg className="deco-bubble" viewBox="0 0 64 54">
+        <path d="M10 4h44a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H28l-12 10v-10h-6a8 8 0 0 1-8-8V12a8 8 0 0 1 8-8Z" />
+      </svg>
+      <svg className="deco-path" viewBox="0 0 220 90">
+        <path d="M4 80C40 20 90 10 120 40s70 30 96-30" />
+      </svg>
+    </div>
+  );
+}
+
 function SlideFigure({
   cast,
   speech,
@@ -59,7 +137,7 @@ function SlideFigure({
   className?: string;
 }) {
   return (
-    <div className={`slide-figure reveal ${className}`} style={step(3)}>
+    <div className={`slide-figure ${className}`}>
       {speech && <p className="slide-speech">{speech}</p>}
       <div className="figure-stage">
         {cast.map((who, n) => (
@@ -80,7 +158,7 @@ function SlideFigure({
 
 /** نثار الاحتفال: قطع ورقية تنطلق مرة واحدة وتهبط ببطء — بلا وميض. */
 function Confetti() {
-  const colors = ["#ffc93c", "#1767b8", "#2fa36b", "#e85d75", "#8f6bd8"];
+  const colors = ["#ffc93c", "#ffffff", "#7fe3d6", "#ff8fb1", "#d7c2ff"];
   return (
     <div className="end-confetti" aria-hidden="true">
       {Array.from({ length: 22 }, (_, n) => {
@@ -217,166 +295,203 @@ export function LessonView({
         {session.title}
       </p>
     );
-    switch (s.kind) {
-      case "title":
-        return (
-          <div className="slide-layout">
-            <div className="slide-main lesson-hero">
-              <p className="slide-meta reveal" style={step(0)}>
-                <span className="eyebrow">
-                  {level.shortName} · {level.name}
-                </span>
-                <span className="lesson-number">
-                  <bdi>الحصة {session.id} من 32</bdi>
-                </span>
-              </p>
-              <div className="slide-title-row">
-                <span className="slide-hero-icon reveal" style={step(1)}>
-                  <Icon name={session.icon} size={34} />
-                </span>
-                <h1
-                  ref={headingRef}
-                  tabIndex={focusable}
-                  className="reveal"
-                  style={step(0)}
-                >
-                  {session.title}
-                </h1>
-              </div>
-              <p className="slide-lead reveal" style={step(2)}>
-                {session.desc}
-              </p>
-              <div className="slide-goal reveal" style={step(2.6)}>
-                <h2>
-                  <Icon name="target" size={24} /> هدفي اليوم
-                </h2>
-                <p>{session.goal}</p>
-              </div>
-            </div>
-            <SlideFigure
-              cast={cast(s)}
-              speech={titleSpeech(review)}
-              named={live}
-              className="figure-title"
-            />
-          </div>
-        );
-      case "activity":
-      case "challenge": {
-        const meta = SECTION_META[s.kind];
-        return (
-          <>
-            {runningHead}
+    const body = (() => {
+      switch (s.kind) {
+        case "title":
+          return (
             <div className="slide-layout">
-              <div className="slide-main">
-                <div className="slide-head">
-                  <span
-                    className={`slide-emblem reveal ${
-                      s.kind === "activity" ? "emblem-blue" : "emblem-gold"
-                    }`}
-                    style={step(1)}
-                  >
-                    <Icon name={meta.icon} size={34} />
+              <div className="slide-main lesson-hero">
+                <p className="slide-meta reveal" style={step(0)}>
+                  <span className="slide-pill">
+                    {level.shortName} · {level.name}
                   </span>
-                  <h2
+                  <span className="lesson-number">
+                    <bdi>الحصة {session.id} من 32</bdi>
+                  </span>
+                </p>
+                <div className="slide-title-row">
+                  <span className="slide-hero-icon reveal" style={step(1)}>
+                    <Icon name={session.icon} size={36} />
+                  </span>
+                  <h1
                     ref={headingRef}
                     tabIndex={focusable}
-                    className="slide-heading reveal"
+                    className="reveal"
                     style={step(0)}
                   >
-                    {meta.label}
-                    {s.parts > 1 && (
-                      <span className="slide-part">
-                        <bdi>
-                          {s.part} من {s.parts}
-                        </bdi>
-                      </span>
-                    )}
-                  </h2>
+                    {session.title}
+                  </h1>
                 </div>
-                {s.steps.length === 1 ? (
-                  <p className="slide-body reveal" style={step(2)}>
-                    {s.steps[0].text}
-                  </p>
-                ) : (
-                  <ol className="slide-steps">
-                    {s.steps.map((item, n) => (
-                      <li
-                        key={item.number}
-                        className="lesson-step reveal"
-                        style={step(2 + n * 0.5)}
-                      >
-                        <span className="lesson-step-number">
-                          {item.number}
-                        </span>
-                        <p>{item.text}</p>
-                      </li>
-                    ))}
-                  </ol>
-                )}
+                <p className="slide-lead reveal" style={step(2)}>
+                  {session.desc}
+                </p>
               </div>
-              <SlideFigure cast={cast(s)} className={`figure-${s.kind}`} />
+              <SlideFigure
+                cast={cast(s)}
+                speech={titleSpeech(review)}
+                named={live}
+                className="figure-title"
+              />
             </div>
-          </>
-        );
-      }
-      case "end":
-        return (
-          <div
-            className={`slide-end-layout ${review ? "is-quiet" : "is-celebrating"}`}
-          >
-            {!review && <Confetti />}
-            <div className="end-stage">
-              <span className="end-glow" aria-hidden="true" />
-              <SlideFigure cast={cast(s)} className="figure-end" />
-              <span className="end-medal" aria-hidden="true">
-                <Icon name={review ? "check" : "star"} size={30} />
-              </span>
-            </div>
-            <h2
-              ref={headingRef}
-              tabIndex={focusable}
-              className="slide-heading reveal"
-              style={step(0)}
-            >
-              نهاية الحصة
-              {!review && <span className="end-cheer">أحسنتم!</span>}
-            </h2>
-            <div className="lesson-approval-note reveal" style={step(2)}>
-              <Icon name={review ? "check" : "book"} size={22} />
-              <p>
-                {review
-                  ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
-                  : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
-              </p>
-            </div>
+          );
+        case "goal":
+          return (
+            <>
+              {runningHead}
+              <div className="slide-layout">
+                <div className="slide-main">
+                  <div className="slide-head">
+                    <span
+                      className="slide-emblem emblem-target reveal"
+                      style={step(1)}
+                    >
+                      <Icon name="target" size={36} />
+                    </span>
+                    <h2
+                      ref={headingRef}
+                      tabIndex={focusable}
+                      className="slide-heading reveal"
+                      style={step(0)}
+                    >
+                      <Accent text="هدفي اليوم" />
+                    </h2>
+                  </div>
+                  <p className="slide-goal-text reveal" style={step(2)}>
+                    {session.goal}
+                  </p>
+                </div>
+                <SlideFigure cast={cast(s)} className="figure-goal" />
+              </div>
+            </>
+          );
+        case "activity":
+        case "challenge": {
+          const meta = SECTION_META[s.kind];
+          return (
+            <>
+              {runningHead}
+              <div className="slide-layout">
+                <div className="slide-main">
+                  <div className="slide-head">
+                    <span
+                      className={`slide-emblem reveal ${
+                        s.kind === "activity" ? "emblem-blue" : "emblem-gold"
+                      }`}
+                      style={step(1)}
+                    >
+                      <Icon name={meta.icon} size={36} />
+                    </span>
+                    <h2
+                      ref={headingRef}
+                      tabIndex={focusable}
+                      className="slide-heading reveal"
+                      style={step(0)}
+                    >
+                      <span>
+                        <Accent text={meta.label} />
+                      </span>
+                      {s.parts > 1 && (
+                        <span className="slide-part">
+                          <bdi>
+                            {s.part} من {s.parts}
+                          </bdi>
+                        </span>
+                      )}
+                    </h2>
+                  </div>
+                  {s.steps.length === 1 ? (
+                    <p className="slide-body reveal" style={step(2)}>
+                      {s.steps[0].text}
+                    </p>
+                  ) : (
+                    <ol className="slide-steps">
+                      {s.steps.map((item, n) => (
+                        <li
+                          key={item.number}
+                          className="lesson-step reveal"
+                          style={step(2 + n * 0.5)}
+                        >
+                          <span className="lesson-step-number">
+                            {item.number}
+                          </span>
+                          <p>{item.text}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+                <SlideFigure cast={cast(s)} className={`figure-${s.kind}`} />
+              </div>
+            </>
+          );
+        }
+        case "end":
+          return (
             <div
-              className="row-actions slide-end-actions reveal"
-              style={step(4)}
+              className={`slide-layout ${review ? "is-quiet" : "is-celebrating"}`}
             >
-              {!review && (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={live ? onComplete : undefined}
-                  tabIndex={live ? undefined : -1}
+              {!review && <Confetti />}
+              <div className="slide-main slide-end-main">
+                <span className="end-medal" aria-hidden="true">
+                  <Icon name={review ? "check" : "star"} size={30} />
+                </span>
+                <h2
+                  ref={headingRef}
+                  tabIndex={focusable}
+                  className="slide-heading reveal"
+                  style={step(0)}
                 >
-                  <Icon name="check" size={20} /> إنهاء الحصة
-                </button>
-              )}
-              <button
-                type="button"
-                className={`btn ${review ? "btn-primary" : "btn-ghost"}`}
-                onClick={live ? onBack : undefined}
-                tabIndex={live ? undefined : -1}
-              >
-                العودة إلى رحلتي
-                <Icon name="chevron-left" size={19} />
-              </button>
+                  نهاية الحصة
+                </h2>
+                {!review && (
+                  <p className="end-cheer reveal" style={step(1)}>
+                    أحسنتم!
+                  </p>
+                )}
+                <div className="lesson-approval-note reveal" style={step(2)}>
+                  <Icon name={review ? "check" : "book"} size={22} />
+                  <p>
+                    {review
+                      ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
+                      : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
+                  </p>
+                </div>
+                <div
+                  className="row-actions slide-end-actions reveal"
+                  style={step(2.5)}
+                >
+                  {!review && (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={live ? onComplete : undefined}
+                      tabIndex={live ? undefined : -1}
+                    >
+                      <Icon name="check" size={20} /> إنهاء الحصة
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className={`btn ${review ? "btn-primary" : "btn-ghost"}`}
+                    onClick={live ? onBack : undefined}
+                    tabIndex={live ? undefined : -1}
+                  >
+                    العودة إلى رحلتي
+                    <Icon name="chevron-left" size={19} />
+                  </button>
+                </div>
+              </div>
+              <SlideFigure cast={cast(s)} className="figure-end" />
             </div>
-          </div>
-        );
-    }
+          );
+      }
+    })();
+    return (
+      <>
+        <SlideDecor tone={TONE[s.kind]} />
+        {body}
+      </>
+    );
   };
 
   const slide = slides[index];
@@ -435,7 +550,7 @@ export function LessonView({
         {leaving && (
           <div
             key={`leave-${leaving.slide.id}-${leaving.stamp}`}
-            className={`slide-frame slide-${leaving.slide.kind} is-leaving leave-${
+            className={`slide-frame slide-${leaving.slide.kind} tone-${TONE[leaving.slide.kind]} is-leaving leave-${
               leaving.direction === 1 ? "next" : "prev"
             }`}
             aria-hidden="true"
@@ -446,7 +561,7 @@ export function LessonView({
         )}
         <section
           key={slide.id}
-          className={`slide slide-frame slide-${slide.kind} enter-${
+          className={`slide slide-frame slide-${slide.kind} tone-${TONE[slide.kind]} enter-${
             direction === 1 ? "next" : "prev"
           }`}
           role="group"

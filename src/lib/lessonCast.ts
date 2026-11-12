@@ -7,6 +7,7 @@ import type { LessonSlide } from "./lessonSlides";
  * | الموقف                     | الوضعية          |
  * | -------------------------- | ---------------- |
  * | العنوان / الترحيب           | تلويح            |
+ * | هدفي اليوم                 | إشارة «لدي فكرة» |
  * | النشاط                     | شرح وإشارة       |
  * | التحدي                     | ثقة وعزم         |
  * | النهاية                    | نجاح واحتفال     |
@@ -29,6 +30,8 @@ export function castFor(
   switch (situation) {
     case "title":
       return [review ? "samiThink" : "lailaWave"];
+    case "goal":
+      return ["sisterIdea"];
     case "activity":
       return [sessionId % 2 === 1 ? "lailaExplain" : "samiExplain"];
     case "challenge":

@@ -18,6 +18,8 @@ export interface SlideStep {
 
 export type LessonSlide =
   | { kind: "title"; id: "title" }
+  /** هدف الحصة في شريحة مستقلة: فكرة واحدة لكل شريحة */
+  | { kind: "goal"; id: "goal" }
   | {
       kind: "activity" | "challenge";
       id: string;
@@ -86,11 +88,15 @@ export function chunkSteps(steps: string[]): string[][] {
 }
 
 /**
- * الشرائح الأساسية: العنوان والهدف، ثم النشاط (خطوات عند الحاجة)،
- * ثم التحدي، ثم شريحة النهاية. أقسام طويلة تُنتج شرائح إضافية مرقّمة.
+ * الشرائح الأساسية: الغلاف (العنوان والوصف)، ثم «هدفي اليوم» في شريحة هادئة
+ * مستقلة، ثم النشاط (خطوات عند الحاجة)، ثم التحدي، ثم شريحة النهاية.
+ * أقسام طويلة تُنتج شرائح إضافية مرقّمة.
  */
 export function buildSlides(session: Session): LessonSlide[] {
-  const slides: LessonSlide[] = [{ kind: "title", id: "title" }];
+  const slides: LessonSlide[] = [
+    { kind: "title", id: "title" },
+    { kind: "goal", id: "goal" },
+  ];
   for (const kind of ["activity", "challenge"] as const) {
     const chunks = chunkSteps(splitIntoSteps(session[kind]));
     let offset = 0;

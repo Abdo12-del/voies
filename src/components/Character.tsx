@@ -122,6 +122,15 @@ export const CHARACTERS = {
     bust: true,
     lesson: true,
   },
+  sisterIdea: {
+    name: "الأخت الصغيرة",
+    pose: "تشير: «لدي فكرة!»",
+    src: "/characters/sister-idea.webp",
+    ratio: 791 / 720,
+    origin: "drive",
+    bust: true,
+    lesson: true,
+  },
   lailaEncourage: {
     name: "ليلى",
     pose: "تشجّع: «لا بأس، حاول مرة أخرى»",

@@ -71,10 +71,10 @@ for (const [width, height] of [
     await page.setViewportSize({ width, height });
     await seedClassroom(page, 7);
     await openCurrentLesson(page);
-    // حصة 8: نشاط من خطوتين → 4 شرائح: العنوان والهدف، النشاط، التحدي، النهاية
+    // حصة 8: نشاط من خطوتين → 5 شرائح: الغلاف، هدفي اليوم، النشاط، التحدي، النهاية
     const total = Number(/من (\d+)/.exec(await counter(page).innerText())![1]);
-    expect(total).toBe(4);
-    await expect(counter(page)).toHaveText("1 من 4");
+    expect(total).toBe(5);
+    await expect(counter(page)).toHaveText("1 من 5");
     await expect(prev(page)).toBeDisabled();
     await expect(finishButton(page)).toHaveCount(0);
     await expectSingleFittingSlide(page, total);
@@ -113,23 +113,23 @@ test("RTL keyboard: left arrow advances, right arrow returns, Home/End jump; bro
   await page.setViewportSize({ width: 1366, height: 768 });
   await seedClassroom(page, 7);
   await openCurrentLesson(page);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   await page.keyboard.press("ArrowLeft");
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await page.keyboard.press("ArrowRight");
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   await page.keyboard.press("End");
-  await expect(counter(page)).toHaveText("4 من 4");
+  await expect(counter(page)).toHaveText("5 من 5");
   await expect(finishButton(page)).toBeVisible();
   await page.keyboard.press("ArrowLeft");
-  await expect(counter(page)).toHaveText("4 من 4");
+  await expect(counter(page)).toHaveText("5 من 5");
   await page.keyboard.press("Home");
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   // النقاط تنقل مباشرة إلى شريحة
   await page
-    .getByRole("button", { name: "الشريحة 3: تحدّي المحطة", exact: true })
+    .getByRole("button", { name: "الشريحة 4: تحدّي المحطة", exact: true })
     .click();
-  await expect(counter(page)).toHaveText("3 من 4");
+  await expect(counter(page)).toHaveText("4 من 5");
   // التجوّل الكامل في الشرائح ثم العودة لا يغيّر التقدّم
   await page.locator(".lesson-float-start .lesson-chip").click();
   await expect(page.getByRole("progressbar")).toHaveAttribute(
@@ -167,12 +167,12 @@ test("horizontal swipe navigates on a phone without any vertical scroll", async 
   };
   // RTL: السحب نحو اليسار يقدّم الشريحة، ونحو اليمين يعيدها
   await swipe(320, 70);
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await swipe(70, 320);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   // سحب قصير أو شبه رأسي لا يبدّل الشريحة
   await swipe(300, 260);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   expect(await page.evaluate(() => scrollY)).toBe(0);
   await context.close();
 });
@@ -183,14 +183,14 @@ test("the wheel stays available mid-deck and closes back onto the same slide", a
   await seedClassroom(page, 7, ["ليان", "سامي"]);
   await openCurrentLesson(page);
   await next(page).click();
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await page.getByRole("button", { name: "مَن يتحدث؟", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "مَن يتحدث؟", exact: true }),
   ).toBeFocused();
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await expect(page.locator(".lesson")).toBeVisible();
 });
 
@@ -204,10 +204,10 @@ test("review mode never offers completion and never changes progress", async ({
   await expect(page.locator(".lesson-float-mode")).toContainText(
     "وضع المراجعة",
   );
-  for (let i = 1; i <= 4; i++) {
-    await expect(counter(page)).toHaveText(`${i} من 4`);
+  for (let i = 1; i <= 5; i++) {
+    await expect(counter(page)).toHaveText(`${i} من 5`);
     await expect(finishButton(page)).toHaveCount(0);
-    if (i < 4) await next(page).click();
+    if (i < 5) await next(page).click();
   }
   await expect(page.locator(".lesson-approval-note")).toContainText(
     "المراجعة لا تغيّر تقدّم الرحلة",
@@ -283,7 +283,7 @@ for (const [width, height] of [
           if (document.documentElement.scrollHeight > innerHeight)
             out.push("page scrolls");
           for (const el of card.querySelectorAll("*")) {
-            if (el.closest(".end-confetti, .end-glow")) continue;
+            if (el.closest(".slide-deco, .end-confetti")) continue;
             const r = el.getBoundingClientRect();
             if (r.width + r.height === 0) continue;
             if (
@@ -327,7 +327,7 @@ test("slides glide RTL with a staggered reveal and a springy, breathing characte
       order: [
         delay(".slide-heading"),
         delay(".slide-emblem"),
-        delay(".slide-steps li, .slide-body"),
+        delay(".slide-steps li, .slide-body, .slide-goal-text"),
         delay(".figure-pop"),
       ],
       bob:
@@ -368,7 +368,7 @@ test("prefers-reduced-motion switches every animation off", async ({
   await seedClassroom(page, 7);
   await openCurrentLesson(page);
   await page.keyboard.press("End");
-  await expect(counter(page)).toHaveText("4 من 4");
+  await expect(counter(page)).toHaveText("5 من 5");
   await expect(page.locator(".slide-frame.is-leaving")).toHaveCount(0);
   const running = await page.evaluate(() =>
     [...document.querySelectorAll(".lesson *")]

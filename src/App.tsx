@@ -189,6 +189,7 @@ export default function App() {
       {lesson ? (
         <div className="app lesson-app">
           <LessonView
+            key={lesson.id}
             id={lesson.id}
             mode={
               statusOf(lesson.id, progress.completed) === "completed"

@@ -1,197 +1,141 @@
 import { useSyncExternalStore } from "react";
-import { TOTAL_SESSIONS, getSession, type LevelId } from "../data/sessions";
+import { TOTAL_SESSIONS, type LevelId } from "../data/sessions";
 
-/**
- * مخزن تقدّم الطفل.
- *
- * القاعدة الأساسية: لا يمكن فتح أي حصة إلا عبر approveNext() التي يستدعيها
- * المدرّب من لوحته المحمية برمز. الدالة تُكمل الحصة الحالية فقط، وتفتح التي تليها
- * مباشرة — لا قفز ولا فتح يدوي لحصة لاحقة.
- *
- * التخزين حاليًا محلي (localStorage). لربطه بقاعدة بيانات (مثل Supabase)
- * يكفي استبدال loadRaw / saveRaw مع الإبقاء على الواجهة نفسها.
- */
-
+/** One classroom journey on this browser. There are no accounts or remote writes. */
+export const PROGRESS_STORAGE_KEY = "voies.classroom-progress.v1";
 export type StationStatus = "completed" | "current" | "locked";
-
-export interface ApprovalEntry {
-  session: number;
-  at: string; // ISO date
-}
-
 export interface ProgressState {
-  version: 1;
-  /** عدد الحصص المكتملة (0 → 32). الحصة الحالية = completed + 1 */
   completed: number;
-  childName: string;
-  history: ApprovalEntry[];
-  pinHash: string | null;
-  /** حصة فُتحت للتو ولم يُعرض تأثير فتح القفل بعد */
   pendingUnlock: number | null;
-  /** مستوى اكتمل للتو ولم يُعرض احتفاله بعد */
   pendingCelebration: LevelId | null;
+  storageAvailable: boolean;
 }
-
-const KEY = "almutahadith.progress.v1";
-
-const initialState: ProgressState = {
-  version: 1,
-  completed: 0, // الحصة الأولى مفتوحة، والحصص 2 → 32 مقفلة
-  childName: "",
-  history: [],
-  pinHash: null,
+const empty: ProgressState = {
+  completed: 0,
   pendingUnlock: null,
   pendingCelebration: null,
+  storageAvailable: true,
 };
-
-function clampCompleted(n: unknown): number {
-  const v = typeof n === "number" && Number.isFinite(n) ? Math.floor(n) : 0;
-  return Math.min(Math.max(v, 0), TOTAL_SESSIONS);
-}
-
-function loadRaw(): ProgressState {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...initialState };
-    const parsed = JSON.parse(raw) as Partial<ProgressState>;
-    return {
-      ...initialState,
-      ...parsed,
-      version: 1,
-      completed: clampCompleted(parsed.completed),
-      history: Array.isArray(parsed.history) ? parsed.history : [],
-    };
-  } catch {
-    return { ...initialState };
-  }
-}
-
-function saveRaw(s: ProgressState) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {
-    /* التخزين غير متاح — نكتفي بالحالة في الذاكرة */
-  }
-}
-
-let state: ProgressState = typeof window !== "undefined" ? loadRaw() : { ...initialState };
+let state = empty;
+let started = false;
 const listeners = new Set<() => void>();
 
-function emit() {
-  listeners.forEach((l) => l());
+export function readProgress(raw: string | null): ProgressState {
+  try {
+    const value: unknown = JSON.parse(raw ?? "null");
+    if (!value || typeof value !== "object") return { ...empty };
+    const record = value as Record<string, unknown>;
+    if (
+      record.version !== 1 ||
+      !Number.isInteger(record.completed) ||
+      (record.completed as number) < 0 ||
+      (record.completed as number) > TOTAL_SESSIONS
+    )
+      return { ...empty };
+    const completed = record.completed as number;
+    return {
+      ...empty,
+      completed,
+      pendingCelebration:
+        record.pendingCelebration === 2 && completed === 32
+          ? 2
+          : record.pendingCelebration === 1 && completed >= 16 && completed < 32
+            ? 1
+            : null,
+    };
+  } catch {
+    return { ...empty };
+  }
 }
-
-function setState(next: ProgressState) {
-  state = next;
-  saveRaw(state);
-  emit();
-}
-
-// مزامنة بين النوافذ: إن اعتمد المدرّب من نافذة أخرى تتحدّث خارطة الطفل فورًا
-if (typeof window !== "undefined") {
-  window.addEventListener("storage", (e) => {
-    if (e.key === KEY) {
-      state = loadRaw();
-      emit();
+function update(patch: Partial<ProgressState>, persist = true) {
+  state = { ...state, ...patch };
+  if (persist) {
+    try {
+      window.localStorage.setItem(
+        PROGRESS_STORAGE_KEY,
+        JSON.stringify({
+          version: 1,
+          completed: state.completed,
+          pendingCelebration: state.pendingCelebration,
+        }),
+      );
+      state.storageAvailable = true;
+    } catch {
+      state.storageAvailable = false;
     }
-  });
+  }
+  listeners.forEach((listener) => listener());
 }
-
-export function subscribe(l: () => void) {
-  listeners.add(l);
-  return () => listeners.delete(l);
+export function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
-
-export function getState() {
+export function getState(): ProgressState {
   return state;
 }
-
 export function useProgress(): ProgressState {
   return useSyncExternalStore(subscribe, getState, getState);
 }
-
-// ───────────── قراءة الحالة ─────────────
-
-export function statusOf(sessionId: number, completed: number): StationStatus {
-  if (sessionId <= completed) return "completed";
-  if (sessionId === completed + 1) return "current";
-  return "locked";
+export function initializeProgress() {
+  if (started) return;
+  started = true;
+  try {
+    update(
+      readProgress(window.localStorage.getItem(PROGRESS_STORAGE_KEY)),
+      false,
+    );
+  } catch {
+    update({ storageAvailable: false }, false);
+  }
+  window.addEventListener("storage", (event) => {
+    if (event.key === PROGRESS_STORAGE_KEY || event.key === null)
+      update(readProgress(event.newValue), false);
+  });
 }
-
+export function statusOf(id: number, completed: number): StationStatus {
+  if (!Number.isInteger(id) || id < 1 || id > TOTAL_SESSIONS) return "locked";
+  if (id <= completed) return "completed";
+  return id === completed + 1 ? "current" : "locked";
+}
 export function currentSessionId(completed: number): number | null {
   return completed >= TOTAL_SESSIONS ? null : completed + 1;
 }
-
 export function currentLevel(completed: number): LevelId {
   return completed >= 16 ? 2 : 1;
 }
-
-export function isLevelComplete(level: LevelId, completed: number) {
-  return completed >= (level === 1 ? 16 : 32);
+export function isLevelComplete(level: LevelId, completed: number): boolean {
+  return completed >= level * 16;
 }
 
-// ───────────── إجراءات المدرّب فقط ─────────────
-
-/** اعتماد إكمال الحصة الحالية وفتح الحصة التالية مباشرة */
-export function approveNext(): boolean {
-  const s = state;
-  if (s.completed >= TOTAL_SESSIONS) return false;
-  const finished = s.completed + 1;
-  const completed = finished;
-  const nextOpen = completed < TOTAL_SESSIONS ? completed + 1 : null;
-  const celebration: LevelId | null =
-    completed === 16 ? 1 : completed === 32 ? 2 : null;
-  setState({
-    ...s,
+/** The expected count also makes a stale/double click a no-op, not a second step. */
+export function approveNext(expectedCount: number): boolean {
+  if (state.completed !== expectedCount || state.completed >= TOTAL_SESSIONS)
+    return false;
+  const completed = state.completed + 1;
+  update({
     completed,
-    history: [...s.history, { session: finished, at: new Date().toISOString() }],
-    pendingUnlock: nextOpen,
-    pendingCelebration: celebration,
+    pendingUnlock: completed < TOTAL_SESSIONS ? completed + 1 : null,
+    pendingCelebration: completed === 16 ? 1 : completed === 32 ? 2 : null,
   });
   return true;
 }
-
-/** التراجع عن آخر اعتماد (في حال الاعتماد بالخطأ) */
-export function undoLast(): boolean {
-  const s = state;
-  if (s.completed <= 0) return false;
-  setState({
-    ...s,
-    completed: s.completed - 1,
-    history: s.history.slice(0, -1),
+export function undoLast(expectedCount: number): boolean {
+  if (state.completed !== expectedCount || state.completed === 0) return false;
+  update({
+    completed: state.completed - 1,
     pendingUnlock: null,
     pendingCelebration: null,
   });
   return true;
 }
-
-export function resetJourney() {
-  setState({ ...state, completed: 0, history: [], pendingUnlock: null, pendingCelebration: null });
+export function resetProgress() {
+  update({ completed: 0, pendingUnlock: null, pendingCelebration: null });
 }
-
-export function setChildName(name: string) {
-  setState({ ...state, childName: name.trim().slice(0, 30) });
-}
-
-export function setPinHash(hash: string) {
-  setState({ ...state, pinHash: hash });
-}
-
-// ───────────── استهلاك المؤثرات لمرة واحدة ─────────────
-
 export function clearPendingUnlock() {
-  if (state.pendingUnlock !== null) setState({ ...state, pendingUnlock: null });
+  if (state.pendingUnlock !== null) update({ pendingUnlock: null }, false);
 }
-
 export function clearPendingCelebration() {
-  if (state.pendingCelebration !== null) setState({ ...state, pendingCelebration: null });
-}
-
-export function lastApprovalLabel(s: ProgressState): string | null {
-  const last = s.history[s.history.length - 1];
-  if (!last) return null;
-  const session = getSession(last.session);
-  const d = new Date(last.at);
-  const date = d.toLocaleDateString("ar", { day: "numeric", month: "long" });
-  return `الحصة ${last.session}${session ? `: ${session.title}` : ""} — ${date}`;
+  if (state.pendingCelebration !== null) update({ pendingCelebration: null });
 }

@@ -1,0 +1,5 @@
+project_id = "voies"
+
+[functions.journey-auth]
+# Children have no JWT before code login. The function verifies teacher JWTs itself.
+verify_jwt = false

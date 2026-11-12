@@ -1,0 +1,51 @@
+name: Journey quality checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: journey-checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Types, classroom tools, layout and browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # Chromium and its required Linux libraries are distributed through npm.
+      # No Chrome CDN download, production credentials, or real students are used.
+      - run: npm run test:e2e
+      - name: Upload browser evidence (best effort)
+        uses: actions/upload-artifact@v4
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        with:
+          name: journey-acceptance
+          path: |
+            playwright-report/
+            test-results/
+            artifacts/screenshots/
+            artifacts/axe-*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+# Deployment is handled by the existing Vercel Git integration, not by a second
+# deploy job or a VERCEL_TOKEN secret. Production branch: main. See vercel.json
+# and docs/deployment.md. A git-triggered preview was verified READY.

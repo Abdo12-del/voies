@@ -1,26 +1,50 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { LEVELS, MILESTONES, SESSIONS, type LevelId } from "../data/sessions";
-import { computeLayout, segsToPath, type Layout, type MapNode, type Rect } from "../lib/mapLayout";
-import { isLevelComplete, statusOf, type ProgressState } from "../lib/progress";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
+import { getLevel, MILESTONES, SESSIONS, type LevelId } from "../data/sessions";
+import {
+  computeLayout,
+  currentCardRect,
+  guideRect,
+  labelRect,
+  reservedRects,
+  samiRect,
+  segsToPath,
+  sisterRect,
+  sisterSpeechRect,
+  type Layout,
+  type Rect,
+  type Vec,
+} from "../lib/mapLayout";
+import {
+  currentSessionId,
+  isLevelComplete,
+  statusOf,
+  type ProgressState,
+} from "../lib/progress";
 import { Character } from "./Character";
-import { LockIcon } from "./icons";
-import { Bridge, DecoLayer, GroundLayer, SceneryDefs, buildScenery, zone2Shape } from "./Scenery";
+import {
+  Bridge,
+  buildScenery,
+  DecoLayer,
+  FarLayer,
+  GroundLayer,
+  SceneryDefs,
+  StartVillage,
+  WorldGate,
+} from "./Scenery";
 import { Station } from "./Station";
-
-function useWidth<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [w, setW] = useState(0);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const update = () => setW(el.clientWidth);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, w] as const;
-}
+import { Icon } from "./icons";
 
 interface Props {
   progress: ProgressState;
@@ -29,315 +53,588 @@ interface Props {
   zone2Entering: boolean;
   onOpenStation: (id: number) => void;
   onStart: (id: number) => void;
-  onOpenMilestone: (level: LevelId) => void;
+  onOpenMilestone: (id: LevelId) => void;
+  onVisibleLevel: (id: LevelId) => void;
 }
-
-/** موضع عنوان المحطة: يُزاح نحو الداخل في أطراف الصفوف كي لا يغطي منعطف الطريق */
-function labelShiftOf(n: MapNode, L: Layout) {
-  if (!n.rowEnd) return 0;
-  const inward = n.x > L.W / 2 ? -1 : 1;
-  return inward * (L.labelW / 2 - 30);
+export interface JourneyMapHandle {
+  goToCurrent: (smooth?: boolean) => void;
+  goToLevel: (id: LevelId) => void;
+  goToMilestone: (id: LevelId) => void;
 }
+const reducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const boxStyle = (r: Rect): CSSProperties => ({
+  left: r.x,
+  top: r.y,
+  width: r.w,
+  height: r.h,
+});
 
-/** الجهة التي تقف فيها ليلى بجانب المحطة الحالية */
-function lailaSideOf(n: MapNode, L: Layout): 1 | -1 {
-  if (!n.rowEnd) return 1;
-  return n.x > L.W / 2 ? 1 : -1;
-}
+export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
+  function JourneyMap(
+    {
+      progress,
+      unlockingId,
+      justCompletedId,
+      zone2Entering,
+      onOpenStation,
+      onStart,
+      onOpenMilestone,
+      onVisibleLevel,
+    },
+    ref,
+  ) {
+    const viewport = useRef<HTMLDivElement>(null);
+    const world = useRef<HTMLDivElement>(null);
+    const [size, setSize] = useState({ w: 0, h: 0 });
+    const [crossing, setCrossing] = useState(false);
+    const [edges, setEdges] = useState({ left: false, right: false });
+    const visibleLevel = useRef<LevelId>(1);
+    const crossingTimer = useRef<ReturnType<typeof setTimeout>>();
+    const frame = useRef(0);
+    const bootstrapped = useRef("");
+    const drag = useRef<{
+      x: number;
+      left: number;
+      active: boolean;
+      moved: boolean;
+    } | null>(null);
+    const currentId = currentSessionId(progress.completed);
 
-function reservedRects(L: Layout): Rect[] {
-  const out: Rect[] = [L.startArea, L.gateArea];
-  for (const n of L.nodes) {
-    if (n.kind === "station") {
-      const top = n.y + L.currentSize / 2 + 4;
-      const cx = n.x + labelShiftOf(n, L);
-      out.push({ x: cx - L.labelW / 2 - 6, y: top, w: L.labelW + 12, h: L.wide ? 64 : 60 });
-      // مكان ليلى المحتمل
-      const side = lailaSideOf(n, L);
-      const lw = L.wide ? 60 : 46;
-      const lx = n.x + side * (L.currentSize / 2 + 4) - (side < 0 ? lw : 0);
-      out.push({ x: lx, y: n.y - (L.wide ? 120 : 96), w: lw, h: L.wide ? 120 : 96 });
-    } else {
-      const s = L.milestoneSize;
-      out.push({ x: n.x - 130, y: n.y + s / 2 - 4, w: 260, h: 54 });
-      out.push({ x: n.x + s / 2, y: n.y - (L.wide ? 150 : 110), w: L.wide ? 130 : 90, h: L.wide ? 190 : 150 });
-      out.push({ x: n.x - s, y: n.y - s, w: s * 2, h: s * 1.6 });
-    }
-  }
-  return out;
-}
+    useLayoutEffect(() => {
+      const el = viewport.current;
+      if (!el) return;
+      const observer = new ResizeObserver((entries) => {
+        const { width, height } = entries[0].contentRect;
+        setSize((old) =>
+          old.w === Math.round(width) && old.h === Math.round(height)
+            ? old
+            : { w: Math.round(width), h: Math.round(height) },
+        );
+      });
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, []);
+    const L = useMemo(
+      () => (size.w && size.h ? computeLayout(size.w, size.h) : null),
+      [size],
+    );
+    const S = useMemo(
+      () => (L ? buildScenery(L, reservedRects(L, currentId)) : null),
+      [L, currentId],
+    );
+    const road = useMemo(() => (L ? segsToPath(L.segs) : ""), [L]);
+    const traveled = useMemo(() => {
+      if (!L || progress.completed === 0) return "";
+      if (progress.completed === 32) return road;
+      const target = L.nodes.find(
+        (n) => n.kind === "station" && n.id === progress.completed + 1,
+      )!;
+      return segsToPath(L.segs.filter((s) => s.b.x >= target.x));
+    }, [L, progress.completed, road]);
 
-export function JourneyMap({
-  progress,
-  unlockingId,
-  justCompletedId,
-  zone2Entering,
-  onOpenStation,
-  onStart,
-  onOpenMilestone,
-}: Props) {
-  const [wrapRef, W] = useWidth<HTMLDivElement>();
-  const L = useMemo(() => (W ? computeLayout(W) : null), [W]);
-  const scenery = useMemo(() => (L ? buildScenery(L, reservedRects(L)) : null), [L]);
-  const completed = progress.completed;
-  const [intro, setIntro] = useState(true);
-  const revealRef = useRef<SVGPathElement>(null);
-  const [revealLen, setRevealLen] = useState(0);
+    const center = useCallback(
+      (point: Vec | undefined, smooth = true) => {
+        if (point && viewport.current && L)
+          viewport.current.scrollTo({
+            left: point.x - L.viewportW / 2,
+            top: 0,
+            behavior: smooth && !reducedMotion() ? "smooth" : "instant",
+          });
+      },
+      [L],
+    );
+    const goCurrent = useCallback(
+      (smooth = true) =>
+        center(
+          L?.nodes.find((n) =>
+            currentId
+              ? n.kind === "station" && n.id === currentId
+              : n.kind === "milestone" && n.level === 2,
+          ),
+          smooth,
+        ),
+      [L, currentId, center],
+    );
+    useImperativeHandle(
+      ref,
+      () => ({
+        goToCurrent: goCurrent,
+        goToLevel: (id) =>
+          center(
+            L?.nodes.find(
+              (n) => n.kind === "station" && n.id === (id === 1 ? 1 : 17),
+            ),
+          ),
+        goToMilestone: (id) =>
+          center(
+            L?.nodes.find((n) => n.kind === "milestone" && n.level === id),
+          ),
+      }),
+      [L, center, goCurrent],
+    );
 
-  useEffect(() => {
-    const t = setTimeout(() => setIntro(false), 3200);
-    return () => clearTimeout(t);
-  }, []);
+    useLayoutEffect(() => {
+      if (!L) return;
+      const key = `${L.W}:${L.H}`;
+      if (bootstrapped.current === key) return;
+      bootstrapped.current = key;
+      const target = L.nodes.find((n) =>
+        progress.pendingCelebration
+          ? n.kind === "milestone" && n.level === progress.pendingCelebration
+          : currentId
+            ? n.kind === "station" && n.id === currentId
+            : n.kind === "milestone" && n.level === 2,
+      );
+      if (!target || !viewport.current) return;
+      viewport.current.scrollLeft =
+        target.x - L.viewportW / 2 + (reducedMotion() ? 0 : 34);
+      const animation = requestAnimationFrame(() => center(target));
+      return () => cancelAnimationFrame(animation);
+    }, [L, progress.pendingCelebration, currentId, center]);
 
-  const d = useMemo(() => (L ? segsToPath(L.segs) : ""), [L]);
+    useEffect(() => {
+      const el = viewport.current;
+      if (!el) return;
+      const wheel = (event: WheelEvent) => {
+        if (event.ctrlKey) return; // Preserve the browser's pinch-to-zoom accessibility gesture.
+        event.preventDefault();
+        const scale =
+          event.deltaMode === 1
+            ? 24
+            : event.deltaMode === 2
+              ? el.clientWidth
+              : 1;
+        el.scrollLeft +=
+          Math.abs(event.deltaX) > Math.abs(event.deltaY)
+            ? event.deltaX * scale
+            : -event.deltaY * scale;
+      };
+      el.addEventListener("wheel", wheel, { passive: false });
+      return () => el.removeEventListener("wheel", wheel);
+    }, []);
+    useEffect(
+      () => () => {
+        clearTimeout(crossingTimer.current);
+        cancelAnimationFrame(frame.current);
+      },
+      [],
+    );
 
-  // الجزء المقطوع من الطريق حتى المحطة الحالية
-  const traveledD = useMemo(() => {
-    if (!L) return "";
-    if (completed >= 32) return d;
-    const idx = L.nodes.findIndex((n) => n.kind === "station" && n.id === completed + 1);
-    return idx >= 0 ? segsToPath(L.segs.slice(0, idx + 1)) : "";
-  }, [L, completed, d]);
+    const onScroll = () => {
+      if (!L || !viewport.current || frame.current) return;
+      frame.current = requestAnimationFrame(() => {
+        frame.current = 0;
+        const el = viewport.current;
+        if (!el) return;
+        world.current?.style.setProperty(
+          "--parallax-shift",
+          `${Math.max(-80, Math.min(80, (el.scrollLeft - L.W + L.viewportW) * 0.035))}px`,
+        );
+        setEdges({
+          left: el.scrollLeft < 3,
+          right: el.scrollLeft > L.W - el.clientWidth - 3,
+        });
+        const level: LevelId =
+          el.scrollLeft + el.clientWidth / 2 < L.splitX ? 2 : 1;
+        if (level !== visibleLevel.current) {
+          visibleLevel.current = level;
+          onVisibleLevel(level);
+          setCrossing(true);
+          clearTimeout(crossingTimer.current);
+          crossingTimer.current = setTimeout(
+            () => setCrossing(false),
+            reducedMotion() ? 0 : 1800,
+          );
+        }
+      });
+    };
+    const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+      if (
+        event.pointerType === "touch" ||
+        event.button !== 0 ||
+        (event.target as HTMLElement).closest("button, a, input")
+      )
+        return;
+      drag.current = {
+        x: event.clientX,
+        left: event.currentTarget.scrollLeft,
+        active: true,
+        moved: false,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+    };
+    const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+      const d = drag.current;
+      if (!d?.active) return;
+      const dx = event.clientX - d.x;
+      if (Math.abs(dx) > 6) {
+        d.moved = true;
+        event.currentTarget.classList.add("is-dragging");
+      }
+      if (d.moved) event.currentTarget.scrollLeft = d.left - dx;
+    };
+    const endDrag = (event: PointerEvent<HTMLDivElement>) => {
+      if (drag.current) drag.current.active = false;
+      event.currentTarget.classList.remove("is-dragging");
+      if (event.currentTarget.hasPointerCapture(event.pointerId))
+        event.currentTarget.releasePointerCapture(event.pointerId);
+    };
+    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+      if (
+        !L ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        ![
+          "ArrowLeft",
+          "ArrowRight",
+          "Home",
+          "End",
+          "PageDown",
+          "PageUp",
+        ].includes(event.key)
+      )
+        return;
+      event.preventDefault();
+      const el = viewport.current!;
+      const focused = (event.target as HTMLElement).closest<HTMLButtonElement>(
+        "[data-station-button]",
+      );
+      if (
+        focused &&
+        (event.key === "ArrowLeft" || event.key === "ArrowRight")
+      ) {
+        const next = Math.max(
+          1,
+          Math.min(
+            32,
+            Number(focused.dataset.stationButton) +
+              (event.key === "ArrowLeft" ? 1 : -1),
+          ),
+        );
+        const button = el.querySelector<HTMLButtonElement>(
+          `[data-station-button="${next}"]`,
+        );
+        button?.focus({ preventScroll: true });
+        center(L.nodes.find((n) => n.kind === "station" && n.id === next));
+      } else if (event.key === "Home") center(L.start);
+      else if (event.key === "End") center(L.end);
+      else
+        el.scrollBy({
+          left:
+            (event.key === "ArrowLeft" || event.key === "PageDown" ? -1 : 1) *
+            (event.key.startsWith("Page") ? el.clientWidth * 0.75 : L.spacing),
+          behavior: reducedMotion() ? "instant" : "smooth",
+        });
+    };
 
-  useLayoutEffect(() => {
-    if (revealRef.current) setRevealLen(revealRef.current.getTotalLength());
-  }, [d]);
-
-  if (!L || !scenery) return <div ref={wrapRef} className="map-wrap" style={{ minHeight: "100vh" }} />;
-
-  const { H, wide, nodes } = L;
-  const zone2Locked = completed < 16;
-  const lailaH = wide ? 118 : 92;
-  const charsH = wide ? 120 : 88;
-  const currentNode = nodes.find((n) => n.kind === "station" && n.id === completed + 1);
-  const splitPct = L.zoneSplitY / H;
-
-  return (
-    <div ref={wrapRef} className={`map-wrap ${intro ? "is-intro" : ""}`}>
-      <div className={`map ${wide ? "is-wide" : "is-compact"}`} style={{ height: H }}>
-        <svg className="scene" width={L.W} height={H} viewBox={`0 0 ${L.W} ${H}`} aria-hidden="true">
-          <defs>
-            <SceneryDefs L={L} />
-            <linearGradient id="roadEdge" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={H}>
-              <stop offset="0" stopColor="#8d74e0" />
-              <stop offset={splitPct} stopColor="#8d74e0" />
-              <stop offset={splitPct + 0.001} stopColor="#dcb978" />
-              <stop offset="1" stopColor="#dcb978" />
-            </linearGradient>
-            <linearGradient id="roadBase" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={H}>
-              <stop offset="0" stopColor="#e2d9fd" />
-              <stop offset={splitPct} stopColor="#e2d9fd" />
-              <stop offset={splitPct + 0.001} stopColor="#fdf0d2" />
-              <stop offset="1" stopColor="#fdf0d2" />
-            </linearGradient>
-            <mask id="roadReveal" maskUnits="userSpaceOnUse" x="0" y="0" width={L.W} height={H}>
-              <path
-                ref={revealRef}
-                d={d}
-                fill="none"
-                stroke="#fff"
-                strokeWidth={L.roadW + 40}
-                strokeLinecap="round"
-                className={revealLen ? "road-reveal" : ""}
-                style={
-                  {
-                    strokeDasharray: revealLen || undefined,
-                    opacity: revealLen ? 1 : 0,
-                    "--len": revealLen,
-                  } as React.CSSProperties
-                }
-              />
-            </mask>
-          </defs>
-
-          <GroundLayer L={L} S={scenery} />
-
-          <g mask="url(#roadReveal)">
-            <path d={d} className="road-shadow" strokeWidth={L.roadW + 12} />
-            <path d={d} className="road-edge" stroke="url(#roadEdge)" strokeWidth={L.roadW + 10} />
-            <path d={d} className="road-base" stroke="url(#roadBase)" strokeWidth={L.roadW} />
-            <path d={d} className="road-dash" />
-            {traveledD && <path d={traveledD} className="road-traveled" />}
-          </g>
-
-          <Bridge L={L} />
-          <DecoLayer S={scenery} />
-
-          {zone2Locked && <path d={zone2Shape(L)} className="zone-veil" />}
-        </svg>
-
-        {/* ── بداية الرحلة: لافتة المستوى الأول والأخت الصغيرة ── */}
-        <ZoneIntro
-          level={1}
-          rect={L.startArea}
-          completed={completed}
-          charsH={charsH}
-          wide={wide}
-          entering={false}
-        />
-
-        {/* ── بوابة المستوى الثاني ── */}
-        <ZoneIntro
-          level={2}
-          rect={L.gateArea}
-          completed={completed}
-          charsH={charsH}
-          wide={wide}
-          entering={zone2Entering}
-        />
-
-        {/* ── المحطات ومحطات الإنجاز ── */}
-        {nodes.map((n, idx) => {
-          if (n.kind === "station") {
-            const session = SESSIONS[n.id - 1];
-            const status = statusOf(n.id, completed);
-            const size = status === "current" || unlockingId === n.id ? L.currentSize : L.stationSize;
-            return (
-              <Station
-                key={n.id}
-                session={session}
-                status={unlockingId === n.id ? "current" : status}
-                x={n.x}
-                y={n.y}
-                size={size}
-                labelShift={labelShiftOf(n, L)}
-                labelWidth={L.labelW}
-                unlocking={unlockingId === n.id}
-                justCompleted={justCompletedId === n.id}
-                introDelay={250 + idx * 60}
-                onOpen={onOpenStation}
-                onStart={onStart}
-              />
-            );
-          }
-          const m = MILESTONES.find((mm) => mm.level === n.level)!;
-          const achieved = isLevelComplete(n.level, completed);
-          const samiH = wide ? 140 : 100;
-          return (
+    const current = L?.nodes.find(
+      (n) => n.kind === "station" && n.id === currentId,
+    );
+    return (
+      <main
+        className={`map-shell ${crossing || zone2Entering ? "is-crossing" : ""}`}
+        aria-label="خارطة رحلتي"
+      >
+        <div
+          ref={viewport}
+          className="map-viewport"
+          dir="ltr"
+          role="region"
+          aria-label="خارطة أفقية، تبدأ من اليمين وتتقدّم يسارًا. استخدم السحب أو عجلة الفأرة أو الأسهم."
+          tabIndex={0}
+          onScroll={onScroll}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onKeyDown={onKeyDown}
+          onClickCapture={(e) => {
+            if (drag.current?.moved) {
+              e.preventDefault();
+              e.stopPropagation();
+              drag.current = null;
+            }
+          }}
+        >
+          {L && S && (
             <div
-              key={`m-${n.level}`}
-              className={`milestone ${achieved ? "is-achieved" : "is-pending"} level-${n.level}`}
-              style={
-                {
-                  left: n.x,
-                  top: n.y,
-                  "--msize": `${L.milestoneSize}px`,
-                  "--intro-delay": `${250 + idx * 60}ms`,
-                } as React.CSSProperties
-              }
+              ref={world}
+              className={`map-world ${L.compact ? "is-compact" : ""}`}
+              dir="rtl"
+              style={{ width: L.W, height: L.H }}
+              data-map-width={L.W}
             >
-              <button
-                type="button"
-                className="milestone-btn"
-                onClick={() => onOpenMilestone(n.level)}
-                aria-label={`محطة إنجاز: ${m.title} — ${achieved ? "تم الإنجاز" : "لم تُفتح بعد"}`}
+              <svg
+                className="scene"
+                width={L.W}
+                height={L.H}
+                viewBox={`0 0 ${L.W} ${L.H}`}
+                aria-hidden="true"
               >
-                <span className="milestone-rays" aria-hidden="true" />
-                <span className="milestone-badge">
-                  <span className="milestone-icon" aria-hidden="true">
-                    {m.icon}
-                  </span>
-                  {!achieved && (
-                    <span className="milestone-lock" aria-hidden="true">
-                      <LockIcon size={20} />
-                    </span>
-                  )}
-                </span>
-                <span className="milestone-ribbon">{m.title}</span>
-              </button>
-              <div className="milestone-char">
-                <div className="speech speech--sami">{achieved ? "أحسنت! 🎉" : "سأنتظرك هنا! 💪"}</div>
-                <Character who={achieved ? "samiCheer" : "sami"} height={samiH} className={achieved ? "hop-once" : ""} />
+                <defs>
+                  <SceneryDefs L={L} />
+                  <linearGradient
+                    id="roadBase"
+                    gradientUnits="userSpaceOnUse"
+                    x1="0"
+                    x2={L.W}
+                  >
+                    <stop stopColor="#f7dca4" />
+                    <stop offset=".48" stopColor="#fdf0d2" />
+                    <stop offset="1" stopColor="#fdf0d2" />
+                  </linearGradient>
+                </defs>
+                <FarLayer L={L} />
+                <GroundLayer L={L} />
+                <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <path
+                    d={road}
+                    className="road-shadow"
+                    strokeWidth={L.roadW + 12}
+                    transform="translate(0 6)"
+                  />
+                  <path d={road} stroke="#ad7c42" strokeWidth={L.roadW + 5} />
+                  <path d={road} stroke="#dcb978" strokeWidth={L.roadW + 2} />
+                  <path
+                    d={road}
+                    stroke="url(#roadBase)"
+                    strokeWidth={L.roadW - 3}
+                  />
+                  <path d={road} className="road-dash" />
+                  {traveled && <path d={traveled} className="road-traveled" />}
+                </g>
+                <Bridge L={L} />
+                <DecoLayer S={S} />
+                <StartVillage L={L} />
+                <WorldGate L={L} />
+                {current && (
+                  <path
+                    className="current-tether"
+                    d={`M${current.x} ${current.y + L.stationSize / 2 + 18}V${L.cardY - 12}`}
+                  />
+                )}
+              </svg>
+              {[1, 2].map((id) => {
+                const level = id as LevelId,
+                  info = getLevel(level),
+                  r = L.signs[id - 1];
+                return (
+                  <div
+                    key={id}
+                    className={`world-sign world-sign-${level}`}
+                    style={boxStyle(r)}
+                    data-collision="world-sign"
+                  >
+                    <span>{info.shortName}</span>
+                    <h3>{info.name}</h3>
+                    <div>
+                      <bdi>
+                        الحصص {info.first}–{info.last}
+                      </bdi>
+                      <i />
+                      <bdi>
+                        {Math.max(
+                          0,
+                          Math.min(16, progress.completed - info.first + 1),
+                        )}
+                        /16 محطة مكتملة
+                      </bdi>
+                    </div>
+                  </div>
+                );
+              })}
+              {L.nodes
+                .filter(
+                  (n) => n.kind === "station" && (n.id === 1 || n.id === 17),
+                )
+                .map((n) => (
+                  <span
+                    key={n.id}
+                    className="world-snap"
+                    style={{ left: n.x }}
+                  />
+                ))}
+              <div
+                className="map-character sister-guide"
+                style={boxStyle(sisterRect(L))}
+                data-collision="sister"
+              >
+                <Character
+                  who="sisterWave"
+                  height={sisterRect(L).h}
+                  decorative={false}
+                />
               </div>
-            </div>
-          );
-        })}
-
-        {/* ── ليلى تشير إلى المحطة الحالية ── */}
-        {currentNode && !unlockingId && (() => {
-          const side = lailaSideOf(currentNode, L);
-          const lailaW = Math.round(lailaH * (310 / 720));
-          const left = currentNode.x + side * (L.currentSize / 2 + 4) - (side < 0 ? lailaW : 0);
-          return (
-            <div
-              key={currentNode.id}
-              className="laila-guide"
-              style={{ left: Math.max(2, Math.min(L.W - lailaW - 2, left)), top: currentNode.y - lailaH * 0.86 }}
-              aria-hidden="true"
-            >
-              <Character who="lailaPoint" height={lailaH} flip={side > 0} />
-            </div>
-          );
-        })()}
-      </div>
-    </div>
-  );
-}
-
-function ZoneIntro({
-  level,
-  rect,
-  completed,
-  charsH,
-  wide,
-  entering,
-}: {
-  level: LevelId;
-  rect: Rect;
-  completed: number;
-  charsH: number;
-  wide: boolean;
-  entering: boolean;
-}) {
-  const info = LEVELS.find((l) => l.id === level)!;
-  const unlocked = level === 1 || completed >= 16;
-  const done = isLevelComplete(level, completed);
-  const doneInLevel = Math.max(0, Math.min(16, completed - (info.first - 1)));
-
-  return (
-    <div
-      className={`zone-intro zone-intro-${level} ${unlocked ? "" : "is-locked"} ${entering ? "is-entering" : ""} ${
-        wide ? "is-wide" : ""
-      }`}
-      style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
-    >
-      <div className="zone-intro-inner">
-        <div className="zone-chars" style={{ height: charsH }}>
-          {level === 1 ? (
-            <div className="zone-char zone-char--sister">
-              <div className="speech speech--sister">سأرافقك من أول خطوة!</div>
-              <Character who="sisterWave" height={charsH} className="float-soft" />
-            </div>
-          ) : (
-            <>
-              <div className="zone-char zone-char--laila">
-                <Character who="laila" height={charsH} />
+              <div
+                className="speech sister-speech"
+                style={boxStyle(sisterSpeechRect(L))}
+                data-collision="sister-speech"
+              >
+                سأرافقك من أول خطوة!
               </div>
-              <div className="zone-char zone-char--sami">
-                <Character who="sami" height={charsH} />
-              </div>
-            </>
+              {L.nodes.map((n) => {
+                if (n.kind === "station")
+                  return (
+                    <Station
+                      key={n.id}
+                      session={SESSIONS[n.id - 1]}
+                      status={statusOf(n.id, progress.completed)}
+                      node={n}
+                      layout={L}
+                      unlocking={unlockingId === n.id}
+                      justCompleted={justCompletedId === n.id}
+                      onOpen={onOpenStation}
+                    />
+                  );
+                const achieved = isLevelComplete(n.level, progress.completed),
+                  title = MILESTONES[n.level - 1].title;
+                const r = labelRect(n, L),
+                  sami = samiRect(n, L);
+                return (
+                  <div key={`milestone-${n.level}`}>
+                    <div
+                      className={`milestone ${achieved ? "is-achieved" : "is-pending"}`}
+                      style={{
+                        left: n.x - L.milestoneSize / 2,
+                        top: n.y - L.milestoneSize / 2,
+                        width: L.milestoneSize,
+                        height: L.milestoneSize,
+                      }}
+                      data-milestone={n.level}
+                    >
+                      <button
+                        type="button"
+                        className="milestone-btn"
+                        onClick={() => onOpenMilestone(n.level)}
+                        aria-label={`${title}، ${achieved ? "مكتمل" : "مغلق حتى إتمام حصص المستوى"}`}
+                      >
+                        <span className="milestone-badge">
+                          <Icon
+                            name={n.level === 1 ? "medal" : "crown"}
+                            size={51}
+                          />
+                        </span>
+                        {!achieved && (
+                          <span className="milestone-lock">
+                            <Icon name="lock" size={16} />
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                    <div
+                      className="milestone-label"
+                      style={boxStyle(r)}
+                      data-collision="milestone-label"
+                    >
+                      {title}
+                      <small>
+                        {achieved ? "إنجاز يستحق الفخر" : "جائزتك تنتظرك هنا"}
+                      </small>
+                    </div>
+                    <div
+                      className={`map-character sami-guide ${achieved ? "is-celebrating" : ""}`}
+                      style={boxStyle(sami)}
+                      data-collision="sami"
+                    >
+                      <Character
+                        who={achieved ? "samiCheer" : "sami"}
+                        height={sami.h}
+                        decorative={false}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {current && (
+                <>
+                  <section
+                    className="current-card"
+                    style={boxStyle(currentCardRect(current, L))}
+                    aria-labelledby="current-station-title"
+                    data-collision="current-card"
+                  >
+                    <div className="current-card-kicker">
+                      <span>
+                        <i />
+                        محطتك الآن
+                      </span>
+                      <bdi>الحصة {current.id}</bdi>
+                    </div>
+                    <h2 id="current-station-title">
+                      {SESSIONS[current.id - 1].title}
+                    </h2>
+                    <button
+                      type="button"
+                      className="btn btn-start current-start"
+                      onClick={() => onStart(current.id)}
+                      disabled={!!unlockingId}
+                    >
+                      <Icon name="play" size={17} />
+                      <span>ابدأ الحصة</span>
+                      <Icon name="chevron-left" size={18} />
+                    </button>
+                  </section>
+                  <div
+                    className="map-character laila-guide"
+                    style={boxStyle(guideRect(current, L))}
+                    data-collision="laila"
+                  >
+                    <Character
+                      who="lailaPoint"
+                      height={guideRect(current, L).h}
+                      flip
+                      decorative={false}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
-        <div className="zone-sign">
-          <span className="zone-sign-tag">
-            {info.shortName} · الحصص {info.first}–{info.last}
-          </span>
-          <h2 className="zone-sign-title">{info.name}</h2>
-          <div className="zone-sign-status">
-            {!unlocked ? (
-              <span className="pill pill-locked">
-                <LockIcon size={15} /> يُفتح بعد إتمام المستوى الأول
-              </span>
-            ) : done ? (
-              <span className="pill pill-done">✓ مكتمل — 16 / 16</span>
-            ) : (
-              <span className="pill pill-progress">{doneInLevel} / 16 محطة مكتملة</span>
-            )}
-          </div>
-        </div>
-        {level === 1 && <div className="start-tag">🚩 نقطة الانطلاق</div>}
-      </div>
-    </div>
-  );
+        <button
+          type="button"
+          className="map-arrow map-arrow-left"
+          data-hud="previous-view"
+          aria-label="تقدّم يسارًا في الخارطة"
+          disabled={edges.left}
+          onClick={() =>
+            viewport.current?.scrollBy({
+              left: -(L?.spacing ?? 200) * 2,
+              behavior: reducedMotion() ? "instant" : "smooth",
+            })
+          }
+        >
+          <Icon name="chevron-left" size={23} />
+        </button>
+        <button
+          type="button"
+          className="map-arrow map-arrow-right"
+          data-hud="next-view"
+          aria-label="ارجع يمينًا في الخارطة"
+          disabled={edges.right}
+          onClick={() =>
+            viewport.current?.scrollBy({
+              left: (L?.spacing ?? 200) * 2,
+              behavior: reducedMotion() ? "instant" : "smooth",
+            })
+          }
+        >
+          <Icon name="chevron-right" size={23} />
+        </button>
+
+        <span className="sr-only" aria-live="polite">
+          {unlockingId
+            ? `أنهينا الحصة السابقة. المحطة ${unlockingId} متاحة الآن.`
+            : ""}
+        </span>
+      </main>
+    );
+  },
+);
+
+export function mapNodeLabelPosition(L: Layout, id: number) {
+  const n = L.nodes.find((node) => node.id === id && node.kind === "station");
+  return n ? labelRect(n, L) : null;
 }

@@ -11,7 +11,13 @@ import "@fontsource/baloo-bhaijaan-2/latin-600.css";
 import "@fontsource/baloo-bhaijaan-2/latin-800.css";
 import "./styles.css";
 import "./map.css";
+import "./classroom.css";
 import App from "./App";
+import { initializeClassroom } from "./lib/classroom";
+import { initializeProgress } from "./lib/progress";
+
+initializeProgress();
+initializeClassroom();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

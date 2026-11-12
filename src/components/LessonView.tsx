@@ -1,95 +1,124 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { getLevel, getSession } from "../data/sessions";
 import { Character } from "./Character";
-import { ArrowBackIcon, CheckIcon } from "./icons";
+import { Icon } from "./icons";
 
 interface Props {
   id: number;
   mode: "learn" | "review";
   onBack: () => void;
+  onPickSpeaker: () => void;
+  onComplete: () => void;
 }
 
-/**
- * شاشة الحصة — تظهر عند فتح المحطة.
- * الخارطة للتنقل والتقدّم فقط؛ أما محتوى كل حصة فيُعرض هنا.
- * (ضع أنشطة الحصة الفعلية داخل قسم "lesson-content" أدناه.)
- */
-export function LessonView({ id, mode, onBack }: Props) {
-  const s = getSession(id)!;
-  const level = getLevel(s.level);
-  const review = mode === "review";
-
+export function LessonView({
+  id,
+  mode,
+  onBack,
+  onPickSpeaker,
+  onComplete,
+}: Props) {
+  const session = getSession(id)!,
+    level = getLevel(session.level),
+    review = mode === "review";
+  const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    title.current?.focus({ preventScroll: true });
   }, [id]);
-
   return (
-    <main className={`lesson level-${s.level}`}>
-      <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
-          <ArrowBackIcon size={18} /> العودة إلى الخارطة
-        </button>
-        <span className={`lesson-mode ${review ? "is-review" : ""}`}>{review ? "↺ وضع المراجعة" : "✨ حصة اليوم"}</span>
-      </div>
-
-      <section className="lesson-hero">
-        <div className="lesson-hero-text">
-          <span className="lesson-kicker">
-            {level.shortName} · {level.name}
+    <main className={`lesson level-${session.level}`}>
+      <div className="lesson-inner">
+        <div className="lesson-top">
+          <button type="button" className="btn btn-ghost" onClick={onBack}>
+            <Icon name="back" size={19} />
+            العودة إلى الخارطة
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary lesson-wheel-button"
+            onClick={onPickSpeaker}
+          >
+            <Icon name="wheel" size={20} /> مَن يتحدث؟
+          </button>
+          <span className="lesson-mode">
+            <Icon name={review ? "review" : "leaf"} size={18} />
+            {review ? "وضع المراجعة" : "خطوة جديدة في رحلتك"}
           </span>
-          <span className="lesson-num">الحصة {s.id} من 32</span>
-          <h1 className="lesson-title">
-            <span className="lesson-icon" aria-hidden="true">
-              {s.icon}
-            </span>
-            {s.title}
-          </h1>
-          <p className="lesson-goal">
-            <b>ماذا سأتعلم؟</b> {s.desc}
-          </p>
         </div>
-        <div className="lesson-hero-char">
-          <div className="speech speech--laila">{review ? "لنتذكّر معًا ما تعلمناه!" : "أنا معك في هذه المحطة!"}</div>
-          <Character who="laila" height={170} />
-        </div>
-      </section>
-
-      <section className="lesson-steps" aria-label="مراحل الحصة">
-        {[
-          { icon: "🧘", t: "نستعد", d: "نتنفّس بهدوء ونتعرّف على هدف المحطة." },
-          { icon: "🎯", t: "نتدرّب", d: "نمارس المهارة بنشاط ممتع خطوة بخطوة." },
-          { icon: "🎤", t: "نؤدّي", d: "نقدّم أداءً قصيرًا ونحتفل بما أنجزناه." },
-        ].map((st, i) => (
-          <div key={st.t} className="lesson-step">
-            <span className="lesson-step-num">{i + 1}</span>
-            <span className="lesson-step-icon" aria-hidden="true">
-              {st.icon}
+        <section className="lesson-hero">
+          <div>
+            <span className="eyebrow">
+              {level.shortName} · {level.name}
             </span>
-            <b>{st.t}</b>
-            <span>{st.d}</span>
+            <span className="lesson-number">
+              <bdi>الحصة {session.id} من 32</bdi>
+            </span>
+            <span className="lesson-icon">
+              <Icon name={session.icon} size={38} />
+            </span>
+            <h1 ref={title} tabIndex={-1}>
+              {session.title}
+            </h1>
+            <p>{session.desc}</p>
           </div>
-        ))}
-      </section>
-
-      <section className="lesson-content" aria-label="محتوى الحصة">
-        <h2>محتوى الحصة</h2>
-        <p>تظهر هنا أنشطة الحصة {s.id} «{s.title}» كما يقدّمها المدرّب.</p>
-      </section>
-
-      <footer className="lesson-foot">
-        {review ? (
-          <p className="lesson-note is-done">
-            <CheckIcon size={18} /> أتممتَ هذه الحصة من قبل — يمكنك مراجعتها متى شئت.
-          </p>
-        ) : (
-          <p className="lesson-note">
-            🔓 عندما تنتهي من الحصة، سيعتمد مدرّبك إكمالها، فتُفتح محطتك التالية على الخارطة.
-          </p>
-        )}
-        <button type="button" className="btn btn-primary" onClick={onBack}>
-          العودة إلى الخارطة
-        </button>
-      </footer>
+          <div className="lesson-character">
+            <div className="speech">
+              {review ? "لنتذكّر معًا ما تعلمناه" : "أنا معك في هذه الخطوة"}
+            </div>
+            <Character who="laila" height={200} decorative={false} />
+          </div>
+        </section>
+        <section
+          className="lesson-steps"
+          aria-label="هدف الحصة ونشاطها وتحدّيها"
+        >
+          {(
+            [
+              { label: "هدفي اليوم", icon: "target", text: session.goal },
+              { label: "نجرّب معًا", icon: "puzzle", text: session.activity },
+              { label: "تحدّي المحطة", icon: "mic", text: session.challenge },
+            ] as const
+          ).map((step, i) => (
+            <article className="lesson-step" key={step.label}>
+              <span className="lesson-step-icon">
+                <Icon name={step.icon} size={28} />
+              </span>
+              <span className="lesson-step-number">0{i + 1}</span>
+              <h2>{step.label}</h2>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </section>
+        <footer className="lesson-foot">
+          <div className="lesson-approval-note">
+            <Icon name={review ? "check" : "book"} size={22} />
+            <p>
+              {review
+                ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
+                : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
+            </p>
+          </div>
+          <div className="row-actions">
+            {!review && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={onComplete}
+              >
+                <Icon name="check" size={20} /> إنهاء الحصة
+              </button>
+            )}
+            <button
+              type="button"
+              className={`btn ${review ? "btn-primary" : "btn-ghost"}`}
+              onClick={onBack}
+            >
+              العودة إلى رحلتي
+              <Icon name="chevron-left" size={19} />
+            </button>
+          </div>
+        </footer>
+      </div>
     </main>
   );
 }

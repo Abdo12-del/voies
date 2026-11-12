@@ -827,14 +827,12 @@ img {
   overscroll-behavior: contain;
   background:
     radial-gradient(ellipse at 85% 6%, #dff0ff, transparent 55%),
-    radial-gradient(ellipse at 6% 96%, #e7f6ff, transparent 52%),
-    #f3f8ff;
+    radial-gradient(ellipse at 6% 96%, #e7f6ff, transparent 52%), #f3f8ff;
 }
 .lesson.level-2 {
   background:
     radial-gradient(ellipse at 85% 6%, #ffeec4, transparent 55%),
-    radial-gradient(ellipse at 6% 96%, #fff6da, transparent 52%),
-    #fdf7e8;
+    radial-gradient(ellipse at 6% 96%, #fff6da, transparent 52%), #fdf7e8;
 }
 .lesson h1:focus,
 .lesson h2:focus {
@@ -891,124 +889,313 @@ img {
 .lesson-chip:hover {
   background: #ffffff;
 }
+/* ═══ عرض الحصة كعرض تقديمي: قالب شريحة ثابت، انتقال انزلاقي RTL، ظهور متدرّج ═══ */
+.lesson {
+  --slide-duration: 0.45s;
+  --slide-shift: min(16vw, 180px);
+  --ease-slide: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --reveal-base: 170ms;
+  --reveal-step: 100ms;
+}
 .slide-stage {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
-  padding: calc(max(14px, env(safe-area-inset-top)) + 58px) max(18px, 4vw)
-    calc(max(14px, env(safe-area-inset-bottom)) + 94px);
+  padding: calc(max(14px, env(safe-area-inset-top)) + 60px) max(18px, 3.4vw)
+    calc(max(14px, env(safe-area-inset-bottom)) + 96px);
   touch-action: pan-y pinch-zoom;
 }
-.slide {
-  width: min(880px, 100%);
-  max-height: 100%;
+/* قالب الشريحة: بطاقة بمقاس ثابت لكل الشرائح، بشريط لوني جانبي وزخرفة هادئة */
+.slide-frame {
+  grid-area: 1 / 1;
+  position: relative;
+  isolation: isolate;
+  width: min(1080px, 100%);
+  height: min(100%, 700px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(20px, 4vh, 44px) clamp(22px, 4.4vw, 60px);
+  padding-inline-start: clamp(30px, 5vw, 70px);
+  border: 1px solid #d9e7f5;
+  border-radius: clamp(24px, 3vw, 34px);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow:
+    0 24px 50px -22px #234d6140,
+    0 4px 0 #d7e5f2;
+  overflow: hidden;
+  text-align: start;
+}
+.level-2 .slide-frame {
+  border-color: #f0dfb4;
+  background: linear-gradient(180deg, #fffefa, #fffaf0);
+  box-shadow:
+    0 24px 50px -22px #7a5a1038,
+    0 4px 0 #efdcae;
+}
+.slide-frame::before {
+  content: "";
+  position: absolute;
+  inset-block: clamp(22px, 4vh, 40px);
+  inset-inline-start: 0;
+  width: 7px;
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+  background: linear-gradient(#1e78c5, #63b4f0);
+}
+.level-2 .slide-frame::before {
+  background: linear-gradient(#d99a14, #ffc93c);
+}
+.slide-frame::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-inline-end: -10%;
+  bottom: -26%;
+  width: 52%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e3f2ff 0, #e3f2ff00 70%);
+}
+.level-2 .slide-frame::after {
+  background: radial-gradient(circle, #ffedb8 0, #ffedb800 70%);
+}
+/* الانتقال: التالية تدخل من اليسار والحالية تخرج يمينًا (والعكس للسابقة) */
+.enter-next {
+  animation: deck-in-next var(--slide-duration) var(--ease-slide) both;
+}
+.enter-prev {
+  animation: deck-in-prev var(--slide-duration) var(--ease-slide) both;
+}
+.leave-next {
+  animation: deck-out-next var(--slide-duration) var(--ease-slide) forwards;
+}
+.leave-prev {
+  animation: deck-out-prev var(--slide-duration) var(--ease-slide) forwards;
+}
+.slide-frame.is-leaving {
+  z-index: 0;
+  pointer-events: none;
+}
+.slide-frame.is-leaving * {
+  animation: none !important;
+}
+.slide-frame.slide {
+  z-index: 1;
+}
+@keyframes deck-in-next {
+  from {
+    opacity: 0;
+    translate: calc(-1 * var(--slide-shift)) 0;
+  }
+}
+@keyframes deck-in-prev {
+  from {
+    opacity: 0;
+    translate: var(--slide-shift) 0;
+  }
+}
+@keyframes deck-out-next {
+  to {
+    opacity: 0;
+    translate: var(--slide-shift) 0;
+  }
+}
+@keyframes deck-out-prev {
+  to {
+    opacity: 0;
+    translate: calc(-1 * var(--slide-shift)) 0;
+  }
+}
+/* الظهور المتدرّج: العنوان ← الأيقونة ← النص ← الشخصية (100ms بين كل خطوة) */
+.reveal {
+  animation: reveal-rise 0.5s var(--ease-slide) both;
+  animation-delay: calc(var(--reveal-base) + var(--i, 0) * var(--reveal-step));
+}
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+/* الشخصية: دخول بقفزة نابضية ثم تنفّس خفيف كل 3 ثوانٍ */
+.slide-figure.reveal {
+  animation: none;
+}
+.slide-figure {
+  --fig-h: clamp(160px, 38vh, 330px);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10px;
+}
+.figure-stage {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
   justify-content: center;
-  gap: clamp(10px, 2vh, 22px);
+  gap: clamp(0px, 1vw, 12px);
+}
+.figure-bob {
+  display: block;
+  animation: figure-bob 3s ease-in-out infinite;
+  animation-delay: calc(
+    var(--reveal-base) + 3 * var(--reveal-step) + 0.85s + var(--n, 0) * 0.4s
+  );
+}
+.figure-pop {
+  display: block;
+  transform-origin: 50% 100%;
+  animation: figure-spring 0.8s ease-out both;
+  animation-delay: calc(
+    var(--reveal-base) + 3 * var(--reveal-step) + var(--n, 0) * 0.12s
+  );
+}
+.slide-figure .character {
+  height: var(--fig-h);
+  width: auto;
+}
+.character.is-bust {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 18%);
+  mask-image: linear-gradient(to top, transparent 0, #000 18%);
+}
+@keyframes figure-spring {
+  0% {
+    opacity: 0;
+    translate: 0 40px;
+    scale: 0.82;
+  }
+  50% {
+    opacity: 1;
+    translate: 0 -8px;
+    scale: 1.03;
+  }
+  75% {
+    translate: 0 2px;
+    scale: 0.99;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes figure-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+.figure-title {
+  --fig-h: clamp(170px, 44vh, 390px);
+}
+.slide-speech {
+  position: relative;
+  max-width: 210px;
+  padding: 8px 14px;
+  border: 1px solid #b9d4e9;
+  border-radius: 16px 16px 4px 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 #a6bed466;
+  color: #3c4b6e;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
   text-align: center;
+  animation: reveal-rise 0.45s var(--ease-slide) both;
+  animation-delay: calc(var(--reveal-base) + 4 * var(--reveal-step) + 0.35s);
 }
-.enter-next {
-  animation: slide-in-next 0.34s ease-out;
-}
-.enter-prev {
-  animation: slide-in-prev 0.34s ease-out;
-}
-@keyframes slide-in-next {
-  from {
-    opacity: 0;
-    translate: -30px 0;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-@keyframes slide-in-prev {
-  from {
-    opacity: 0;
-    translate: 30px 0;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-.slide-title-grid {
+.slide-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(22px, 4vw, 58px);
-  width: 100%;
-  text-align: start;
+  gap: clamp(18px, 3.4vw, 52px);
+  min-height: 0;
+  margin-block: auto;
+}
+.slide-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(8px, 1.6vh, 16px);
+}
+.slide-running-head {
+  display: block;
+  flex-shrink: 0;
+  padding-block-end: 8px;
+  overflow: hidden;
+  color: #536278;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.slide-running-head > span {
+  margin-inline: 7px;
+}
+/* شريحة العنوان */
+.lesson-hero .slide-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 15px;
 }
 .lesson-number {
   display: block;
   font-size: clamp(14px, 1.7vh, 16px);
   color: #5d6b84;
-  margin: 4px 0 10px;
+}
+.slide-title-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 18px);
 }
 .slide-hero-icon {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: clamp(50px, 8vh, 68px);
-  height: clamp(50px, 8vh, 68px);
+  width: clamp(50px, 8vh, 66px);
+  height: clamp(50px, 8vh, 66px);
   border: 1px solid #c4e1fb;
   border-radius: 20px;
   background: #e3f2ff;
   color: #1767b8;
-  margin-bottom: clamp(8px, 1.6vh, 15px);
+  box-shadow: 0 4px 0 #bfdcf5;
 }
 .level-2 .slide-hero-icon {
   background: #ffedb3;
   border-color: #ecd188;
   color: #7a4b03;
+  box-shadow: 0 4px 0 #e3c887;
 }
 .lesson-hero h1 {
-  font-size: clamp(29px, min(3.6vw, 5.4vh), 44px);
+  font-size: clamp(29px, min(3.6vw, 5.4vh), 46px);
   line-height: 1.32;
   color: #1b2a4e;
-  margin-bottom: clamp(6px, 1vh, 12px);
 }
 .lesson-hero p {
   font-size: clamp(17px, min(1.9vw, 2.5vh), 21px);
   line-height: 1.75;
   color: #3c4b6e;
 }
-.slide-character {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(8px, 1.6vh, 14px);
-}
-.slide-character .character {
-  height: clamp(110px, 23vh, 188px);
-  width: auto;
-}
-.slide-speech {
-  position: relative;
-  max-width: 200px;
-  padding: 8px 13px;
-  border: 1px solid #b9d4e9;
-  border-radius: 14px 14px 3px 14px;
-  background: #ffffff;
-  box-shadow: 0 4px 0 #a6bed466;
-  color: #3c4b6e;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.55;
-}
 .slide-goal {
   width: 100%;
+  margin-top: clamp(2px, 0.8vh, 8px);
   text-align: start;
   background: #fff4cf;
   border: 1px solid #f0d48c;
   border-radius: 20px;
   box-shadow: 0 4px 0 #e8cf8f66;
-  padding: clamp(13px, 2.3vh, 22px) clamp(17px, 2.8vw, 28px);
+  padding: clamp(12px, 2.2vh, 20px) clamp(16px, 2.6vw, 26px);
 }
 .slide-goal h2 {
   display: flex;
@@ -1017,23 +1204,31 @@ img {
   font-size: clamp(21px, min(2.6vw, 3.3vh), 27px);
   line-height: 1.45;
   color: #785114;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 .slide-goal h2 > svg {
   color: #9b680a;
 }
+.lesson-hero .slide-goal p,
 .slide-goal p {
   font-size: clamp(17px, min(1.9vw, 2.5vh), 21px);
   line-height: 1.75;
   color: #785114;
 }
+/* شرائح النشاط والتحدي */
+.slide-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 18px);
+}
 .slide-emblem {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: clamp(56px, 10vh, 84px);
-  height: clamp(56px, 10vh, 84px);
+  width: clamp(52px, 8.4vh, 72px);
+  height: clamp(52px, 8.4vh, 72px);
   border: 1px solid;
-  border-radius: 26px;
+  border-radius: 22px;
 }
 .emblem-blue {
   background: #e3f2ff;
@@ -1047,13 +1242,12 @@ img {
   color: #7a4b03;
   box-shadow: 0 5px 0 #e3c887;
 }
-.slide > h2 {
+.slide-heading {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(8px, 1.4vw, 14px);
-  font-size: clamp(27px, min(3.2vw, 4.8vh), 38px);
+  gap: 6px 14px;
+  font-size: clamp(27px, min(3.2vw, 4.8vh), 40px);
   line-height: 1.4;
   color: #1b2a4e;
 }
@@ -1061,28 +1255,33 @@ img {
   font-family: var(--display);
   font-size: clamp(14px, 2vh, 16px);
   font-weight: 700;
-  color: #5d6b84;
+  color: #536278;
   background: #eef2f7;
   border: 1px solid #dbe4f0;
   border-radius: 999px;
-  padding: 4px 13px;
+  padding: 3px 13px;
 }
 .slide-body {
-  font-size: clamp(19px, min(2.15vw, 2.9vh), 25px);
+  font-size: clamp(19px, min(2.15vw, 2.9vh), 26px);
   line-height: 1.85;
   color: #3c4b6e;
-  max-width: 780px;
+  max-width: 720px;
 }
 .slide-challenge .slide-body {
   color: #1b2a4e;
   font-weight: 500;
+  padding: clamp(12px, 2.2vh, 20px) clamp(16px, 2.4vw, 24px);
+  border: 1px solid #f0d48c;
+  border-inline-start: 6px solid #f2b81f;
+  border-radius: 18px;
+  background: #fff8e3;
 }
 .slide-steps {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.6vh, 15px);
+  gap: clamp(8px, 1.6vh, 14px);
   width: 100%;
-  max-width: 790px;
+  max-width: 740px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1090,25 +1289,25 @@ img {
 .lesson-step {
   display: flex;
   align-items: flex-start;
-  gap: clamp(11px, 2vw, 17px);
+  gap: clamp(11px, 2vw, 16px);
   text-align: start;
   background: #ffffff;
   border: 1px solid #d2e3f5;
   border-radius: 18px;
-  padding: clamp(12px, 2vh, 19px) clamp(14px, 2.4vw, 22px);
+  padding: clamp(11px, 1.9vh, 18px) clamp(14px, 2.2vw, 20px);
   box-shadow: 0 3px 0 #d7e5f280;
 }
 .lesson-step-number {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: clamp(34px, 5.4vh, 45px);
-  height: clamp(34px, 5.4vh, 45px);
+  width: clamp(34px, 5.4vh, 44px);
+  height: clamp(34px, 5.4vh, 44px);
   border-radius: 999px;
   background: #e3f2ff;
   color: #1767b8;
   font-family: var(--display);
-  font-size: clamp(18px, 2.6vh, 24px);
+  font-size: clamp(18px, 2.6vh, 23px);
   font-weight: 700;
   line-height: 1;
 }
@@ -1119,9 +1318,141 @@ img {
   line-height: 1.8;
   color: #3c4b6e;
 }
-.slide-end-character .character {
-  height: clamp(92px, 17vh, 148px);
-  width: auto;
+/* شريحة النهاية: احتفال موسّع — توهّج، وسام، شخصيتان، ونثار يهبط مرة واحدة */
+.slide-end-layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.9vh, 18px);
+  text-align: center;
+}
+.end-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.end-stage > .slide-figure {
+  z-index: 1;
+}
+.end-glow {
+  position: absolute;
+  inset: -18% -30% -6%;
+  border-radius: 50%;
+  z-index: 0;
+  background: radial-gradient(closest-side, #ffefb8, #ffefb800);
+  animation: end-glow 1.4s ease-out both;
+  animation-delay: 0.2s;
+}
+.is-quiet .end-glow {
+  background: radial-gradient(closest-side, #e3f2ff, #e3f2ff00);
+}
+.figure-end {
+  --fig-h: clamp(110px, 25vh, 220px);
+}
+.figure-end .character.is-bust {
+  height: calc(var(--fig-h) * 0.66);
+}
+.figure-end .figure-stage {
+  gap: clamp(16px, 4vw, 60px);
+}
+.end-medal {
+  position: relative;
+  z-index: 2;
+  order: -2;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffd65a, #f2b21b);
+  color: #7a4b03;
+  box-shadow: 0 4px 0 #d89a0f;
+  animation: medal-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--reveal-base) + var(--reveal-step) + 0.55s);
+}
+.is-quiet .end-medal {
+  background: linear-gradient(180deg, #e3f2ff, #c6e1fb);
+  color: #1767b8;
+  box-shadow: 0 4px 0 #a9cdee;
+}
+.end-cheer {
+  font-size: 0.6em;
+  font-weight: 800;
+  color: #7a4b03;
+  background: #fff1c2;
+  border: 1px solid #f0d48c;
+  border-radius: 999px;
+  padding: 2px 16px;
+}
+.slide-end-layout .slide-heading {
+  justify-content: center;
+}
+.end-confetti {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.end-confetti i {
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  width: 8px;
+  height: 13px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-burst 2.6s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+  animation-delay: calc(0.5s + var(--d));
+}
+@keyframes confetti-burst {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+    translate: var(--x) var(--y);
+    rotate: var(--r);
+  }
+  100% {
+    opacity: 0;
+    translate: var(--x) calc(var(--y) + 110px);
+    rotate: calc(var(--r) + 160deg);
+  }
+}
+@keyframes end-glow {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes medal-pop {
+  from {
+    opacity: 0;
+    scale: 0.3;
+    rotate: -25deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: 0deg;
+  }
 }
 .lesson-approval-note {
   display: flex;
@@ -1132,7 +1463,7 @@ img {
   background: #fff4cf;
   border: 1px solid #f0d48c;
   border-radius: 16px;
-  padding: clamp(12px, 2vh, 18px) clamp(15px, 2.6vw, 24px);
+  padding: clamp(11px, 1.9vh, 17px) clamp(15px, 2.6vw, 24px);
   color: #785114;
   font-size: clamp(15px, min(1.8vw, 2.3vh), 18px);
   line-height: 1.8;
@@ -1147,6 +1478,7 @@ img {
 .slide-end-actions {
   justify-content: center;
 }
+/* أداة التنقّل العائمة: عدّاد «شريحة N من M» بارز وشريط تقدّم رفيع مقسّم */
 .slide-nav {
   position: absolute;
   inset-inline: 0;
@@ -1157,7 +1489,7 @@ img {
   margin-inline: auto;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.8vw, 15px);
+  gap: clamp(8px, 1.8vw, 16px);
   padding: 8px;
   border: 1px solid #ffffffc9;
   border-radius: 999px;
@@ -1200,25 +1532,31 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-width: 92px;
+  gap: 3px;
+  min-width: 112px;
 }
 .slide-counter {
-  font-size: 14px;
-  font-weight: 700;
-  color: #3c4b6e;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #1b2a4e;
   white-space: nowrap;
+}
+.slide-counter-label {
+  font-weight: 600;
+  color: #3c4b6e;
 }
 .slide-dots {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 .slide-dots .dot {
   display: block;
-  width: 24px;
-  height: 22px;
-  padding: 6px 7px;
+  width: clamp(20px, 4.4vw, 34px);
+  height: 20px;
+  padding: 7px 0;
   border: 0;
   border-radius: 999px;
   background: none;
@@ -1226,17 +1564,19 @@ img {
 .slide-dots .dot::before {
   content: "";
   display: block;
-  width: 10px;
-  height: 10px;
-  margin: auto;
+  width: 100%;
+  height: 6px;
   border-radius: 999px;
-  background: #c9d6e8;
-  transition:
-    width 0.25s,
-    background 0.25s;
+  background: #d3deec;
+  transition: background-color var(--slide-duration) var(--ease-slide);
+}
+.slide-dots .dot:hover:not(.active)::before {
+  background: #a9c8e8;
+}
+.slide-dots .dot.is-done::before {
+  background: #7fb0df;
 }
 .slide-dots .dot.active::before {
-  width: 22px;
   background: #1767b8;
 }
 @keyframes dialog-in {
@@ -1354,17 +1694,47 @@ img {
     inset-inline-end: max(10px, env(safe-area-inset-right));
   }
   .slide-stage {
-    padding: calc(max(12px, env(safe-area-inset-top)) + 50px) 16px
-      calc(max(12px, env(safe-area-inset-bottom)) + 86px);
+    padding: calc(max(12px, env(safe-area-inset-top)) + 54px) 12px
+      calc(max(12px, env(safe-area-inset-bottom)) + 90px);
   }
-  .slide-title-grid {
+  .slide-frame {
+    height: 100%;
+    padding: 16px 16px 18px;
+    padding-inline-start: 22px;
+    border-radius: 24px;
+  }
+  .slide-frame::before {
+    inset-block: 20px;
+    width: 5px;
+  }
+  .slide-layout {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
-  .slide-character {
-    display: none;
+  .slide-figure {
+    order: -1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
   }
-  .slide-end-character .character {
-    height: clamp(72px, 13vh, 104px);
+  .figure-title {
+    --fig-h: clamp(96px, 19vh, 176px);
+  }
+  .figure-activity,
+  .figure-challenge {
+    --fig-h: clamp(96px, 23vh, 200px);
+  }
+  .figure-end {
+    --fig-h: clamp(90px, 18vh, 160px);
+  }
+  .slide-speech {
+    max-width: 150px;
+    font-size: 13px;
+    padding: 6px 11px;
+  }
+  .slide-running-head {
+    font-size: 13px;
+    padding-block-end: 4px;
   }
   .slide-end-actions > .btn {
     flex-grow: 0;
@@ -1375,11 +1745,14 @@ img {
   }
   .btn-nav {
     min-height: 44px;
-    padding: 8px 14px;
+    padding: 8px 13px;
     font-size: 14px;
   }
   .slide-status {
-    min-width: 74px;
+    min-width: 96px;
+  }
+  .slide-counter {
+    font-size: 15px;
   }
 }
 @media (max-height: 650px) and (min-width: 641px) {
@@ -1392,16 +1765,18 @@ img {
 }
 /* شاشات العرض القصيرة: نقلّص المساحات فقط، ولا نصغّر خط النصوص عن الحد المقروء */
 @media (max-height: 720px) and (min-width: 641px) {
-  .slide-character .character {
-    height: clamp(96px, 20vh, 150px);
+  .figure-title {
+    --fig-h: clamp(150px, 40vh, 270px);
   }
-  .slide-end-character .character {
-    height: clamp(80px, 15vh, 120px);
+  .slide-figure {
+    --fig-h: clamp(140px, 34vh, 240px);
+  }
+  .figure-end {
+    --fig-h: clamp(96px, 20vh, 150px);
   }
   .slide-hero-icon {
     width: 50px;
     height: 50px;
-    margin-bottom: 8px;
   }
   .slide-hero-icon > svg {
     width: 30px;
@@ -1409,8 +1784,8 @@ img {
   }
 }
 @media (max-height: 560px) {
-  .slide-character,
-  .slide-end-character {
+  .slide-figure,
+  .end-stage {
     display: none;
   }
 }
@@ -1421,5 +1796,9 @@ img {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+  /* بلا حركة: لا نثار ولا انزلاق ولا تنفّس — الشريحة تظهر مباشرة */
+  .end-confetti {
+    display: none;
   }
 }

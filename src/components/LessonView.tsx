@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { getLevel, getSession } from "../data/sessions";
+import { castFor, titleSpeech } from "../lib/lessonCast";
 import {
   buildSlides,
   SECTION_META,
   type LessonSlide,
 } from "../lib/lessonSlides";
-import { Character } from "./Character";
+import { Character, type CharacterKey } from "./Character";
 import { Icon } from "./icons";
 
 interface Props {
@@ -15,6 +25,9 @@ interface Props {
   onPickSpeaker: () => void;
   onComplete: () => void;
 }
+
+/** مدة الانتقال بين الشرائح — مطابقة لـ --slide-duration في CSS. */
+const SLIDE_DURATION = 450;
 
 function slideName(slide: LessonSlide, sessionTitle: string): string {
   switch (slide.kind) {
@@ -27,10 +40,76 @@ function slideName(slide: LessonSlide, sessionTitle: string): string {
   }
 }
 
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** ترتيب الظهور المتدرّج: العنوان ← الأيقونة ← النص ← الشخصية. */
+const step = (i: number) => ({ "--i": i }) as CSSProperties;
+
+function SlideFigure({
+  cast,
+  speech,
+  named,
+  className = "",
+}: {
+  cast: CharacterKey[];
+  speech?: string;
+  named?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`slide-figure reveal ${className}`} style={step(3)}>
+      {speech && <p className="slide-speech">{speech}</p>}
+      <div className="figure-stage">
+        {cast.map((who, n) => (
+          <span
+            key={who}
+            className="figure-bob"
+            style={{ "--n": n } as CSSProperties}
+          >
+            <span className="figure-pop">
+              <Character who={who} height={340} decorative={!named} />
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** نثار الاحتفال: قطع ورقية تنطلق مرة واحدة وتهبط ببطء — بلا وميض. */
+function Confetti() {
+  const colors = ["#ffc93c", "#1767b8", "#2fa36b", "#e85d75", "#8f6bd8"];
+  return (
+    <div className="end-confetti" aria-hidden="true">
+      {Array.from({ length: 22 }, (_, n) => {
+        const angle = (n / 22) * Math.PI * 2;
+        const reach = 150 + ((n * 37) % 110);
+        return (
+          <i
+            key={n}
+            style={
+              {
+                "--x": `${Math.round(Math.cos(angle) * reach)}px`,
+                "--y": `${Math.round(Math.sin(angle) * reach * 0.62 - 30)}px`,
+                "--r": `${(n * 53) % 360}deg`,
+                "--d": `${(n % 5) * 40}ms`,
+                background: colors[n % colors.length],
+              } as CSSProperties
+            }
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * الحصة عرض تقديمي: شريحة واحدة تملأ المساحة المرئية، بلا تمرير رأسي.
  * التنقّل بزرّي التالي/السابق، وبأسهم لوحة المفاتيح (اليسار = التالي باتجاه RTL)،
- * وبالسحب الأفقي على الشاشات اللمسية، وبنقاط الوصول المباشر.
+ * وبالسحب الأفقي على الشاشات اللمسية، وبشريط التقدّم المقسّم.
+ * الانتقال انزلاقي باتجاه العربية: التالية تدخل من اليسار والحالية تخرج يمينًا.
  * التجوّل بين الشرائح لا يُنهي الحصة أبدًا — زر «إنهاء الحصة» في شريحة النهاية فقط.
  */
 export function LessonView({
@@ -46,19 +125,36 @@ export function LessonView({
   const slides = useMemo(() => buildSlides(session), [session]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
+  /** الشريحة المغادرة تبقى لحظة الانتقال فقط (ولا تُرسم مع تقليل الحركة). */
+  const [leaving, setLeaving] = useState<{
+    slide: LessonSlide;
+    direction: 1 | -1;
+    stamp: number;
+  } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const gesture = useRef<{ x: number; y: number } | null>(null);
 
   const goTo = useCallback(
     (target: number) => {
-      setIndex((previous) => {
-        const next = Math.max(0, Math.min(slides.length - 1, target));
-        if (next !== previous) setDirection(next > previous ? 1 : -1);
-        return next;
-      });
+      const next = Math.max(0, Math.min(slides.length - 1, target));
+      if (next === index) return;
+      const dir = next > index ? 1 : -1;
+      setDirection(dir);
+      setLeaving(
+        prefersReducedMotion()
+          ? null
+          : { slide: slides[index], direction: dir, stamp: Date.now() },
+      );
+      setIndex(next);
     },
-    [slides.length],
+    [index, slides],
   );
+
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = setTimeout(() => setLeaving(null), SLIDE_DURATION + 40);
+    return () => clearTimeout(timer);
+  }, [leaving]);
 
   /* لوحة المفاتيح تراعي اتجاه العربية: اليسار للتقدّم واليمين للرجوع. */
   useEffect(() => {
@@ -105,91 +201,148 @@ export function LessonView({
       goTo(index + (dx < 0 ? 1 : -1));
   };
 
-  const slide = slides[index];
-  const name = slideName(slide, session.title);
-  const content = (() => {
-    switch (slide.kind) {
+  const cast = (s: LessonSlide) =>
+    castFor(s.kind, { sessionId: session.id, review });
+
+  /** محتوى الشريحة. `live = false` للنسخة المغادرة: بلا مرجع تركيز ولا أزرار فعّالة. */
+  const renderSlide = (s: LessonSlide, live: boolean): ReactNode => {
+    const headingRef: Ref<HTMLHeadingElement> | undefined = live
+      ? heading
+      : undefined;
+    const focusable = live ? -1 : undefined;
+    const runningHead = (
+      <p className="slide-running-head">
+        <bdi>الحصة {session.id}</bdi>
+        <span aria-hidden="true">·</span>
+        {session.title}
+      </p>
+    );
+    switch (s.kind) {
       case "title":
         return (
-          <>
-            <div className="slide-title-grid">
-              <div className="lesson-hero">
+          <div className="slide-layout">
+            <div className="slide-main lesson-hero">
+              <p className="slide-meta reveal" style={step(0)}>
                 <span className="eyebrow">
                   {level.shortName} · {level.name}
                 </span>
                 <span className="lesson-number">
                   <bdi>الحصة {session.id} من 32</bdi>
                 </span>
-                <span className="slide-hero-icon">
-                  <Icon name={session.icon} size={36} />
+              </p>
+              <div className="slide-title-row">
+                <span className="slide-hero-icon reveal" style={step(1)}>
+                  <Icon name={session.icon} size={34} />
                 </span>
-                <h1 ref={heading} tabIndex={-1}>
+                <h1
+                  ref={headingRef}
+                  tabIndex={focusable}
+                  className="reveal"
+                  style={step(0)}
+                >
                   {session.title}
                 </h1>
-                <p>{session.desc}</p>
               </div>
-              <div className="slide-character">
-                <p className="slide-speech">
-                  {review ? "لنتذكّر معًا ما تعلمناه" : "أنا معك في هذه الخطوة"}
-                </p>
-                <Character who="laila" height={190} decorative={false} />
+              <p className="slide-lead reveal" style={step(2)}>
+                {session.desc}
+              </p>
+              <div className="slide-goal reveal" style={step(2.6)}>
+                <h2>
+                  <Icon name="target" size={24} /> هدفي اليوم
+                </h2>
+                <p>{session.goal}</p>
               </div>
             </div>
-            <div className="slide-goal">
-              <h2>
-                <Icon name="target" size={24} /> هدفي اليوم
-              </h2>
-              <p>{session.goal}</p>
-            </div>
-          </>
+            <SlideFigure
+              cast={cast(s)}
+              speech={titleSpeech(review)}
+              named={live}
+              className="figure-title"
+            />
+          </div>
         );
       case "activity":
       case "challenge": {
-        const meta = SECTION_META[slide.kind];
+        const meta = SECTION_META[s.kind];
         return (
           <>
-            <span
-              className={`slide-emblem ${
-                slide.kind === "activity" ? "emblem-blue" : "emblem-gold"
-              }`}
-            >
-              <Icon name={meta.icon} size={38} />
-            </span>
-            <h2 ref={heading} tabIndex={-1}>
-              {meta.label}
-              {slide.parts > 1 && (
-                <span className="slide-part">
-                  <bdi>
-                    {slide.part} من {slide.parts}
-                  </bdi>
-                </span>
-              )}
-            </h2>
-            {slide.steps.length === 1 ? (
-              <p className="slide-body">{slide.steps[0].text}</p>
-            ) : (
-              <ol className="slide-steps">
-                {slide.steps.map((step) => (
-                  <li key={step.number} className="lesson-step">
-                    <span className="lesson-step-number">{step.number}</span>
-                    <p>{step.text}</p>
-                  </li>
-                ))}
-              </ol>
-            )}
+            {runningHead}
+            <div className="slide-layout">
+              <div className="slide-main">
+                <div className="slide-head">
+                  <span
+                    className={`slide-emblem reveal ${
+                      s.kind === "activity" ? "emblem-blue" : "emblem-gold"
+                    }`}
+                    style={step(1)}
+                  >
+                    <Icon name={meta.icon} size={34} />
+                  </span>
+                  <h2
+                    ref={headingRef}
+                    tabIndex={focusable}
+                    className="slide-heading reveal"
+                    style={step(0)}
+                  >
+                    {meta.label}
+                    {s.parts > 1 && (
+                      <span className="slide-part">
+                        <bdi>
+                          {s.part} من {s.parts}
+                        </bdi>
+                      </span>
+                    )}
+                  </h2>
+                </div>
+                {s.steps.length === 1 ? (
+                  <p className="slide-body reveal" style={step(2)}>
+                    {s.steps[0].text}
+                  </p>
+                ) : (
+                  <ol className="slide-steps">
+                    {s.steps.map((item, n) => (
+                      <li
+                        key={item.number}
+                        className="lesson-step reveal"
+                        style={step(2 + n * 0.5)}
+                      >
+                        <span className="lesson-step-number">
+                          {item.number}
+                        </span>
+                        <p>{item.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+              <SlideFigure cast={cast(s)} className={`figure-${s.kind}`} />
+            </div>
           </>
         );
       }
       case "end":
         return (
-          <>
-            <span className="slide-end-character">
-              <Character who="samiCheer" height={150} />
-            </span>
-            <h2 ref={heading} tabIndex={-1}>
+          <div
+            className={`slide-end-layout ${review ? "is-quiet" : "is-celebrating"}`}
+          >
+            {!review && <Confetti />}
+            <div className="end-stage">
+              <span className="end-glow" aria-hidden="true" />
+              <SlideFigure cast={cast(s)} className="figure-end" />
+              <span className="end-medal" aria-hidden="true">
+                <Icon name={review ? "check" : "star"} size={30} />
+              </span>
+            </div>
+            <h2
+              ref={headingRef}
+              tabIndex={focusable}
+              className="slide-heading reveal"
+              style={step(0)}
+            >
               نهاية الحصة
+              {!review && <span className="end-cheer">أحسنتم!</span>}
             </h2>
-            <div className="lesson-approval-note">
+            <div className="lesson-approval-note reveal" style={step(2)}>
               <Icon name={review ? "check" : "book"} size={22} />
               <p>
                 {review
@@ -197,12 +350,16 @@ export function LessonView({
                   : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
               </p>
             </div>
-            <div className="row-actions slide-end-actions">
+            <div
+              className="row-actions slide-end-actions reveal"
+              style={step(4)}
+            >
               {!review && (
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={onComplete}
+                  onClick={live ? onComplete : undefined}
+                  tabIndex={live ? undefined : -1}
                 >
                   <Icon name="check" size={20} /> إنهاء الحصة
                 </button>
@@ -210,16 +367,20 @@ export function LessonView({
               <button
                 type="button"
                 className={`btn ${review ? "btn-primary" : "btn-ghost"}`}
-                onClick={onBack}
+                onClick={live ? onBack : undefined}
+                tabIndex={live ? undefined : -1}
               >
                 العودة إلى رحلتي
                 <Icon name="chevron-left" size={19} />
               </button>
             </div>
-          </>
+          </div>
         );
     }
-  })();
+  };
+
+  const slide = slides[index];
+  const name = slideName(slide, session.title);
 
   return (
     <main
@@ -271,16 +432,28 @@ export function LessonView({
           gesture.current = null;
         }}
       >
+        {leaving && (
+          <div
+            key={`leave-${leaving.slide.id}-${leaving.stamp}`}
+            className={`slide-frame slide-${leaving.slide.kind} is-leaving leave-${
+              leaving.direction === 1 ? "next" : "prev"
+            }`}
+            aria-hidden="true"
+            ref={(el) => el?.setAttribute("inert", "")}
+          >
+            {renderSlide(leaving.slide, false)}
+          </div>
+        )}
         <section
           key={slide.id}
-          className={`slide slide-${slide.kind} enter-${
+          className={`slide slide-frame slide-${slide.kind} enter-${
             direction === 1 ? "next" : "prev"
           }`}
           role="group"
           aria-roledescription="شريحة"
           aria-label={`الشريحة ${index + 1} من ${slides.length}: ${name}`}
         >
-          {content}
+          {renderSlide(slide, true)}
         </section>
       </div>
 
@@ -295,16 +468,20 @@ export function LessonView({
         </button>
         <div className="slide-status">
           <p className="slide-counter">
+            <span className="slide-counter-label">شريحة</span>{" "}
             <bdi>
               {index + 1} من {slides.length}
             </bdi>
           </p>
+          {/* شريط تقدّم رفيع مقسّم: كل قطعة زرّ للانتقال المباشر إلى شريحتها */}
           <div className="slide-dots" role="group" aria-label="اختيار شريحة">
             {slides.map((s, dotIndex) => (
               <button
                 key={s.id}
                 type="button"
-                className={`dot ${dotIndex === index ? "active" : ""}`}
+                className={`dot ${dotIndex === index ? "active" : ""} ${
+                  dotIndex < index ? "is-done" : ""
+                }`}
                 aria-label={`الشريحة ${dotIndex + 1}: ${slideName(s, session.title)}`}
                 aria-current={dotIndex === index ? "true" : undefined}
                 onClick={() => goTo(dotIndex)}

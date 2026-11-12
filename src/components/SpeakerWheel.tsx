@@ -11,7 +11,9 @@ import {
   setNoRepeat,
   useClassroom,
 } from "../lib/classroom";
+import { castFor } from "../lib/lessonCast";
 import { nextRotation, randomIndex, sectorPath } from "../lib/speakerWheel";
+import { Character } from "./Character";
 import { Icon } from "./icons";
 import { Modal } from "./Modal";
 
@@ -111,13 +113,22 @@ export function SpeakerWheel({
       className="speaker-panel"
     >
       <div className="speaker-heading">
-        <span className="eyebrow">
-          <Icon name="wheel" size={19} /> لكل صوت فرصة
+        {/* «مَن يتحدث؟» ← وضعية التفكير من مكتبة شخصيات المتحدث */}
+        <span className="speaker-thinker" aria-hidden="true">
+          <Character
+            who={castFor("speaker", { sessionId: 0 })[0]}
+            height={88}
+          />
         </span>
-        <h2 id="speaker-title" tabIndex={-1} data-autofocus>
-          مَن يتحدث الآن؟
-        </h2>
-        <p className="muted">أضف الأسماء، وأدر العجلة لاختيار المتحدث.</p>
+        <div>
+          <span className="eyebrow">
+            <Icon name="wheel" size={19} /> لكل صوت فرصة
+          </span>
+          <h2 id="speaker-title" tabIndex={-1} data-autofocus>
+            مَن يتحدث الآن؟
+          </h2>
+          <p className="muted">أضف الأسماء، وأدر العجلة لاختيار المتحدث.</p>
+        </div>
       </div>
       <div className="speaker-content">
         <section className="classroom-names" aria-labelledby="names-title">

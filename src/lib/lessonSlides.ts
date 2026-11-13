@@ -1,4 +1,10 @@
 import type { Session, SessionIconName } from "../data/sessions";
+import type { CharacterKey } from "../components/Character";
+import {
+  FIRST_LESSON_CLOSING,
+  FIRST_LESSON_PHASES,
+  FIRST_LESSON_SLIDES,
+} from "../data/firstLesson";
 
 /**
  * نموذج شرائح الحصة. التقسيم عرضي بحت: لا يُحذف ولا يُختصر أي نص أصلي —
@@ -16,8 +22,81 @@ export interface SlideStep {
   text: string;
 }
 
+export interface LessonPhase {
+  number: 1 | 2 | 3 | 4 | 5 | 6;
+  title: string;
+  /** مدة المرحلة كاملة بالدقائق، وليست مدة الشريحة المفردة. */
+  minutes: number;
+}
+
+export interface SlideIllustration {
+  /** هوية الشخصية أو الشخصيات التي تمثلها الرسمة المخصصة. */
+  characters: CharacterKey[];
+  /** ملف رسمة جديدة مصممة للشريحة داخل public/lesson-art. */
+  artwork?: string;
+  /** وصف الوضعية المختارة، ويُستخدم أيضًا كبديل نصي للشخصية. */
+  pose: string;
+  /** جملة قصيرة تظهر في فقاعة كلام بجوار الشخصية. */
+  speech?: string;
+}
+
+export interface GuidedCard {
+  title: string;
+  text: string;
+  tone?: "blue" | "pink" | "mint" | "gold" | "safe" | "private";
+  character?: CharacterKey;
+  /** رسمة مخصصة للبطاقة بدل الصورة العامة للشخصية. */
+  artwork?: string;
+  pose?: string;
+}
+
+export type GuidedLayout =
+  | "agenda"
+  | "question"
+  | "definition"
+  | "grid"
+  | "compare"
+  | "practice"
+  | "steps"
+  | "model"
+  | "keywords"
+  | "trio"
+  | "presentation"
+  | "listening"
+  | "reflection";
+
+/** شريحة إثرائية ذات محتوى منظّم، مستخدمة للحصة الأولى ذات الـ18 شريحة. */
+export interface GuidedSlide {
+  kind: "guided";
+  id: string;
+  phase: LessonPhase;
+  title: string;
+  icon: SessionIconName;
+  layout: GuidedLayout;
+  body?: string;
+  items?: string[];
+  cards?: GuidedCard[];
+  example?: { label: string; text: string };
+  prompt?: string;
+  note?: string;
+  /** صورة ووضعية وفق موضوع الشريحة؛ الشريحة الثلاثية تستخدم صور البطاقات. */
+  illustration?: SlideIllustration;
+}
+
+export interface LessonClosing {
+  headline: string;
+  reflection: string;
+  nextLesson: string;
+  illustration?: SlideIllustration;
+}
+
 export type LessonSlide =
-  | { kind: "title"; id: "title" }
+  | {
+      kind: "title";
+      id: "title";
+      phase?: LessonPhase;
+      illustration?: SlideIllustration;
+    }
   /** هدف الحصة في شريحة مستقلة: فكرة واحدة لكل شريحة */
   | { kind: "goal"; id: "goal" }
   | {
@@ -28,7 +107,17 @@ export type LessonSlide =
       parts: number;
       steps: SlideStep[];
     }
-  | { kind: "end"; id: "end" };
+  | GuidedSlide
+  | {
+      kind: "end";
+      id: "end";
+      phase?: LessonPhase;
+      /** عنوان خاص عند وجود إنجاز أو انعكاس ختامي للحصة. */
+      headline?: string;
+      reflection?: string;
+      nextLesson?: string;
+      illustration?: SlideIllustration;
+    };
 
 export const SECTION_META: Record<
   "activity" | "challenge",
@@ -88,11 +177,33 @@ export function chunkSteps(steps: string[]): string[][] {
 }
 
 /**
- * الشرائح الأساسية: الغلاف (العنوان والوصف)، ثم «هدفي اليوم» في شريحة هادئة
- * مستقلة، ثم النشاط (خطوات عند الحاجة)، ثم التحدي، ثم شريحة النهاية.
- * أقسام طويلة تُنتج شرائح إضافية مرقّمة.
+ * الحصة الأولى لها تسلسل تعليمي خاص من 18 شريحة موزع على ست مراحل.
+ * بقية الحصص تستخدم قالب العنوان والهدف والنشاط والتحدي والنهاية المعتاد.
  */
 export function buildSlides(session: Session): LessonSlide[] {
+  if (session.id === 1) {
+    return [
+      {
+        kind: "title",
+        id: "title",
+        phase: FIRST_LESSON_PHASES[0],
+        illustration: {
+          characters: ["lailaWave"],
+          artwork: "/lesson-art/slide-01-cover-laila.webp",
+          pose: "ليلى تلوّح مرحّبة ببداية الحصة.",
+          speech: "أهلًا بكم! مساحة الكلام للجميع.",
+        },
+      },
+      ...FIRST_LESSON_SLIDES,
+      {
+        kind: "end",
+        id: "end",
+        phase: FIRST_LESSON_PHASES[5],
+        ...FIRST_LESSON_CLOSING,
+      },
+    ];
+  }
+
   const slides: LessonSlide[] = [
     { kind: "title", id: "title" },
     { kind: "goal", id: "goal" },

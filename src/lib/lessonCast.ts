@@ -16,7 +16,10 @@ import type { LessonSlide } from "./lessonSlides";
  *
  * شريحة النشاط تتناوب بين ليلى وسامي حسب رقم الحصة كي لا يتكرّر الوجه نفسه.
  */
-export type CastSituation = LessonSlide["kind"] | "speaker" | "wrong";
+export type CastSituation =
+  | Exclude<LessonSlide["kind"], "guided">
+  | "speaker"
+  | "wrong";
 
 export interface CastOptions {
   sessionId: number;

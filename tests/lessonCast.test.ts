@@ -60,7 +60,14 @@ describe("شخصيات المتحدث في عرض الحصة", () => {
     for (const session of SESSIONS)
       for (const review of [false, true])
         for (const slide of buildSlides(session)) {
-          const cast = castFor(slide.kind, { sessionId: session.id, review });
+          const cast =
+            "illustration" in slide && slide.illustration
+              ? slide.illustration.characters
+              : slide.kind === "guided"
+                ? (slide.cards?.flatMap((card) =>
+                    card.character ? [card.character] : [],
+                  ) ?? [])
+                : castFor(slide.kind, { sessionId: session.id, review });
           expect(cast.length).toBeGreaterThan(0);
           for (const key of cast) expect(lessonKeys).toContain(key);
         }

@@ -279,10 +279,13 @@ test("lessons open without accounts; browsing and locked links never complete a 
     .getByRole("button", { name: "العودة إلى محطتي", exact: true })
     .click();
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
-  // «هدفي اليوم» صار شريحة مستقلة هادئة بعد الغلاف مباشرة
+  // الغلاف تتبعه شريحة خطة اليوم في عرض الحصة الأولى
   await page.getByRole("button", { name: "التالي", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "هدفي اليوم", exact: true }),
+    page.getByRole("heading", {
+      name: "مساحة الكلام — ما الذي سنفعله اليوم؟",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
     page.locator('input[type="password"], input[type="email"]'),

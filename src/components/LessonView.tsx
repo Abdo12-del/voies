@@ -13,6 +13,7 @@ import { castFor, titleSpeech } from "../lib/lessonCast";
 import {
   buildSlides,
   SECTION_META,
+  type LessonPhase,
   type LessonSlide,
 } from "../lib/lessonSlides";
 import { Character, type CharacterKey } from "./Character";
@@ -35,11 +36,32 @@ function slideName(slide: LessonSlide, sessionTitle: string): string {
       return sessionTitle;
     case "goal":
       return "هدفي اليوم";
+    case "guided":
+      return slide.title;
     case "end":
-      return "نهاية الحصة";
+      return slide.headline ?? "نهاية الحصة";
     default:
       return SECTION_META[slide.kind].label;
   }
+}
+
+function PhaseBadge({
+  phase,
+  onCover = false,
+}: {
+  phase: LessonPhase;
+  onCover?: boolean;
+}) {
+  return (
+    <span className={`phase-badge ${onCover ? "on-cover" : ""}`}>
+      <span className="phase-name">
+        المرحلة <bdi>{phase.number}</bdi> · {phase.title}
+      </span>
+      <span className="phase-duration">
+        <bdi>{phase.minutes}</bdi> دقائق
+      </span>
+    </span>
+  );
 }
 
 const prefersReducedMotion = () =>
@@ -66,6 +88,7 @@ type Tone = "loud" | "calm";
 const TONE: Record<LessonSlide["kind"], Tone> = {
   title: "loud",
   goal: "calm",
+  guided: "calm",
   activity: "calm",
   challenge: "calm",
   end: "loud",
@@ -127,30 +150,55 @@ function SlideDecor({ tone }: { tone: Tone }) {
 
 function SlideFigure({
   cast,
+  artwork,
   speech,
+  description,
   named,
   className = "",
 }: {
   cast: CharacterKey[];
+  artwork?: string;
   speech?: string;
+  description?: string;
   named?: boolean;
   className?: string;
 }) {
+  const accessibleDescription = description
+    ? `${description}${speech ? ` يقول: ${speech}` : ""}`
+    : undefined;
   return (
-    <div className={`slide-figure ${className}`}>
+    <div
+      className={`slide-figure ${className}`}
+      role={accessibleDescription ? "img" : undefined}
+      aria-label={accessibleDescription}
+    >
       {speech && <p className="slide-speech">{speech}</p>}
       <div className="figure-stage">
-        {cast.map((who, n) => (
-          <span
-            key={who}
-            className="figure-bob"
-            style={{ "--n": n } as CSSProperties}
-          >
+        {artwork ? (
+          <span className="figure-bob" style={{ "--n": 0 } as CSSProperties}>
             <span className="figure-pop">
-              <Character who={who} height={340} decorative={!named} />
+              <img
+                src={artwork}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="lesson-art"
+              />
             </span>
           </span>
-        ))}
+        ) : (
+          cast.map((who, n) => (
+            <span
+              key={who}
+              className="figure-bob"
+              style={{ "--n": n } as CSSProperties}
+            >
+              <span className="figure-pop">
+                <Character who={who} height={340} decorative={!named} />
+              </span>
+            </span>
+          ))
+        )}
       </div>
     </div>
   );
@@ -279,8 +327,12 @@ export function LessonView({
       goTo(index + (dx < 0 ? 1 : -1));
   };
 
-  const cast = (s: LessonSlide) =>
-    castFor(s.kind, { sessionId: session.id, review });
+  const cast = (s: LessonSlide): CharacterKey[] => {
+    if ("illustration" in s && s.illustration)
+      return s.illustration.characters;
+    if (s.kind === "guided") return [];
+    return castFor(s.kind, { sessionId: session.id, review });
+  };
 
   /** محتوى الشريحة. `live = false` للنسخة المغادرة: بلا مرجع تركيز ولا أزرار فعّالة. */
   const renderSlide = (s: LessonSlide, live: boolean): ReactNode => {
@@ -308,6 +360,7 @@ export function LessonView({
                   <span className="lesson-number">
                     <bdi>الحصة {session.id} من 32</bdi>
                   </span>
+                  {s.phase && <PhaseBadge phase={s.phase} onCover />}
                 </p>
                 <div className="slide-title-row">
                   <span className="slide-hero-icon reveal" style={step(1)}>
@@ -328,7 +381,13 @@ export function LessonView({
               </div>
               <SlideFigure
                 cast={cast(s)}
-                speech={titleSpeech(review)}
+                artwork={s.illustration?.artwork}
+                speech={
+                  review
+                    ? titleSpeech(true)
+                    : (s.illustration?.speech ?? titleSpeech(false))
+                }
+                description={s.illustration?.pose}
                 named={live}
                 className="figure-title"
               />
@@ -364,6 +423,121 @@ export function LessonView({
               </div>
             </>
           );
+        case "guided": {
+          const hasCharacterCards = Boolean(
+            s.cards?.some((card) => card.character || card.artwork),
+          );
+          return (
+            <>
+              {runningHead}
+              <div
+                className={`slide-layout guided-layout guided-layout-${s.layout} ${
+                  hasCharacterCards ? "guided-layout-no-hero" : ""
+                }`}
+              >
+                <div className="slide-main guided-main">
+                  <PhaseBadge phase={s.phase} />
+                  <div className="slide-head">
+                    <span className="slide-emblem emblem-blue reveal" style={step(1)}>
+                      <Icon name={s.icon} size={32} />
+                    </span>
+                    <h2
+                      ref={headingRef}
+                      tabIndex={focusable}
+                      className="slide-heading reveal"
+                      style={step(0)}
+                    >
+                      <Accent text={s.title} />
+                    </h2>
+                  </div>
+                  {s.body && (
+                    <p className="guided-lead reveal" style={step(2)}>
+                      {s.body}
+                    </p>
+                  )}
+                  {s.example && (
+                    <div className="guided-example reveal" style={step(2.5)}>
+                      <span className="guided-example-label">{s.example.label}</span>
+                      <p>{s.example.text}</p>
+                    </div>
+                  )}
+                  {s.cards && (
+                    <div className={`guided-cards cards-${s.cards.length}`}>
+                      {s.cards.map((card, n) => (
+                        <article
+                          key={`${card.title}-${n}`}
+                          className={`guided-card tone-${card.tone ?? "blue"} ${
+                            card.character ? "has-character" : ""
+                          } reveal`}
+                          style={step(2 + n * 0.35)}
+                        >
+                          {(card.artwork || card.character) && (
+                            <span
+                              className="guided-card-portrait"
+                              role={card.pose ? "img" : undefined}
+                              aria-label={
+                                card.pose ? `${card.title}: ${card.pose}` : undefined
+                              }
+                            >
+                              {card.artwork ? (
+                                <img
+                                  src={card.artwork}
+                                  alt=""
+                                  aria-hidden="true"
+                                  draggable={false}
+                                  className="guided-card-artwork"
+                                />
+                              ) : card.character ? (
+                                <Character
+                                  who={card.character}
+                                  height={112}
+                                  className="guided-card-character"
+                                />
+                              ) : null}
+                            </span>
+                          )}
+                          <span className="guided-card-copy">
+                            <strong>{card.title}</strong>
+                            <span>{card.text}</span>
+                          </span>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                  {s.items && (
+                    <ol
+                      className={`guided-items ${
+                        s.layout === "reflection" ? "is-checklist" : "is-numbered"
+                      }`}
+                    >
+                      {s.items.map((item, n) => (
+                        <li key={item} className="reveal" style={step(2 + n * 0.45)}>
+                          {item}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {s.prompt && (
+                    <div className="guided-prompt reveal" style={step(3)}>
+                      <Icon name="sparkles" size={20} />
+                      <p>{s.prompt}</p>
+                    </div>
+                  )}
+                  {s.note && <p className="guided-note">{s.note}</p>}
+                </div>
+                {!hasCharacterCards && (
+                  <SlideFigure
+                    cast={cast(s)}
+                    artwork={s.illustration?.artwork}
+                    speech={s.illustration?.speech}
+                    description={s.illustration?.pose}
+                    className="figure-guided"
+                  />
+                )}
+              </div>
+            </>
+          );
+        }
         case "activity":
         case "challenge": {
           const meta = SECTION_META[s.kind];
@@ -432,6 +606,7 @@ export function LessonView({
             >
               {!review && <Confetti />}
               <div className="slide-main slide-end-main">
+                {s.phase && <PhaseBadge phase={s.phase} onCover />}
                 <span className="end-medal" aria-hidden="true">
                   <Icon name={review ? "check" : "star"} size={30} />
                 </span>
@@ -441,21 +616,28 @@ export function LessonView({
                   className="slide-heading reveal"
                   style={step(0)}
                 >
-                  نهاية الحصة
+                  {s.headline ?? "نهاية الحصة"}
                 </h2>
                 {!review && (
                   <p className="end-cheer reveal" style={step(1)}>
-                    أحسنتم!
+                    {s.headline ? "أحسنت!" : "أحسنتم!"}
                   </p>
                 )}
                 <div className="lesson-approval-note reveal" style={step(2)}>
                   <Icon name={review ? "check" : "book"} size={22} />
                   <p>
-                    {review
-                      ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
-                      : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية."}
+                    {s.reflection ??
+                      (review
+                        ? "درسنا هذه الحصة من قبل. المراجعة لا تغيّر تقدّم الرحلة."
+                        : "بعد إنهاء أنشطة الحصة مع الصف، اضغط «إنهاء الحصة» للانتقال إلى الخطوة التالية.")}
                   </p>
                 </div>
+                {s.nextLesson && (
+                  <p className="lesson-next-preview reveal" style={step(2.5)}>
+                    <Icon name="sparkles" size={19} />
+                    {s.nextLesson}
+                  </p>
+                )}
                 <div
                   className="row-actions slide-end-actions reveal"
                   style={step(2.5)}
@@ -481,7 +663,13 @@ export function LessonView({
                   </button>
                 </div>
               </div>
-              <SlideFigure cast={cast(s)} className="figure-end" />
+              <SlideFigure
+                cast={cast(s)}
+                artwork={s.illustration?.artwork}
+                speech={s.illustration?.speech}
+                description={s.illustration?.pose}
+                className="figure-end"
+              />
             </div>
           );
       }

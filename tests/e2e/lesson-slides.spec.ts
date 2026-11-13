@@ -13,12 +13,135 @@ const finishButton = (page: Page) =>
   page.getByRole("button", { name: "إنهاء الحصة", exact: true });
 const counter = (page: Page) => page.locator(".slide-counter bdi");
 
+async function expectCustomArtwork(page: Page, slideNumber: number) {
+  const art = page.locator(".lesson-art, .guided-card-artwork");
+  const count = slideNumber === 14 ? 3 : 1;
+  await expect(art).toHaveCount(count);
+  await expect
+    .poll(() =>
+      art.evaluateAll((images) =>
+        images.every((image) => {
+          const img = image as HTMLImageElement;
+          return img.complete && img.naturalWidth > 0;
+        }),
+      ),
+    )
+    .toBe(true);
+}
+
 async function openCurrentLesson(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
   await expect(page.locator(".lesson")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 }
+
+test("the first lesson follows its 18 timed slides, safe-sharing lesson and closing preview", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seedClassroom(page, 0);
+  await openCurrentLesson(page);
+  await expectCustomArtwork(page, 1);
+  await expect(counter(page)).toHaveText("1 من 18");
+  await expect(page.locator(".phase-badge")).toContainText("10 دقائق");
+  await expect(finishButton(page)).toHaveCount(0);
+
+  await next(page).click();
+  await expectCustomArtwork(page, 2);
+  await expect(
+    page.getByRole("heading", {
+      name: "مساحة الكلام — ما الذي سنفعله اليوم؟",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator(".guided-card")).toHaveCount(6);
+  const a11y = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(
+    a11y.violations.map((violation) => ({
+      id: violation.id,
+      targets: violation.nodes.map((node) => node.target),
+    })),
+  ).toEqual([]);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide2.png" });
+
+  await page.locator('.slide-dots .dot[aria-label^="الشريحة 6:"]').click();
+  await expectCustomArtwork(page, 6);
+  await expect(counter(page)).toHaveText("6 من 18");
+  await expect(page.locator(".guided-cards")).toContainText("رقم الهاتف");
+  await expect(page.locator(".guided-cards")).toContainText("كلمة المرور");
+
+  await page.locator('.slide-dots .dot[aria-label^="الشريحة 11:"]').click();
+  await expectCustomArtwork(page, 11);
+  await expect(counter(page)).toHaveText("11 من 18");
+  await expect(page.locator(".guided-example")).toContainText("مرحبًا! اسمي مريم");
+  await expect(page.locator(".guided-card")).toHaveCount(4);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide11.png" });
+
+  await page.locator('.slide-dots .dot[aria-label^="الشريحة 14:"]').click();
+  await expectCustomArtwork(page, 14);
+  await expect(counter(page)).toHaveText("14 من 18");
+  await expect(page.locator(".guided-card")).toHaveCount(3);
+  await expect(page.locator(".guided-cards")).toContainText("ليلى");
+  await expect(page.locator(".guided-cards")).toContainText("سامي");
+  await expect(page.locator(".guided-cards")).toContainText("الأخت الصغيرة");
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide14.png" });
+
+  await page.keyboard.press("End");
+  await expectCustomArtwork(page, 18);
+  await expect(counter(page)).toHaveText("18 من 18");
+  await expect(page.getByRole("heading", { name: "إنجازي الأول" })).toBeVisible();
+  await expect(page.locator(".lesson-next-preview")).toContainText(
+    "في الحصة القادمة",
+  );
+  await expect(finishButton(page)).toBeVisible();
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide18.png" });
+});
+
+test("the first lesson stays legible on a phone and uses compact slide controls", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seedClassroom(page, 0);
+  await openCurrentLesson(page);
+  const total = 18;
+  await expectCustomArtwork(page, 1);
+  await expectSingleFittingSlide(page, total);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide1.png" });
+
+  await next(page).click();
+  await expectCustomArtwork(page, 2);
+  await expect(counter(page)).toHaveText("2 من 18");
+  await expectSingleFittingSlide(page, total);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide2.png" });
+
+  for (let slide = 3; slide <= 11; slide++) {
+    await next(page).click();
+    await expectCustomArtwork(page, slide);
+    if (slide === 6)
+      await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide6.png" });
+  }
+  await expect(counter(page)).toHaveText("11 من 18");
+  await expectSingleFittingSlide(page, total);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide11.png" });
+
+  for (let slide = 12; slide <= 17; slide++) {
+    await next(page).click();
+    await expectCustomArtwork(page, slide);
+    if (slide === 17) {
+      await expectSingleFittingSlide(page, total);
+      await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide17.png" });
+    }
+  }
+  await page.keyboard.press("End");
+  await expectCustomArtwork(page, 18);
+  await expect(counter(page)).toHaveText("18 من 18");
+  await expect(finishButton(page)).toBeVisible();
+  await expectSingleFittingSlide(page, total);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide18.png" });
+});
 
 /** شريحة واحدة مرئية، الصفحة لا تتمرر رأسيًا، ولا عنصر مقصوص خارج الشاشة. */
 async function expectSingleFittingSlide(page: Page, total: number) {

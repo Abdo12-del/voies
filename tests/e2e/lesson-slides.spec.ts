@@ -14,7 +14,9 @@ const finishButton = (page: Page) =>
 const counter = (page: Page) => page.locator(".slide-counter bdi");
 
 async function expectCustomArtwork(page: Page, slideNumber: number) {
-  const art = page.locator(".lesson-art, .guided-card-artwork");
+  const art = page.locator(
+    ".first-lesson-art, .lesson-art, .guided-card-artwork",
+  );
   const count = slideNumber === 14 ? 3 : 1;
   await expect(art).toHaveCount(count);
   await expect
@@ -36,26 +38,45 @@ async function openCurrentLesson(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-test("the first lesson follows its 18 timed slides, safe-sharing lesson and closing preview", async ({
+const firstLessonSlide = (page: Page) => page.locator(".lesson .slide");
+async function expectFirstLessonSlide(page: Page, index: number) {
+  await expect(firstLessonSlide(page)).toHaveAttribute(
+    "data-slide-index",
+    String(index),
+  );
+  await expect(firstLessonSlide(page)).toHaveAttribute("data-slide-count", "18");
+}
+async function advanceFirstLesson(page: Page, count = 1) {
+  for (let i = 0; i < count; i++) await page.keyboard.press("ArrowLeft");
+}
+async function jumpToFirstLessonSlide(page: Page, index: number) {
+  await page.keyboard.press("Home");
+  await advanceFirstLesson(page, index - 1);
+  await expectFirstLessonSlide(page, index);
+}
+
+test("the first lesson is an 18-scene teaching deck, not a platform dashboard", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
+  await expectFirstLessonSlide(page, 1);
   await expectCustomArtwork(page, 1);
-  await expect(counter(page)).toHaveText("1 من 18");
-  await expect(page.locator(".phase-badge")).toContainText("10 دقائق");
+  await expect(firstLessonSlide(page)).toHaveAttribute(
+    "data-purpose",
+    "تهيئة الأطفال للدخول إلى مساحة الكلام",
+  );
+  await expect(page.locator(".slide-nav, .slide-counter, .slide-dots")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "مَن يتحدث؟" })).toBeVisible();
   await expect(finishButton(page)).toHaveCount(0);
+  await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide1.png" });
 
-  await next(page).click();
+  await advanceFirstLesson(page);
+  await expectFirstLessonSlide(page, 2);
   await expectCustomArtwork(page, 2);
-  await expect(
-    page.getByRole("heading", {
-      name: "مساحة الكلام — ما الذي سنفعله اليوم؟",
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(page.locator(".guided-card")).toHaveCount(6);
+  await expect(page.locator(".journey-stop")).toHaveCount(6);
+  await expect(page.locator(".scene-journey")).toContainText("20 دقيقة");
   const a11y = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
@@ -67,79 +88,95 @@ test("the first lesson follows its 18 timed slides, safe-sharing lesson and clos
   ).toEqual([]);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide2.png" });
 
-  await page.locator('.slide-dots .dot[aria-label^="الشريحة 6:"]').click();
+  await jumpToFirstLessonSlide(page, 3);
+  await expect(page.locator(".question-prompt")).toContainText("ما شيء صغير");
+  await jumpToFirstLessonSlide(page, 6);
   await expectCustomArtwork(page, 6);
-  await expect(counter(page)).toHaveText("6 من 18");
-  await expect(page.locator(".guided-cards")).toContainText("رقم الهاتف");
-  await expect(page.locator(".guided-cards")).toContainText("كلمة المرور");
+  await expect(page.locator(".safety-choices")).toContainText("رقم الهاتف");
+  await expect(page.locator(".safety-choices")).toContainText("كلمة المرور");
 
-  await page.locator('.slide-dots .dot[aria-label^="الشريحة 11:"]').click();
+  await jumpToFirstLessonSlide(page, 11);
   await expectCustomArtwork(page, 11);
-  await expect(counter(page)).toHaveText("11 من 18");
-  await expect(page.locator(".guided-example")).toContainText("مرحبًا! اسمي مريم");
-  await expect(page.locator(".guided-card")).toHaveCount(4);
+  await expect(page.locator(".model-quote")).toContainText("مرحبًا! اسمي مريم");
+  await expect(page.locator(".model-fragment")).toHaveCount(4);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide11.png" });
 
-  await page.locator('.slide-dots .dot[aria-label^="الشريحة 14:"]').click();
+  await jumpToFirstLessonSlide(page, 14);
   await expectCustomArtwork(page, 14);
-  await expect(counter(page)).toHaveText("14 من 18");
-  await expect(page.locator(".guided-card")).toHaveCount(3);
-  await expect(page.locator(".guided-cards")).toContainText("ليلى");
-  await expect(page.locator(".guided-cards")).toContainText("سامي");
-  await expect(page.locator(".guided-cards")).toContainText("الأخت الصغيرة");
+  await expect(page.locator(".trio-performer")).toHaveCount(3);
+  await expect(page.locator(".trio-stage")).toContainText("ليلى");
+  await expect(page.locator(".trio-stage")).toContainText("سامي");
+  await expect(page.locator(".trio-stage")).toContainText("الأخت الصغيرة");
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide14.png" });
 
   await page.keyboard.press("End");
+  await expectFirstLessonSlide(page, 18);
   await expectCustomArtwork(page, 18);
-  await expect(counter(page)).toHaveText("18 من 18");
   await expect(page.getByRole("heading", { name: "إنجازي الأول" })).toBeVisible();
-  await expect(page.locator(".lesson-next-preview")).toContainText(
-    "في الحصة القادمة",
-  );
+  await expect(page.locator(".ending-next")).toContainText("في الحصة القادمة");
   await expect(finishButton(page)).toBeVisible();
+  await expect(page.locator(".slide-nav, .slide-counter, .slide-dots")).toHaveCount(0);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide18.png" });
 });
 
-test("the first lesson stays legible on a phone and uses compact slide controls", async ({
+test("the first lesson reflows as full-screen teaching scenes on a phone", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
-  const total = 18;
+  await expectFirstLessonSlide(page, 1);
   await expectCustomArtwork(page, 1);
-  await expectSingleFittingSlide(page, total);
+  await expectSingleFittingSlide(page, 18);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide1.png" });
 
-  await next(page).click();
+  await advanceFirstLesson(page);
+  await expectFirstLessonSlide(page, 2);
   await expectCustomArtwork(page, 2);
-  await expect(counter(page)).toHaveText("2 من 18");
-  await expectSingleFittingSlide(page, total);
+  await expectSingleFittingSlide(page, 18);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide2.png" });
 
   for (let slide = 3; slide <= 11; slide++) {
-    await next(page).click();
+    await advanceFirstLesson(page);
+    await expectFirstLessonSlide(page, slide);
     await expectCustomArtwork(page, slide);
     if (slide === 6)
       await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide6.png" });
   }
-  await expect(counter(page)).toHaveText("11 من 18");
-  await expectSingleFittingSlide(page, total);
+  await expectSingleFittingSlide(page, 18);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide11.png" });
 
   for (let slide = 12; slide <= 17; slide++) {
-    await next(page).click();
+    await advanceFirstLesson(page);
+    await expectFirstLessonSlide(page, slide);
     await expectCustomArtwork(page, slide);
     if (slide === 17) {
-      await expectSingleFittingSlide(page, total);
+      await expectSingleFittingSlide(page, 18);
       await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide17.png" });
     }
   }
   await page.keyboard.press("End");
+  await expectFirstLessonSlide(page, 18);
   await expectCustomArtwork(page, 18);
-  await expect(counter(page)).toHaveText("18 من 18");
   await expect(finishButton(page)).toBeVisible();
-  await expectSingleFittingSlide(page, total);
+  await expectSingleFittingSlide(page, 18);
+  const medalOverlapsHeadline = await page.evaluate(() => {
+    const medal = document.querySelector(".ending-medal")!.getBoundingClientRect();
+    return Array.from(
+      document.querySelectorAll<HTMLElement>(".ending-title, .ending-cheer"),
+    ).some((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Array.from(range.getClientRects()).some(
+        (text) =>
+          medal.left < text.right &&
+          medal.right > text.left &&
+          medal.top < text.bottom &&
+          medal.bottom > text.top,
+      );
+    });
+  });
+  expect(medalOverlapsHeadline).toBe(false);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide18.png" });
 });
 
@@ -152,8 +189,9 @@ async function expectSingleFittingSlide(page: Page, total: number) {
     const lesson = document.querySelector(".lesson")!;
     const clipped: string[] = [];
     for (const el of document.querySelectorAll(
-      ".lesson .slide, .lesson .slide *, .slide-nav, .slide-nav *, .lesson-float, .lesson-float *",
+      ".lesson .slide, .lesson .slide *, .slide-nav, .slide-nav *, .lesson-float, .lesson-float *, .first-presentation-tool, .first-presentation-tool *",
     )) {
+      if (el instanceof HTMLElement && el.closest(".first-actor")) continue;
       const r = el.getBoundingClientRect();
       if ((r.width < 2 && r.height < 2) || r.width + r.height === 0) continue;
       if (r.left < -1 || r.right > vw + 1 || r.top < -1 || r.bottom > vh + 1)
@@ -168,8 +206,9 @@ async function expectSingleFittingSlide(page: Page, total: number) {
         lesson.scrollWidth > lesson.clientWidth + 1,
       clipped,
       slideTop: document.querySelector(".slide")!.getBoundingClientRect().top,
-      navBottom: document.querySelector(".slide-nav")!.getBoundingClientRect()
-        .bottom,
+      navBottom:
+        document.querySelector(".slide-nav")?.getBoundingClientRect().bottom ??
+        document.querySelector(".slide-stage")!.getBoundingClientRect().bottom,
     };
   });
   expect(geometry.documentOverflow, "الصفحة لا تتمرر رأسيًا").toBe(false);
@@ -178,7 +217,11 @@ async function expectSingleFittingSlide(page: Page, total: number) {
   expect(geometry.navBottom).toBeLessThanOrEqual(
     (await page.evaluate(() => innerHeight)) + 1,
   );
-  await expect(page.locator(".slide-dots .dot")).toHaveCount(total);
+  if (await page.locator(".lesson-first-presentation").count()) {
+    await expect(page.locator(".slide-nav, .slide-counter, .slide-dots")).toHaveCount(0);
+  } else {
+    await expect(page.locator(".slide-dots .dot")).toHaveCount(total);
+  }
 }
 
 /* على الحاسوب واللوحي والهاتف: شريحة واحدة تملأ الشاشة وتسير حتى النهاية */
@@ -395,10 +438,13 @@ for (const [width, height] of [
       await expect(page.locator(".lesson .slide")).toHaveCount(1);
       await page.evaluate(() => document.fonts.ready);
       const total = Number(
-        /من (\d+)/.exec(await counter(page).innerText())![1],
+        await page.locator(".lesson .slide").getAttribute("data-slide-count"),
       );
       for (let i = 1; i <= total; i++) {
-        await expect(counter(page)).toHaveText(`${i} من ${total}`);
+        await expect(page.locator(".lesson .slide")).toHaveAttribute(
+          "data-slide-index",
+          String(i),
+        );
         const issues = await page.evaluate(() => {
           const card = document.querySelector(".lesson .slide")!;
           const c = card.getBoundingClientRect();
@@ -406,7 +452,7 @@ for (const [width, height] of [
           if (document.documentElement.scrollHeight > innerHeight)
             out.push("page scrolls");
           for (const el of card.querySelectorAll("*")) {
-            if (el.closest(".slide-deco, .end-confetti")) continue;
+            if (el.closest(".slide-deco, .end-confetti, .first-actor")) continue;
             const r = el.getBoundingClientRect();
             if (r.width + r.height === 0) continue;
             if (

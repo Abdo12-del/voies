@@ -42,6 +42,9 @@ export function Modal({
       if (stack[stack.length - 1] !== id) return;
       if (event.key === "Escape" && dismissible) {
         event.preventDefault();
+        // Keep the dismissing key from reaching page-level shortcuts (for example,
+        // the presentation's Escape-to-exit handler behind this dialog).
+        event.stopPropagation();
         onCloseRef.current();
       }
       if (event.key !== "Tab") return;

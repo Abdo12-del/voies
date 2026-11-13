@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { SESSIONS, getSession, type Session } from "../src/data/sessions";
 import {
   FIRST_LESSON_PHASES,
+  FIRST_LESSON_PURPOSES,
   FIRST_LESSON_SLIDES,
   FIRST_LESSON_TOTAL_MINUTES,
 } from "../src/data/firstLesson";
@@ -55,6 +56,11 @@ describe("تقسيم الحصص إلى شرائح العرض", () => {
     const slides = buildSlides(getSession(1)!);
     expect(slides).toHaveLength(18);
     expect(FIRST_LESSON_SLIDES).toHaveLength(16);
+    expect(Object.keys(FIRST_LESSON_PURPOSES)).toHaveLength(18);
+    expect(slides.map((slide) => slide.id)).toEqual(
+      Object.keys(FIRST_LESSON_PURPOSES),
+    );
+    expect(slides.every((slide) => Boolean(slide.purpose))).toBe(true);
     expect(FIRST_LESSON_PHASES.map(({ title, minutes }) => [title, minutes])).toEqual([
       ["الاستقبال والتهيئة", 10],
       ["اكتشاف معنى التعريف بالنفس", 15],

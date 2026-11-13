@@ -17,6 +17,7 @@ import {
   type LessonSlide,
 } from "../lib/lessonSlides";
 import { Character, type CharacterKey } from "./Character";
+import { FirstLessonScene } from "./FirstLessonScene";
 import { Icon } from "./icons";
 
 interface Props {
@@ -248,6 +249,7 @@ export function LessonView({
   const session = getSession(id)!;
   const level = getLevel(session.level);
   const review = mode === "review";
+  const isFirstLesson = session.id === 1;
   const slides = useMemo(() => buildSlides(session), [session]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -305,11 +307,20 @@ export function LessonView({
       } else if (event.key === "End") {
         event.preventDefault();
         goTo(slides.length - 1);
+      } else if (event.key === " " || event.key === "PageDown") {
+        event.preventDefault();
+        goTo(index + 1);
+      } else if (event.key === "PageUp") {
+        event.preventDefault();
+        goTo(index - 1);
+      } else if (event.key === "Escape" && isFirstLesson) {
+        event.preventDefault();
+        onBack();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, goTo, slides.length]);
+  }, [index, goTo, isFirstLesson, onBack, slides.length]);
 
   /* نقل التركيز إلى عنوان الشريحة يُسمع قارئ الشاشة فور وصولها. */
   useEffect(() => {
@@ -336,6 +347,18 @@ export function LessonView({
 
   /** محتوى الشريحة. `live = false` للنسخة المغادرة: بلا مرجع تركيز ولا أزرار فعّالة. */
   const renderSlide = (s: LessonSlide, live: boolean): ReactNode => {
+    if (isFirstLesson) {
+      return (
+        <FirstLessonScene
+          slide={s}
+          session={session}
+          review={review}
+          live={live}
+          headingRef={live ? heading : undefined}
+          onComplete={onComplete}
+        />
+      );
+    }
     const headingRef: Ref<HTMLHeadingElement> | undefined = live
       ? heading
       : undefined;
@@ -687,39 +710,54 @@ export function LessonView({
 
   return (
     <main
-      className={`lesson level-${session.level}`}
+      className={`lesson level-${session.level} ${isFirstLesson ? "lesson-first-presentation" : ""}`}
       aria-label={`الحصة ${session.id}: ${session.title}`}
     >
-      {/* أدوات عائمة خفيفة — بلا شريط علوي أو سفلي ممتدّ */}
-      <div className="lesson-float lesson-float-start">
-        <button
-          type="button"
-          className="lesson-chip"
-          onClick={onBack}
-          aria-label="العودة إلى رحلتي"
-          title="العودة إلى الخارطة"
-        >
-          <Icon name="back" size={18} />
-          <span aria-hidden="true">رحلتي</span>
-        </button>
-      </div>
-      {review && (
-        <p className="lesson-float lesson-float-mode">
-          <Icon name="review" size={15} /> وضع المراجعة
-        </p>
+      {isFirstLesson ? (
+        <div className="first-presentation-tool">
+          <button
+            type="button"
+            onClick={onPickSpeaker}
+            aria-label="مَن يتحدث؟"
+            title="مَن يتحدث؟"
+          >
+            <Icon name="mic" size={28} />
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* أدوات الحصص الأخرى تبقى كما هي خارج لوحة الشريحة. */}
+          <div className="lesson-float lesson-float-start">
+            <button
+              type="button"
+              className="lesson-chip"
+              onClick={onBack}
+              aria-label="العودة إلى رحلتي"
+              title="العودة إلى الخارطة"
+            >
+              <Icon name="back" size={18} />
+              <span aria-hidden="true">رحلتي</span>
+            </button>
+          </div>
+          {review && (
+            <p className="lesson-float lesson-float-mode">
+              <Icon name="review" size={15} /> وضع المراجعة
+            </p>
+          )}
+          <div className="lesson-float lesson-float-end">
+            <button
+              type="button"
+              className="lesson-chip"
+              onClick={onPickSpeaker}
+              aria-label="مَن يتحدث؟"
+              title="عجلة اختيار المتحدث"
+            >
+              <Icon name="wheel" size={19} />
+              <span aria-hidden="true">مَن يتحدث؟</span>
+            </button>
+          </div>
+        </>
       )}
-      <div className="lesson-float lesson-float-end">
-        <button
-          type="button"
-          className="lesson-chip"
-          onClick={onPickSpeaker}
-          aria-label="مَن يتحدث؟"
-          title="عجلة اختيار المتحدث"
-        >
-          <Icon name="wheel" size={19} />
-          <span aria-hidden="true">مَن يتحدث؟</span>
-        </button>
-      </div>
 
       <div
         className="slide-stage"
@@ -755,12 +793,17 @@ export function LessonView({
           role="group"
           aria-roledescription="شريحة"
           aria-label={`الشريحة ${index + 1} من ${slides.length}: ${name}`}
+          data-slide-id={slide.id}
+          data-slide-index={index + 1}
+          data-slide-count={slides.length}
+          data-purpose={"purpose" in slide ? slide.purpose : undefined}
         >
           {renderSlide(slide, true)}
         </section>
       </div>
 
-      <nav className="slide-nav" aria-label="التنقّل بين شرائح الحصة">
+      {!isFirstLesson && (
+        <nav className="slide-nav" aria-label="التنقّل بين شرائح الحصة">
         <button
           type="button"
           className="btn-nav btn-nav-prev"
@@ -800,7 +843,8 @@ export function LessonView({
         >
           التالي <Icon name="chevron-left" size={18} />
         </button>
-      </nav>
+        </nav>
+      )}
       <p className="sr-only" role="status">
         {`الشريحة ${index + 1} من ${slides.length}: ${name}`}
       </p>

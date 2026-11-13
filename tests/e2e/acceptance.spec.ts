@@ -279,8 +279,8 @@ test("lessons open without accounts; browsing and locked links never complete a 
     .getByRole("button", { name: "العودة إلى محطتي", exact: true })
     .click();
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
-  // الغلاف تتبعه شريحة خطة اليوم في عرض الحصة الأولى
-  await page.getByRole("button", { name: "التالي", exact: true }).click();
+  // الغلاف تتبعه شريحة خطة اليوم؛ في العرض البصري نتقدّم بلوحة المفاتيح.
+  await page.keyboard.press("ArrowLeft");
   await expect(
     page.getByRole("heading", {
       name: "مساحة الكلام — ما الذي سنفعله اليوم؟",
@@ -290,9 +290,8 @@ test("lessons open without accounts; browsing and locked links never complete a 
   await expect(
     page.locator('input[type="password"], input[type="email"]'),
   ).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "العودة إلى رحلتي", exact: true })
-    .click();
+  // Escape closes the first-lesson presentation without marking it complete.
+  await page.keyboard.press("Escape");
   await expect(page.getByRole("progressbar")).toHaveAttribute(
     "aria-valuenow",
     "0",

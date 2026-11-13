@@ -3,6 +3,7 @@ import type { CharacterKey } from "../components/Character";
 import {
   FIRST_LESSON_CLOSING,
   FIRST_LESSON_PHASES,
+  FIRST_LESSON_PURPOSES,
   FIRST_LESSON_SLIDES,
 } from "../data/firstLesson";
 
@@ -69,6 +70,8 @@ export type GuidedLayout =
 export interface GuidedSlide {
   kind: "guided";
   id: string;
+  /** وظيفة الشريحة التعليمية في تسلسل الحصة، للاستخدام في خطة المعلم لا كعنصر مرئي. */
+  purpose?: string;
   phase: LessonPhase;
   title: string;
   icon: SessionIconName;
@@ -84,6 +87,8 @@ export interface GuidedSlide {
 }
 
 export interface LessonClosing {
+  /** وظيفة الشريحة التعليمية في تسلسل الحصة، للاستخدام في خطة المعلم لا كعنصر مرئي. */
+  purpose?: string;
   headline: string;
   reflection: string;
   nextLesson: string;
@@ -94,6 +99,8 @@ export type LessonSlide =
   | {
       kind: "title";
       id: "title";
+      /** وظيفة الشريحة التعليمية في تسلسل الحصة، للاستخدام في خطة المعلم لا كعنصر مرئي. */
+      purpose?: string;
       phase?: LessonPhase;
       illustration?: SlideIllustration;
     }
@@ -111,6 +118,8 @@ export type LessonSlide =
   | {
       kind: "end";
       id: "end";
+      /** وظيفة الشريحة التعليمية في تسلسل الحصة، للاستخدام في خطة المعلم لا كعنصر مرئي. */
+      purpose?: string;
       phase?: LessonPhase;
       /** عنوان خاص عند وجود إنجاز أو انعكاس ختامي للحصة. */
       headline?: string;
@@ -186,6 +195,7 @@ export function buildSlides(session: Session): LessonSlide[] {
       {
         kind: "title",
         id: "title",
+        purpose: FIRST_LESSON_PURPOSES.title,
         phase: FIRST_LESSON_PHASES[0],
         illustration: {
           characters: ["lailaWave"],
@@ -194,10 +204,14 @@ export function buildSlides(session: Session): LessonSlide[] {
           speech: "أهلًا بكم! مساحة الكلام للجميع.",
         },
       },
-      ...FIRST_LESSON_SLIDES,
+      ...FIRST_LESSON_SLIDES.map((slide) => ({
+        ...slide,
+        purpose: FIRST_LESSON_PURPOSES[slide.id],
+      })),
       {
         kind: "end",
         id: "end",
+        purpose: FIRST_LESSON_PURPOSES.end,
         phase: FIRST_LESSON_PHASES[5],
         ...FIRST_LESSON_CLOSING,
       },

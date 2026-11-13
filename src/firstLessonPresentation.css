@@ -1,0 +1,1974 @@
+/*
+ * «أهلًا بي في مساحة الكلام» — مشاهد عرض تقديمي لا بطاقات واجهة.
+ * كل تكوين مرسوم وفق وظيفته: سؤال، طريق، مثال، موقف، تدريب أو تأمل.
+ */
+.lesson-first-presentation {
+  --deck-blue: #1767b8;
+  --deck-deep: #114b87;
+  --deck-sky: #eaf5ff;
+  --deck-ink: #1b2a4e;
+  --deck-muted: #415675;
+  --deck-gold: #ffc93c;
+  --deck-coral: #e45b7b;
+  --deck-mint: #2eaa9e;
+  background:
+    radial-gradient(ellipse at 82% 12%, #dcefff 0, transparent 44%),
+    #eef7ff;
+}
+.lesson-first-presentation .slide-stage {
+  inset: 0 0 44px;
+  padding: 0;
+}
+.lesson-first-presentation .slide-frame {
+  --pad-y: 0px;
+  --pad-x: 0px;
+  width: min(100%, calc((100dvh - 44px) * 16 / 9));
+  height: min(100%, calc(100vw * 9 / 16));
+  max-width: none;
+  max-height: none;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--deck-ink);
+  text-align: start;
+}
+.lesson-first-presentation .slide-frame::before,
+.lesson-first-presentation .slide-nav,
+.lesson-first-presentation > .lesson-float {
+  display: none;
+}
+.first-presentation-tool {
+  position: absolute;
+  z-index: 8;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+}
+.first-presentation-tool button {
+  display: grid;
+  place-items: center;
+  width: clamp(46px, 5.2cqw, 66px);
+  height: clamp(46px, 5.2cqw, 66px);
+  padding: 0;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff, #d9efff);
+  box-shadow: 0 5px 0 #a7cdea, 0 10px 22px #114b8722;
+  color: var(--deck-blue);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.first-presentation-tool button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 #a7cdea, 0 13px 24px #114b8725;
+}
+.first-presentation-tool button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #a7cdea;
+}
+.first-scene {
+  position: relative;
+  isolation: isolate;
+  container-type: size;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  direction: rtl;
+  color: var(--deck-ink);
+  background:
+    radial-gradient(ellipse at 88% 4%, #e8f5ff 0, transparent 32%),
+    radial-gradient(ellipse at 4% 88%, #edf7ff 0, transparent 34%),
+    #ffffff;
+}
+.first-scene::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -22%;
+  left: -11%;
+  width: 38%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #d9edff;
+  opacity: 0.65;
+}
+.first-scene::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset-inline: -2%;
+  bottom: -1px;
+  height: clamp(24px, 4.2cqh, 55px);
+  background: linear-gradient(90deg, #68b5f2, #1d75c5 46%, #55a9ed);
+  clip-path: polygon(0 42%, 12% 25%, 27% 52%, 44% 37%, 58% 60%, 74% 32%, 89% 49%, 100% 31%, 100% 100%, 0 100%);
+  opacity: 0.92;
+}
+.first-scene > * {
+  z-index: 1;
+}
+.first-scene-heading {
+  max-width: 100%;
+  color: var(--deck-deep);
+  font-family: var(--display);
+  font-size: clamp(31px, 4.15cqw, 66px);
+  font-weight: 800;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+.first-actor {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 0;
+  pointer-events: none;
+}
+.first-actor img,
+.first-actor .character {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 10px 14px #1c4b7020);
+}
+.first-speech {
+  position: absolute;
+  z-index: 4;
+  max-width: min(37%, 430px);
+  padding: clamp(10px, 1.35cqh, 18px) clamp(16px, 1.8cqw, 25px);
+  border: 2px solid #a8d2f5;
+  border-radius: 30px 30px 30px 8px;
+  background: #ffffff;
+  box-shadow: 0 6px 0 #cde7fb;
+  color: var(--deck-deep);
+  font-size: clamp(19px, 2.05cqw, 30px);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+}
+.first-speech::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  inset-inline-start: 30px;
+  width: 20px;
+  height: 20px;
+  border-inline-start: 2px solid #a8d2f5;
+  border-bottom: 2px solid #a8d2f5;
+  border-bottom-left-radius: 5px;
+  background: #ffffff;
+  rotate: -18deg;
+}
+.scene-kicker,
+.cover-kicker,
+.ending-kicker {
+  color: #3976ad;
+  font-size: clamp(15px, 1.45cqw, 21px);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+/* 1 — استقبال: عنوان كبير، ليلى بطلة المشهد، وجملة ترحيب كحوار. */
+.scene-cover {
+  padding: 7.5% 6.5% 7%;
+  background:
+    radial-gradient(ellipse at 4% 4%, #d9eeff 0 20%, transparent 20.5%),
+    radial-gradient(ellipse at 104% 96%, #e8f5ff 0 20%, transparent 20.5%),
+    linear-gradient(110deg, #f6fbff 0%, #ffffff 42%, #f9fcff 100%);
+}
+.scene-cover::before {
+  top: auto;
+  bottom: -22%;
+  left: 11%;
+  width: 34%;
+  background: #d9edff;
+  opacity: 0.7;
+}
+.cover-copy {
+  position: relative;
+  z-index: 3;
+  width: 63%;
+  margin-inline-start: 0;
+  padding-top: 2%;
+}
+.cover-kicker {
+  margin-bottom: 12px;
+}
+.cover-title {
+  max-width: 900px;
+  color: #124f8f;
+  font-family: var(--display);
+  font-size: clamp(42px, 6.05cqw, 92px);
+  font-weight: 800;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.cover-description {
+  max-width: 790px;
+  margin-top: clamp(14px, 2.5cqh, 28px);
+  color: #315579;
+  font-size: clamp(21px, 2.55cqw, 38px);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.cover-speech {
+  position: relative;
+  display: table;
+  max-width: 78%;
+  margin-top: clamp(18px, 3cqh, 32px);
+  inset: auto;
+  border-color: #f1ce5b;
+  box-shadow: 0 6px 0 #f9e8a5;
+  color: #124f8f;
+}
+.cover-speech::after {
+  border-color: #f1ce5b;
+}
+.cover-actor {
+  left: 2.5%;
+  bottom: 1%;
+  width: 31%;
+  height: 88%;
+}
+.cover-lightbulb {
+  position: absolute;
+  z-index: 1;
+  left: 35%;
+  top: 12%;
+  color: var(--deck-gold);
+  font-size: clamp(44px, 7cqw, 100px);
+  rotate: 14deg;
+  text-shadow: 0 4px 0 #f7e4a1;
+}
+
+/* 2 — خريطة اليوم: رحلة مرسومة على مسار لا ست بطاقات واجهة. */
+.scene-journey {
+  padding: 5.5% 6% 6%;
+}
+.journey-copy {
+  position: relative;
+  z-index: 3;
+  width: 69%;
+  margin-inline-start: 0;
+}
+.journey-copy .first-scene-heading {
+  max-width: 850px;
+}
+.journey-lead,
+.journey-prompt {
+  max-width: 840px;
+  margin-top: 10px;
+  color: var(--deck-muted);
+  font-size: clamp(19px, 2.15cqw, 31px);
+  line-height: 1.45;
+}
+.journey-prompt {
+  display: inline-block;
+  margin-top: 8px;
+  color: #12675f;
+  font-weight: 800;
+}
+.journey-trail {
+  position: absolute;
+  z-index: 0;
+  right: 4%;
+  bottom: 7%;
+  width: 70%;
+  height: 42%;
+  overflow: visible;
+  fill: none;
+  stroke: #82b9e7;
+  stroke-width: 5;
+  stroke-dasharray: 4 14;
+  stroke-linecap: round;
+}
+.journey-stops {
+  position: absolute;
+  z-index: 2;
+  right: 4%;
+  bottom: 10%;
+  width: 70%;
+  height: 44%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 1fr);
+  align-items: center;
+  gap: 4% 5%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.journey-stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 11px;
+  min-width: 0;
+  animation: scene-arrive 500ms cubic-bezier(.22,.8,.24,1) both;
+  animation-delay: calc(160ms + var(--scene-order, 0) * 90ms);
+}
+.journey-stop-number {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: clamp(34px, 4.5cqw, 60px);
+  height: clamp(34px, 4.5cqw, 60px);
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: var(--deck-gold);
+  box-shadow: 0 4px 0 #e6b52d;
+  color: #614800;
+  font-family: var(--display);
+  font-size: clamp(20px, 2.3cqw, 32px);
+  font-weight: 800;
+}
+.journey-stop:nth-child(2n) .journey-stop-number {
+  background: #bde3ff;
+  box-shadow: 0 4px 0 #92c4ed;
+  color: #124f8f;
+}
+.journey-stop-title {
+  color: var(--deck-deep);
+  font-size: clamp(16px, 1.85cqw, 26px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+.journey-stop-time {
+  color: #58708e;
+  font-size: clamp(13px, 1.35cqw, 19px);
+  font-weight: 700;
+}
+.journey-actor {
+  left: 1.5%;
+  bottom: 1%;
+  width: 26%;
+  height: 58%;
+}
+/* 3 — سؤال مفتوح: مساحة تنفّس قبل الإجابة، وسامي يفكر لا يشرح. */
+.scene-question {
+  padding: 7% 7%;
+}
+.question-copy {
+  position: relative;
+  z-index: 3;
+  width: 60%;
+  margin-inline-start: 0;
+}
+.question-context {
+  margin-top: clamp(12px, 2cqh, 20px);
+  color: #45617f;
+  font-size: clamp(18px, 2.15cqw, 31px);
+  line-height: 1.48;
+}
+.question-prompt {
+  max-width: 900px;
+  margin-top: clamp(22px, 3.8cqh, 42px);
+  padding: clamp(14px, 2.2cqh, 22px) clamp(20px, 2.8cqw, 38px);
+  border-radius: 999px;
+  background: #ffedaf;
+  box-shadow: 0 5px 0 #f1cc55;
+  color: #174f87;
+  font-family: var(--display);
+  font-size: clamp(26px, 3.55cqw, 51px);
+  font-weight: 800;
+  line-height: 1.32;
+  text-wrap: balance;
+}
+.question-note {
+  margin-top: 16px;
+  color: #526987;
+  font-size: clamp(15px, 1.65cqw, 23px);
+  line-height: 1.45;
+}
+.question-mark {
+  position: absolute;
+  z-index: 1;
+  top: 8%;
+  left: 24%;
+  color: #4a93dc;
+  font-family: var(--display);
+  font-size: clamp(90px, 15cqw, 210px);
+  font-weight: 800;
+  line-height: 1;
+  rotate: -12deg;
+  opacity: 0.85;
+}
+.question-actor {
+  left: 3%;
+  bottom: 1%;
+  width: 32%;
+  height: 70%;
+}
+.question-speech {
+  left: 25%;
+  bottom: 46%;
+  max-width: 25%;
+}
+
+/* 4 — تعريف واحد ومعه مثال؛ لا قائمة تعليمات جانبية. */
+.scene-meaning {
+  padding: 6.5% 7%;
+}
+.meaning-copy {
+  position: relative;
+  z-index: 3;
+  width: 64%;
+  margin-inline-start: 0;
+}
+.meaning-statement {
+  margin-top: clamp(16px, 2.5cqh, 28px);
+  padding: clamp(15px, 2.4cqh, 24px) clamp(22px, 3.2cqw, 42px);
+  border-radius: 54px;
+  background: #dceeff;
+  color: #104d88;
+  font-family: var(--display);
+  font-size: clamp(24px, 3.25cqw, 46px);
+  font-weight: 700;
+  line-height: 1.38;
+  text-align: center;
+}
+.meaning-example {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: fit-content;
+  max-width: 95%;
+  margin-top: clamp(18px, 3cqh, 32px);
+  padding: 11px 20px;
+  border-bottom: 3px solid #f3cb49;
+  color: #314d6f;
+}
+.meaning-example > span {
+  flex: none;
+  color: #aa7300;
+  font-size: clamp(15px, 1.5cqw, 20px);
+  font-weight: 800;
+}
+.meaning-example p {
+  font-size: clamp(20px, 2.25cqw, 32px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.meaning-actor {
+  left: 2%;
+  bottom: 0;
+  width: 29%;
+  height: 83%;
+}
+.meaning-speech {
+  left: 22%;
+  top: 20%;
+  max-width: 23%;
+}
+
+/* 5 + 9 — أفكار تطفو حول الشخصية بدل البطاقات المتطابقة. */
+.scene-orbits {
+  padding: 6% 6%;
+}
+.orbits-copy {
+  position: relative;
+  z-index: 3;
+  width: 68%;
+  margin-inline-start: 0;
+}
+.orbits-lead {
+  margin-top: 10px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.95cqw, 28px);
+  line-height: 1.42;
+}
+.orbits-field {
+  position: absolute;
+  z-index: 2;
+  right: 26%;
+  bottom: 10%;
+  width: 68%;
+  height: 54%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: 2%;
+}
+.idea-orbit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 190px);
+  aspect-ratio: 0.94;
+  padding: 12px;
+  border: 2px solid #b7dcf8;
+  border-radius: 49% 51% 54% 46% / 53% 45% 55% 47%;
+  background: #ffffffed;
+  box-shadow: 0 7px 0 #dceefa;
+  text-align: center;
+  animation: scene-arrive 560ms cubic-bezier(.22,.8,.24,1) both;
+  animation-delay: calc(130ms + var(--scene-order, 0) * 110ms);
+}
+.idea-orbit:nth-child(2n) {
+  translate: 0 12px;
+  border-color: #f0d87c;
+  box-shadow: 0 7px 0 #f6ebbf;
+  background: #fffdf4;
+}
+.idea-orbit.tone-pink {
+  border-color: #f1bfd0;
+  box-shadow: 0 7px 0 #f8e0e9;
+  background: #fffafd;
+}
+.idea-orbit.tone-mint,
+.idea-orbit.tone-safe {
+  border-color: #a7ded4;
+  box-shadow: 0 7px 0 #d8f0eb;
+  background: #f8fffd;
+}
+.idea-orbit-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(37px, 4.9cqw, 66px);
+  height: clamp(37px, 4.9cqw, 66px);
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: #e3f2ff;
+  color: var(--deck-blue);
+}
+.idea-orbit:nth-child(2n) .idea-orbit-icon {
+  background: #fff1bf;
+  color: #a46d00;
+}
+.idea-orbit.tone-pink .idea-orbit-icon {
+  background: #ffe4ec;
+  color: #b6355d;
+}
+.idea-orbit.tone-mint .idea-orbit-icon {
+  background: #dcf6f1;
+  color: #167568;
+}
+.idea-orbit > strong {
+  color: var(--deck-deep);
+  font-family: var(--display);
+  font-size: clamp(17px, 1.9cqw, 27px);
+  font-weight: 800;
+  line-height: 1.22;
+}
+.idea-orbit-copy {
+  margin-top: 4px;
+  color: #506680;
+  font-size: clamp(13px, 1.4cqw, 19px);
+  line-height: 1.28;
+}
+.orbits-actor {
+  left: 0.5%;
+  bottom: 0;
+  width: 25%;
+  height: 61%;
+}
+.orbits-speech {
+  left: 19%;
+  bottom: 45%;
+  max-width: 23%;
+}
+.scene-step-interests .orbits-field {
+  height: 50%;
+  bottom: 12%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 1fr);
+  width: 61%;
+  right: 31%;
+  justify-items: center;
+}
+.scene-step-interests .idea-orbit {
+  width: min(100%, 170px);
+  aspect-ratio: 1.1;
+  border-radius: 48% 52% 46% 54%;
+  box-shadow: none;
+  background: #f8fcffdd;
+}
+.scene-step-interests .idea-orbit:nth-child(2n) {
+  translate: 0 0;
+}
+.scene-step-interests .idea-orbit-copy {
+  font-size: clamp(13px, 1.42cqw, 19px);
+}
+
+/* 6 — اختيار آمن/خاص: موازنة بصرية بين مساحتين، لا صندوق مقارنة. */
+.scene-safety {
+  padding: 5.5% 6%;
+}
+.safety-heading {
+  position: relative;
+  z-index: 3;
+  width: 70%;
+  margin-inline-start: 0;
+}
+.safety-heading > p {
+  margin-top: 10px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.9cqw, 27px);
+  line-height: 1.4;
+}
+.safety-choices {
+  position: absolute;
+  z-index: 2;
+  top: 43%;
+  right: 29%;
+  width: 66%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 3.3cqw, 46px);
+}
+.safety-choice {
+  position: relative;
+  min-height: 215px;
+  padding: 5px 16px 12px;
+  text-align: center;
+}
+.safety-choice::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 2% 0 -8%;
+  border: 2px dashed #99d6c9;
+  border-radius: 45% 55% 50% 50% / 55% 46% 54% 45%;
+  background: #eefbf8;
+  rotate: -2deg;
+}
+.safety-choice-2::before {
+  border-color: #efc4d1;
+  background: #fff5f8;
+  rotate: 2deg;
+}
+.safety-choice-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 6cqw, 78px);
+  height: clamp(48px, 6cqw, 78px);
+  margin-inline: auto;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #168373;
+  box-shadow: 0 4px 12px #1f826d20;
+}
+.safety-choice-2 .safety-choice-icon {
+  color: #c34d6e;
+  box-shadow: 0 4px 12px #a64c6d20;
+}
+.safety-choice h3 {
+  margin-top: 9px;
+  color: #126e62;
+  font-family: var(--display);
+  font-size: clamp(20px, 2.2cqw, 32px);
+  font-weight: 800;
+}
+.safety-choice-2 h3 {
+  color: #a63c5d;
+}
+.safety-choice p {
+  max-width: 420px;
+  margin: 3px auto 0;
+  color: #445b73;
+  font-size: clamp(16px, 1.7cqw, 24px);
+  line-height: 1.42;
+}
+.safety-prompt {
+  position: absolute;
+  z-index: 3;
+  right: 34%;
+  bottom: 8%;
+  max-width: 58%;
+  padding: 7px 0;
+  border-bottom: 3px solid #f1d36f;
+  color: #5c4a23;
+  font-size: clamp(16px, 1.7cqw, 24px);
+  font-weight: 700;
+}
+.safety-actor {
+  left: 1%;
+  bottom: 0;
+  width: 27%;
+  height: 68%;
+}
+.safety-speech {
+  left: 20%;
+  top: 26%;
+  max-width: 22%;
+}
+
+/* 7 — الاسم: أول جملة بصوت ليلى، كبيرة كأنها تخرج منها. */
+.scene-step-name,
+.scene-step-fact {
+  padding: 6.5% 7%;
+}
+.step-copy {
+  position: relative;
+  z-index: 3;
+  width: 65%;
+  margin-inline-start: 0;
+}
+.step-lead {
+  margin-top: 13px;
+  color: #3b5b7d;
+  font-size: clamp(20px, 2.35cqw, 34px);
+  font-weight: 600;
+  line-height: 1.44;
+}
+.step-example-name {
+  display: inline-block;
+  margin-top: clamp(24px, 4cqh, 44px);
+  padding: 11px 22px 13px;
+  border-bottom: 4px solid #f1c943;
+  color: #15558f;
+  font-family: var(--display);
+  font-size: clamp(31px, 4cqw, 58px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+.step-prompt {
+  margin-top: 18px;
+  color: #516883;
+  font-size: clamp(17px, 1.85cqw, 26px);
+  line-height: 1.4;
+}
+.step-actor-name {
+  left: 1%;
+  bottom: 0;
+  width: 28%;
+  height: 79%;
+}
+.step-speech {
+  left: 20%;
+  top: 27%;
+  max-width: 24%;
+}
+
+/* 8 — معلومة بسيطة واحدة: المثال بحجم كبير، والتنبيه مطمئن لا تحذيري. */
+.fact-example {
+  position: relative;
+  max-width: 880px;
+  margin-top: clamp(18px, 3cqh, 32px);
+  padding: 6px 24px 10px 0;
+  border-inline-end: 5px solid #f4cd48;
+}
+.fact-example > span {
+  display: block;
+  color: #9a700a;
+  font-size: clamp(15px, 1.45cqw, 20px);
+  font-weight: 800;
+}
+.fact-example p {
+  margin-top: 5px;
+  color: #154f8a;
+  font-family: var(--display);
+  font-size: clamp(25px, 3.05cqw, 44px);
+  font-weight: 800;
+  line-height: 1.34;
+}
+.fact-note {
+  max-width: 770px;
+  margin-top: 16px;
+  color: #59718b;
+  font-size: clamp(15px, 1.6cqw, 23px);
+  line-height: 1.4;
+}
+.fact-actor {
+  left: 1%;
+  bottom: 0;
+  width: 27%;
+  height: 74%;
+}
+.fact-speech {
+  left: 19%;
+  top: 23%;
+  max-width: 23%;
+}
+
+/* 10 — ترتيب التعريف: ثلاث محطات تتصل بصريًا في جملة واحدة. */
+.scene-connection {
+  padding: 5.7% 6%;
+}
+.connection-heading {
+  position: relative;
+  z-index: 3;
+  width: 69%;
+  margin-inline-start: 0;
+}
+.connection-heading > p {
+  margin-top: 9px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.9cqw, 27px);
+  line-height: 1.42;
+}
+.connection-path {
+  position: absolute;
+  z-index: 2;
+  top: 40%;
+  right: 26%;
+  width: 68%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.connection-node {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: clamp(112px, 17cqh, 175px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 16px;
+  border: 2px solid #aed8f7;
+  border-radius: 48% 52% 49% 51% / 52% 47% 53% 48%;
+  background: #f6fbff;
+  text-align: center;
+}
+.connection-node-2 {
+  translate: 0 14px;
+  border-color: #f1d46c;
+  background: #fffdf4;
+}
+.connection-node-3 {
+  border-color: #b4e2d9;
+  background: #f6fffc;
+}
+.connection-node-title {
+  color: #5b7190;
+  font-size: clamp(14px, 1.45cqw, 20px);
+  font-weight: 700;
+}
+.connection-node strong {
+  margin-top: 4px;
+  color: #164f8b;
+  font-family: var(--display);
+  font-size: clamp(22px, 2.5cqw, 36px);
+  font-weight: 800;
+  line-height: 1.24;
+}
+.connection-arrow {
+  position: absolute;
+  z-index: 2;
+  left: -23px;
+  color: #f0bd22;
+  font-size: clamp(28px, 3.5cqw, 48px);
+  font-weight: 800;
+}
+.connection-example {
+  position: absolute;
+  z-index: 3;
+  right: 31%;
+  bottom: 8%;
+  width: 59%;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #9bc8eb;
+  color: #344f6e;
+  font-size: clamp(19px, 2.15cqw, 31px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.connection-example span {
+  margin-inline-end: 10px;
+  color: #a47300;
+  font-size: 0.72em;
+}
+.connection-actor {
+  left: 1%;
+  bottom: 0;
+  width: 24%;
+  height: 53%;
+}
+.connection-speech {
+  left: 17%;
+  bottom: 44%;
+  max-width: 24%;
+}
+
+/* 11 — النموذج الكامل: جمل تظهر بالتتابع في فقاعة واحدة كبيرة. */
+.scene-model {
+  padding: 5.2% 6%;
+}
+.model-heading {
+  position: relative;
+  z-index: 3;
+  width: 76%;
+  margin-inline-start: 0;
+}
+.model-heading > p {
+  margin-top: 7px;
+  color: var(--deck-muted);
+  font-size: clamp(17px, 1.85cqw, 26px);
+}
+.model-reading {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 6% 7%;
+  top: 27%;
+  bottom: 17%;
+  display: grid;
+  grid-template-columns: 29% 1fr;
+  align-items: end;
+  gap: 2%;
+}
+.model-actor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  align-self: end;
+}
+.model-quote {
+  align-self: center;
+  min-width: 0;
+  padding: clamp(16px, 2.4cqh, 26px) clamp(22px, 3cqw, 42px);
+  border: 3px solid #9fcef1;
+  border-radius: 38px 38px 38px 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 0 #d9edfb;
+}
+.model-fragment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-block: 5px;
+  color: #20476c;
+  font-size: clamp(18px, 2.05cqw, 29px);
+  font-weight: 600;
+  line-height: 1.38;
+  animation: scene-arrive 500ms cubic-bezier(.22,.8,.24,1) both;
+  animation-delay: calc(160ms + var(--scene-order, 0) * 310ms);
+}
+.model-fragment + .model-fragment {
+  border-top: 1px dashed #deebf6;
+}
+.model-bead {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin-top: 9px;
+  border-radius: 50%;
+  background: #67a8e1;
+}
+.model-fragment-2 .model-bead { background: #eb7294; }
+.model-fragment-3 .model-bead { background: #4ab3a3; }
+.model-fragment-4 .model-bead { background: #f1c43a; }
+.model-map {
+  position: absolute;
+  z-index: 3;
+  right: 35%;
+  bottom: 5%;
+  width: 59%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.model-map-part {
+  position: relative;
+  color: #3d6a94;
+  font-size: clamp(14px, 1.5cqw, 21px);
+  font-weight: 800;
+}
+.model-map-part:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 6px);
+  width: clamp(18px, 3cqw, 42px);
+  border-top: 2px dashed #92bce0;
+}
+
+/* 12 — بطاقة تذكّر واحدة: غرض تعليمي داخل المشهد، لا واجهة بطاقات. */
+.scene-keywords {
+  padding: 5.6% 6%;
+}
+.keywords-heading {
+  position: relative;
+  z-index: 3;
+  width: 72%;
+  margin-inline-start: 0;
+}
+.keywords-heading > p {
+  margin-top: 8px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.9cqw, 27px);
+}
+.memory-paper {
+  position: absolute;
+  z-index: 2;
+  top: 36%;
+  right: 27%;
+  width: 58%;
+  min-height: 40%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: center;
+  gap: 10px 7%;
+  padding: 3% 4%;
+  border: 1px solid #e5d9ad;
+  border-radius: 9px 18px 11px 22px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 49px, #d6e7f6 50px 51px),
+    #fffef7;
+  box-shadow: 0 10px 0 #e8e2cf, 0 17px 28px #1d4c6c20;
+  rotate: -1.2deg;
+}
+.memory-paper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 11%;
+  height: 100%;
+  border-left: 1px solid #f2c4c4;
+  opacity: 0.8;
+}
+.memory-word {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 9px;
+  color: #174f88;
+}
+.memory-word strong {
+  font-size: clamp(17px, 1.9cqw, 27px);
+  font-weight: 800;
+}
+.memory-word span {
+  color: #8b9bae;
+  font-size: clamp(14px, 1.45cqw, 20px);
+  letter-spacing: 0.2em;
+}
+.keywords-actor {
+  left: 1%;
+  bottom: 0;
+  width: 27%;
+  height: 69%;
+}
+.keywords-speech {
+  left: 20%;
+  top: 31%;
+  max-width: 23%;
+}
+.keywords-prompt {
+  position: absolute;
+  z-index: 3;
+  right: 28%;
+  bottom: 7%;
+  width: 60%;
+  color: #8a630a;
+  font-size: clamp(16px, 1.75cqw, 25px);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 13 — تدريب: ثلاث خطوات على مسار، ثم عبارة ختام قابلة للقول. */
+.scene-practice {
+  padding: 5.7% 6%;
+}
+.practice-heading {
+  position: relative;
+  z-index: 3;
+  width: 72%;
+  margin-inline-start: 0;
+}
+.practice-heading > p {
+  margin-top: 8px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.9cqw, 27px);
+}
+.practice-route {
+  position: absolute;
+  z-index: 2;
+  top: 38%;
+  right: 28%;
+  width: 66%;
+  height: 42%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 3%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.practice-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.practice-stop:nth-child(2) { translate: 0 25px; }
+.practice-stop > span {
+  display: grid;
+  place-items: center;
+  width: clamp(49px, 6.7cqw, 88px);
+  height: clamp(49px, 6.7cqw, 88px);
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #ffe9a1;
+  box-shadow: 0 5px 0 #efc64f;
+  color: #745400;
+  font-family: var(--display);
+  font-size: clamp(24px, 3.1cqw, 42px);
+  font-weight: 800;
+}
+.practice-stop:nth-child(2) > span { background: #dff3ff; box-shadow: 0 5px 0 #acd6f0; color: #15558f; }
+.practice-stop:nth-child(3) > span { background: #d9f3ec; box-shadow: 0 5px 0 #a5ddcf; color: #176b5f; }
+.practice-stop p {
+  max-width: 260px;
+  color: #34516f;
+  font-size: clamp(16px, 1.8cqw, 25px);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.practice-closing {
+  position: absolute;
+  z-index: 3;
+  right: 34%;
+  bottom: 8%;
+  max-width: 59%;
+  color: #174f88;
+  font-family: var(--display);
+  font-size: clamp(19px, 2.25cqw, 32px);
+  font-weight: 800;
+}
+.practice-closing span {
+  margin-inline-end: 9px;
+  color: #9a700a;
+  font-family: "Tajawal", sans-serif;
+  font-size: 0.7em;
+}
+.practice-actor {
+  left: 0.5%;
+  bottom: 0;
+  width: 25%;
+  height: 54%;
+}
+.practice-speech {
+  left: 18%;
+  bottom: 40%;
+  max-width: 24%;
+}
+
+/* 14 — نموذج بثلاثة ممثلين: شخصيات واقفة في مساحة مشتركة، بلا بطاقات. */
+.scene-trio {
+  padding: 5% 5.5% 6%;
+}
+.trio-heading {
+  position: relative;
+  z-index: 3;
+  width: 86%;
+  margin-inline: auto;
+  text-align: center;
+}
+.trio-heading > p {
+  margin-top: 7px;
+  color: var(--deck-muted);
+  font-size: clamp(17px, 1.85cqw, 26px);
+}
+.trio-stage {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 5%;
+  top: 29%;
+  bottom: 7%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 1.5%;
+}
+.trio-performer {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+}
+.trio-performer::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: 1%;
+  width: min(92%, 245px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #e3f2ff;
+  opacity: 0.86;
+}
+.trio-performer-2::before { background: #e8f5ff; }
+.trio-performer-3::before { background: #e5f7f2; }
+.trio-actor {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 0;
+  width: 100%;
+  max-width: 340px;
+  align-items: flex-end;
+}
+.trio-actor img {
+  max-height: 100%;
+}
+.trio-performer > strong {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  margin-top: -5px;
+  color: #123f73;
+  font-family: var(--display);
+  font-size: clamp(19px, 2.3cqw, 32px);
+  font-weight: 800;
+}
+.trio-line {
+  position: relative;
+  flex: none;
+  inset: auto;
+  z-index: 4;
+  width: min(92%, 330px);
+  max-width: none;
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 20px 20px 20px 5px;
+  box-shadow: 0 4px 0 #cde7fb;
+  font-size: clamp(14px, 1.55cqw, 22px);
+  line-height: 1.32;
+}
+.trio-performer-2 .trio-line {
+  border-color: #a9d3f1;
+  background: #f7fbff;
+}
+.trio-performer-3 .trio-line {
+  border-color: #b1dfd7;
+  box-shadow: 0 4px 0 #d6eee8;
+  background: #fbfffd;
+}
+.trio-prompt {
+  position: absolute;
+  z-index: 4;
+  top: 22%;
+  right: 4%;
+  color: #12685e;
+  font-size: clamp(15px, 1.65cqw, 23px);
+  font-weight: 800;
+}
+
+/* 15 — دور الطفل: مشهد تقديم أمام المجموعة، وثلاثة رموز تساعد على التذكر. */
+.scene-your-turn {
+  padding: 5.6% 6%;
+}
+.turn-heading {
+  position: relative;
+  z-index: 3;
+  width: 69%;
+  margin-inline-start: 0;
+}
+.turn-heading > p {
+  margin-top: 8px;
+  color: var(--deck-muted);
+  font-size: clamp(19px, 2cqw, 29px);
+}
+.turn-steps {
+  position: absolute;
+  z-index: 3;
+  right: 29%;
+  bottom: 13%;
+  width: 65%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 3%;
+}
+.turn-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 2px solid #a9d3f1;
+}
+.turn-step:nth-child(2) { border-color: #f1d46c; }
+.turn-step:nth-child(3) { border-color: #a7ded4; }
+.turn-step > span {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(40px, 5cqw, 66px);
+  height: clamp(40px, 5cqw, 66px);
+  border-radius: 50%;
+  background: #e3f2ff;
+  color: #1767b8;
+}
+.turn-step:nth-child(2) > span { background: #fff2c4; color: #987000; }
+.turn-step:nth-child(3) > span { background: #e0f6f0; color: #177466; }
+.turn-step p {
+  color: #385571;
+  font-size: clamp(14px, 1.6cqw, 22px);
+  font-weight: 700;
+  line-height: 1.34;
+}
+.turn-actor {
+  left: 1%;
+  bottom: 0;
+  width: 26%;
+  height: 66%;
+}
+.turn-speech {
+  left: 18%;
+  top: 29%;
+  max-width: 25%;
+}
+.turn-prompt {
+  position: absolute;
+  z-index: 4;
+  right: 31%;
+  bottom: 5%;
+  width: 61%;
+  color: #835e07;
+  font-size: clamp(15px, 1.6cqw, 22px);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 16 — إنصات متبادل: شخصيتان تتحدثان، والحوار جزء من المشهد. */
+.scene-listening {
+  padding: 5.2% 6%;
+}
+.listening-heading {
+  position: relative;
+  z-index: 4;
+  width: 74%;
+  margin-inline-start: 0;
+}
+.listening-heading > p {
+  margin-top: 8px;
+  color: var(--deck-muted);
+  font-size: clamp(17px, 1.85cqw, 26px);
+}
+.conversation-stage {
+  position: absolute;
+  z-index: 2;
+  left: 7%;
+  right: 7%;
+  bottom: 7%;
+  height: 46%;
+}
+.listener-actor {
+  left: 10%;
+  bottom: 0;
+  width: 23%;
+  height: 100%;
+}
+.speaker-actor {
+  right: 9%;
+  bottom: 0;
+  width: 22%;
+  height: 92%;
+}
+.conversation-bubble {
+  max-width: 28%;
+  border-radius: 29px;
+  font-size: clamp(17px, 1.95cqw, 27px);
+}
+.conversation-bubble-listener {
+  left: 27%;
+  bottom: 58%;
+}
+.conversation-bubble-speaker {
+  right: 26%;
+  bottom: 74%;
+  border-color: #edd16d;
+  box-shadow: 0 6px 0 #f5e6af;
+  background: #fffdf4;
+  color: #574813;
+}
+.conversation-bubble-speaker::after {
+  border-color: #edd16d;
+  background: #fffdf4;
+}
+.listening-cues {
+  position: absolute;
+  z-index: 4;
+  right: 24%;
+  top: 35%;
+  width: 58%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.listening-cue {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+}
+.listening-cue > span {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: #e6f3ff;
+  color: #1767b8;
+}
+.listening-cue:nth-child(2) > span { background: #ffe7ef; color: #ae3b5f; }
+.listening-cue:nth-child(3) > span { background: #fff3c9; color: #997000; }
+.listening-cue strong {
+  color: #194f83;
+  font-size: clamp(15px, 1.65cqw, 23px);
+}
+.listening-cue small {
+  color: #536b84;
+  font-size: clamp(12px, 1.25cqw, 17px);
+  line-height: 1.25;
+}
+.listening-prompt {
+  position: absolute;
+  z-index: 4;
+  right: 27%;
+  top: 43%;
+  width: 59%;
+  color: #12685e;
+  font-size: clamp(16px, 1.75cqw, 25px);
+  font-weight: 800;
+  text-align: center;
+}
+
+/* 17 — مراجعة ذاتية: الإنجازات كنجوم حول سامي، وسؤال واحد للتأمل. */
+.scene-reflection {
+  padding: 5.6% 6%;
+}
+.reflection-heading {
+  position: relative;
+  z-index: 3;
+  width: 70%;
+  margin-inline-start: 0;
+}
+.reflection-heading > p {
+  margin-top: 8px;
+  color: var(--deck-muted);
+  font-size: clamp(18px, 1.9cqw, 27px);
+}
+.reflection-heading .reflection-question {
+  display: inline-block;
+  margin-top: 12px;
+  padding-bottom: 7px;
+  border-bottom: 3px solid #f1cf56;
+  color: #8a6407;
+  font-weight: 800;
+}
+.reflection-constellation {
+  position: absolute;
+  z-index: 2;
+  right: 26%;
+  bottom: 8%;
+  width: 65%;
+  height: 45%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 2%;
+}
+.reflection-star {
+  width: min(100%, 170px);
+  aspect-ratio: 0.95;
+  padding: 9px;
+  border: 0;
+  border-radius: 45% 55% 51% 49%;
+  background: #f5faff;
+  box-shadow: none;
+}
+.reflection-star:nth-child(2n) { translate: 0 18px; background: #fffaf0; }
+.reflection-star .idea-orbit-icon {
+  width: clamp(35px, 4.2cqw, 58px);
+  height: clamp(35px, 4.2cqw, 58px);
+}
+.reflection-star > strong {
+  font-size: clamp(15px, 1.7cqw, 24px);
+}
+.reflection-star .idea-orbit-copy {
+  font-size: clamp(12px, 1.28cqw, 18px);
+}
+.reflection-actor {
+  left: 1%;
+  bottom: 0;
+  width: 25%;
+  height: 60%;
+}
+.reflection-speech {
+  left: 18%;
+  bottom: 45%;
+  max-width: 24%;
+}
+
+/* 18 — ختام: إنجاز واضح، انعكاس قصير، وإجراء الإنهاء مرة واحدة فقط. */
+.scene-ending {
+  padding: 6% 6.5%;
+  color: #ffffff;
+  background:
+    radial-gradient(ellipse at 15% 96%, #4c93d0 0 27%, transparent 27.5%),
+    linear-gradient(125deg, #104f90 0%, #1767b8 58%, #2380ce 100%);
+}
+.scene-ending::before {
+  top: auto;
+  bottom: -25%;
+  left: 3%;
+  width: 48%;
+  background: #7db7e6;
+  opacity: 0.16;
+}
+.scene-ending::after {
+  height: clamp(34px, 6cqh, 76px);
+  background: #0e467f;
+  opacity: 0.72;
+  clip-path: polygon(0 47%, 14% 28%, 28% 51%, 46% 33%, 64% 58%, 83% 34%, 100% 45%, 100% 100%, 0 100%);
+}
+.ending-copy {
+  position: relative;
+  z-index: 3;
+  width: 57%;
+  margin-inline-start: 0;
+  padding-top: 1%;
+}
+.ending-kicker {
+  color: #d4eaff;
+}
+.ending-title {
+  margin-top: 8px;
+  color: #ffffff;
+  font-family: var(--display);
+  font-size: clamp(36px, 5.3cqw, 76px);
+  font-weight: 800;
+  line-height: 1.12;
+}
+.ending-cheer {
+  margin-top: 2px;
+  color: #ffe37b;
+  font-family: var(--display);
+  font-size: clamp(48px, 7.1cqw, 102px);
+  font-weight: 800;
+  line-height: 1.12;
+}
+.ending-message {
+  margin-top: -2px;
+  color: #e8f5ff;
+  font-size: clamp(20px, 2.35cqw, 33px);
+  font-weight: 700;
+  line-height: 1.32;
+}
+.ending-reflection {
+  max-width: 760px;
+  margin-top: clamp(12px, 2cqh, 20px);
+  color: #f0f7ff;
+  font-size: clamp(18px, 2.1cqw, 30px);
+  line-height: 1.45;
+}
+.ending-next {
+  max-width: 790px;
+  margin-top: clamp(12px, 2.2cqh, 22px);
+  padding: 9px 14px;
+  border-inline-start: 4px solid #ffd456;
+  color: #fff0bc;
+  font-size: clamp(16px, 1.8cqw, 25px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.ending-finish {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  margin-top: clamp(15px, 2.5cqh, 26px);
+  padding: 10px 20px;
+  border: 1px solid #fff0b0;
+  border-radius: 999px;
+  background: linear-gradient(#ffe487, #ffc82f);
+  box-shadow: 0 4px 0 #d89506;
+  color: #493500;
+  font-size: clamp(16px, 1.7cqw, 24px);
+  font-weight: 800;
+}
+.ending-finish:hover {
+  background: #ffe99a;
+}
+.ending-review-note {
+  margin-top: 18px;
+  color: #d6ebff;
+  font-size: 16px;
+}
+.ending-actor {
+  left: 4%;
+  bottom: 0;
+  width: 31%;
+  height: 86%;
+}
+.ending-medal {
+  position: absolute;
+  z-index: 3;
+  left: 31%;
+  top: 16%;
+  display: grid;
+  place-items: center;
+  width: clamp(54px, 7.5cqw, 96px);
+  height: clamp(54px, 7.5cqw, 96px);
+  border: 4px solid #fff8d8;
+  border-radius: 50%;
+  background: linear-gradient(#ffe895, #f2b918);
+  box-shadow: 0 6px 0 #c68c0b;
+  color: #725000;
+}
+.is-review .ending-actor,
+.is-review .ending-medal {
+  opacity: 0.92;
+}
+
+@keyframes scene-arrive {
+  from { opacity: 0; translate: 0 12px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@media (max-width: 900px) {
+  .lesson-first-presentation .slide-stage {
+    inset: 0;
+    padding: 0;
+  }
+  .lesson-first-presentation .slide-frame {
+    width: 100%;
+    height: 100%;
+  }
+  .first-presentation-tool {
+    top: max(9px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    right: auto;
+  }
+  .first-presentation-tool button {
+    width: 42px;
+    height: 42px;
+  }
+  .first-presentation-tool svg {
+    width: 22px;
+    height: 22px;
+  }
+  .first-scene::after {
+    height: clamp(22px, 4.2cqh, 38px);
+  }
+  .first-scene-heading {
+    font-size: clamp(28px, 6cqw, 46px);
+    line-height: 1.2;
+  }
+  .first-speech {
+    max-width: min(50%, 260px);
+    padding: 7px 11px;
+    border-width: 1.5px;
+    border-radius: 20px 20px 20px 6px;
+    box-shadow: 0 4px 0 #cde7fb;
+    font-size: clamp(15px, 3.8cqw, 20px);
+  }
+  .first-speech::after {
+    width: 13px;
+    height: 13px;
+    bottom: -8px;
+    border-width: 1.5px;
+  }
+
+  .scene-cover { padding: 8% 6% 14%; }
+  .cover-copy {
+    width: 73%;
+    margin-inline-start: 24%;
+    padding-top: 3%;
+  }
+  .cover-kicker { margin-bottom: 6px; font-size: clamp(13px, 2.8cqw, 17px); }
+  .cover-title { font-size: clamp(34px, 7.4cqw, 54px); }
+  .cover-description {
+    margin-top: 10px;
+    font-size: clamp(17px, 3.8cqw, 23px);
+    line-height: 1.4;
+  }
+  .cover-speech { max-width: 76%; margin-top: 13px; }
+  .cover-actor { left: 0; bottom: 0; width: 38%; height: 46%; }
+  .cover-lightbulb { left: 38%; top: 40%; font-size: clamp(34px, 10cqw, 58px); }
+
+  .scene-journey { padding: 7% 5% 12%; }
+  .journey-copy { width: 92%; margin-inline-start: 0; }
+  .journey-copy .first-scene-heading { max-width: 82%; font-size: clamp(28px, 6cqw, 44px); }
+  .journey-lead { max-width: 90%; margin-top: 5px; font-size: clamp(16px, 3.4cqw, 22px); line-height: 1.34; }
+  .journey-prompt { display: none; }
+  .journey-trail { right: 2%; bottom: 7%; width: 68%; height: 48%; stroke-width: 3; }
+  .journey-stops {
+    right: 2%; bottom: 9%; width: 68%; height: 57%;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(6, minmax(0, 1fr));
+    gap: 2px;
+  }
+  .journey-stop { column-gap: 8px; }
+  .journey-stop-number { width: 31px; height: 31px; border-width: 2px; font-size: 17px; }
+  .journey-stop-title { font-size: clamp(14px, 3.3cqw, 18px); line-height: 1.1; }
+  .journey-stop-time { font-size: clamp(11px, 2.6cqw, 14px); line-height: 1.1; }
+  .journey-actor { left: -4%; bottom: 0; width: 31%; height: 34%; }
+
+  .scene-question { padding: 8% 6% 12%; }
+  .question-copy { width: 92%; margin-inline-start: 0; }
+  .question-context { max-width: 92%; margin-top: 8px; font-size: clamp(16px, 3.6cqw, 22px); line-height: 1.35; }
+  .question-prompt { max-width: 94%; margin-top: 17px; padding: 11px 15px; font-size: clamp(22px, 5.4cqw, 33px); }
+  .question-note { max-width: 88%; margin-top: 9px; font-size: clamp(13px, 3.1cqw, 17px); }
+  .question-mark { top: 46%; left: 4%; font-size: clamp(68px, 20cqw, 108px); }
+  .question-actor { left: 0; bottom: 0; width: 43%; height: 39%; }
+  .question-speech { left: 33%; bottom: 35%; max-width: 43%; }
+
+  .scene-meaning { padding: 8% 6% 12%; }
+  .meaning-copy { width: 96%; margin-inline-start: 0; }
+  .meaning-copy .first-scene-heading { max-width: 88%; font-size: clamp(27px, 5.8cqw, 43px); }
+  .meaning-statement { margin-top: 12px; padding: 11px 15px; border-radius: 30px; font-size: clamp(19px, 4.3cqw, 27px); line-height: 1.34; }
+  .meaning-example { max-width: 94%; margin-top: 12px; padding: 5px 10px; gap: 8px; }
+  .meaning-example > span { font-size: 13px; }
+  .meaning-example p { font-size: clamp(16px, 3.5cqw, 21px); }
+  .meaning-actor { left: 0; bottom: 0; width: 38%; height: 37%; }
+  .meaning-speech { left: 31%; top: auto; bottom: 31%; max-width: 43%; }
+
+  .scene-orbits { padding: 7% 5% 12%; }
+  .orbits-copy { width: 96%; margin-inline-start: 0; }
+  .orbits-copy .first-scene-heading { max-width: 93%; font-size: clamp(26px, 5.8cqw, 42px); }
+  .orbits-lead { max-width: 93%; margin-top: 6px; font-size: clamp(15px, 3.3cqw, 21px); line-height: 1.3; }
+  .orbits-field {
+    right: 18%; bottom: 8%; width: 80%; height: 53%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 0 4%;
+    justify-items: center;
+  }
+  .idea-orbit { width: min(100%, 150px); height: 100%; max-height: 137px; aspect-ratio: 1.05; padding: 6px; border-width: 1.5px; box-shadow: 0 4px 0 #dceefa; }
+  .idea-orbit:nth-child(2n) { translate: 0 5px; }
+  .idea-orbit-icon { width: 31px; height: 31px; margin-bottom: 2px; }
+  .idea-orbit-icon svg { width: 21px; height: 21px; }
+  .idea-orbit > strong { font-size: clamp(14px, 3.1cqw, 18px); line-height: 1.12; }
+  .idea-orbit-copy { margin-top: 2px; font-size: clamp(11px, 2.5cqw, 14px); line-height: 1.12; }
+  .orbits-actor { left: -5%; bottom: 0; width: 32%; height: 34%; }
+  .orbits-speech { left: 17%; bottom: 34%; max-width: 40%; }
+  .scene-step-interests .orbits-field { right: 24%; bottom: 9%; width: 72%; height: 49%; }
+  .scene-step-interests .idea-orbit { max-height: 130px; }
+
+  .scene-safety { padding: 7% 5% 12%; }
+  .safety-heading { width: 96%; margin-inline-start: 0; }
+  .safety-heading .first-scene-heading { max-width: 90%; font-size: clamp(25px, 5.5cqw, 40px); }
+  .safety-heading > p { max-width: 95%; margin-top: 6px; font-size: clamp(15px, 3.2cqw, 20px); line-height: 1.3; }
+  .safety-choices { top: 38%; right: 3%; width: 94%; gap: 3%; }
+  .safety-choice { min-height: 0; padding: 2px 8px 8px; }
+  .safety-choice::before { inset: 0 -3px -4px; }
+  .safety-choice-icon { width: 38px; height: 38px; }
+  .safety-choice-icon svg { width: 26px; height: 26px; }
+  .safety-choice h3 { margin-top: 4px; font-size: clamp(16px, 3.3cqw, 20px); line-height: 1.2; }
+  .safety-choice p { margin-top: 2px; font-size: clamp(12px, 2.6cqw, 16px); line-height: 1.25; }
+  .safety-prompt { right: 4%; bottom: 7%; max-width: 90%; font-size: clamp(13px, 2.9cqw, 17px); }
+  .safety-actor { left: -5%; bottom: 0; width: 32%; height: 33%; }
+  .safety-speech { left: 19%; top: auto; bottom: 28%; max-width: 37%; }
+
+  .scene-step-name, .scene-step-fact { padding: 7% 6% 12%; }
+  .step-copy { width: 97%; margin-inline-start: 0; }
+  .step-copy .first-scene-heading { max-width: 89%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .step-lead { max-width: 94%; margin-top: 8px; font-size: clamp(17px, 3.7cqw, 23px); line-height: 1.32; }
+  .step-example-name { margin-top: 15px; padding: 5px 11px 7px; border-bottom-width: 3px; font-size: clamp(27px, 6.3cqw, 38px); }
+  .step-prompt { max-width: 90%; margin-top: 8px; font-size: clamp(14px, 3.15cqw, 18px); }
+  .step-actor-name { left: 0; bottom: 0; width: 38%; height: 39%; }
+  .step-speech { left: 30%; top: auto; bottom: 31%; max-width: 44%; }
+  .fact-example { max-width: 94%; margin-top: 11px; padding: 4px 12px 6px 0; border-inline-end-width: 3px; }
+  .fact-example > span { font-size: 13px; }
+  .fact-example p { margin-top: 3px; font-size: clamp(21px, 4.7cqw, 29px); line-height: 1.26; }
+  .fact-note { max-width: 92%; margin-top: 7px; font-size: clamp(13px, 2.9cqw, 17px); line-height: 1.25; }
+  .fact-actor { left: 0; bottom: 0; width: 37%; height: 35%; }
+  .fact-speech { left: 29%; top: auto; bottom: 28%; max-width: 45%; }
+
+  .scene-connection { padding: 7% 5% 12%; }
+  .connection-heading { width: 96%; margin-inline-start: 0; }
+  .connection-heading .first-scene-heading { max-width: 91%; font-size: clamp(25px, 5.5cqw, 40px); }
+  .connection-heading > p { margin-top: 5px; font-size: clamp(15px, 3.1cqw, 20px); line-height: 1.3; }
+  .connection-path { top: 42%; right: 4%; width: 92%; gap: 2%; }
+  .connection-node { min-height: 95px; padding: 8px 7px; border-width: 1.5px; }
+  .connection-node-title { font-size: clamp(11px, 2.5cqw, 14px); }
+  .connection-node strong { margin-top: 2px; font-size: clamp(17px, 3.9cqw, 23px); }
+  .connection-arrow { left: -15px; font-size: 27px; }
+  .connection-example { right: 8%; bottom: 8%; width: 83%; font-size: clamp(15px, 3.2cqw, 19px); }
+  .connection-actor { left: -6%; bottom: 0; width: 28%; height: 31%; }
+  .connection-speech { left: 16%; bottom: 31%; max-width: 40%; }
+
+  .scene-model { padding: 7% 5% 12%; }
+  .model-heading { width: 96%; margin-inline-start: 0; }
+  .model-heading .first-scene-heading { max-width: 89%; font-size: clamp(26px, 5.6cqw, 41px); }
+  .model-heading > p { max-width: 92%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); }
+  .model-reading { inset-inline: 4%; top: 30%; bottom: 18%; grid-template-columns: 27% 1fr; gap: 3%; }
+  .model-quote { padding: 9px 10px; border-width: 1.5px; border-radius: 21px 21px 21px 6px; box-shadow: 0 4px 0 #d9edfb; }
+  .model-fragment { gap: 6px; padding-block: 3px; font-size: clamp(13px, 2.8cqw, 17px); line-height: 1.22; }
+  .model-bead { width: 8px; height: 8px; margin-top: 5px; }
+  .model-map { right: 32%; bottom: 7%; width: 64%; gap: 5px; }
+  .model-map-part { font-size: clamp(10px, 2.4cqw, 14px); }
+  .model-map-part:not(:last-child)::after { width: 11px; left: calc(100% + 2px); }
+
+  .scene-keywords { padding: 7% 5% 12%; }
+  .keywords-heading { width: 96%; margin-inline-start: 0; }
+  .keywords-heading .first-scene-heading { max-width: 90%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .keywords-heading > p { max-width: 90%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); line-height: 1.3; }
+  .memory-paper { top: 37%; right: 6%; width: 88%; min-height: 40%; gap: 3px 4%; padding: 3% 5%; background: repeating-linear-gradient(to bottom, transparent 0 31px, #d6e7f6 32px 33px), #fffef7; box-shadow: 0 5px 0 #e8e2cf, 0 9px 18px #1d4c6c18; }
+  .memory-word { padding: 4px 5px; }
+  .memory-word strong { font-size: clamp(14px, 3.1cqw, 18px); }
+  .memory-word span { font-size: 12px; }
+  .keywords-actor { left: -7%; bottom: 0; width: 35%; height: 31%; }
+  .keywords-speech { left: 16%; top: auto; bottom: 28%; max-width: 41%; }
+  .keywords-prompt { right: 7%; bottom: 6%; width: 87%; font-size: clamp(13px, 2.8cqw, 17px); }
+
+  .scene-practice { padding: 7% 5% 12%; }
+  .practice-heading { width: 96%; margin-inline-start: 0; }
+  .practice-heading .first-scene-heading { max-width: 90%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .practice-heading > p { margin-top: 5px; font-size: clamp(15px, 3.2cqw, 20px); line-height: 1.3; }
+  .practice-route { top: 40%; right: 4%; width: 92%; height: 38%; gap: 2%; }
+  .practice-stop { gap: 5px; }
+  .practice-stop > span { width: 43px; height: 43px; border-width: 2px; font-size: 22px; }
+  .practice-stop p { font-size: clamp(12px, 2.9cqw, 17px); line-height: 1.22; }
+  .practice-closing { right: 7%; bottom: 7%; max-width: 84%; font-size: clamp(15px, 3.4cqw, 20px); }
+  .practice-actor { left: -7%; bottom: 0; width: 32%; height: 31%; }
+  .practice-speech { left: 16%; bottom: 29%; max-width: 42%; }
+
+  .scene-trio { padding: 7% 3.5% 12%; }
+  .trio-heading { width: 96%; }
+  .trio-heading .first-scene-heading { max-width: 90%; margin-inline: auto; font-size: clamp(24px, 5.2cqw, 39px); }
+  .trio-heading > p { max-width: 94%; margin: 5px auto 0; font-size: clamp(13px, 2.8cqw, 17px); line-height: 1.25; }
+  .trio-prompt { top: auto; right: 4%; bottom: 5%; max-width: 92%; font-size: clamp(13px, 2.9cqw, 17px); }
+  .trio-stage { inset-inline: 1%; top: 28%; bottom: 10%; gap: 0; }
+  .trio-performer::before { width: 94%; }
+  .trio-performer > strong { margin-top: 0; font-size: clamp(16px, 3.5cqw, 21px); }
+  .trio-line { width: 98%; margin-top: 3px; padding: 5px 6px; border-width: 1px; border-radius: 13px 13px 13px 4px; box-shadow: 0 3px 0 #cde7fb; font-size: clamp(11px, 2.65cqw, 15px); line-height: 1.18; }
+
+  .scene-your-turn { padding: 7% 5% 12%; }
+  .turn-heading { width: 96%; margin-inline-start: 0; }
+  .turn-heading .first-scene-heading { max-width: 89%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .turn-heading > p { max-width: 94%; margin-top: 5px; font-size: clamp(15px, 3.3cqw, 20px); line-height: 1.3; }
+  .turn-steps { right: 5%; bottom: 17%; width: 89%; gap: 3%; }
+  .turn-step { flex-direction: column; align-items: center; gap: 5px; padding-top: 6px; text-align: center; }
+  .turn-step > span { width: 35px; height: 35px; }
+  .turn-step > span svg { width: 21px; height: 21px; }
+  .turn-step p { font-size: clamp(11px, 2.7cqw, 16px); line-height: 1.18; }
+  .turn-actor { left: -5%; bottom: 0; width: 35%; height: 34%; }
+  .turn-speech { left: 20%; top: auto; bottom: 31%; max-width: 39%; }
+  .turn-prompt { right: 5%; bottom: 6%; width: 89%; font-size: clamp(12px, 2.8cqw, 17px); }
+
+  .scene-listening { padding: 7% 5% 12%; }
+  .listening-heading { width: 96%; margin-inline-start: 0; }
+  .listening-heading .first-scene-heading { max-width: 89%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .listening-heading > p { max-width: 92%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); line-height: 1.28; }
+  .conversation-stage { left: 0; right: 0; bottom: 6%; height: 34%; }
+  .listener-actor { left: 2%; bottom: 0; width: 29%; height: 100%; }
+  .speaker-actor { right: 2%; bottom: 0; width: 28%; height: 92%; }
+  .conversation-bubble { max-width: 42%; padding: 6px 8px; font-size: clamp(13px, 3cqw, 18px); }
+  .conversation-bubble-listener { left: 24%; bottom: 62%; }
+  .conversation-bubble-speaker { right: 22%; bottom: 80%; }
+  .listening-cues { right: 5%; top: 38%; width: 90%; gap: 5px; }
+  .listening-cue { grid-template-columns: auto 1fr; gap: 1px 5px; }
+  .listening-cue > span { width: 31px; height: 31px; }
+  .listening-cue > span svg { width: 20px; height: 20px; }
+  .listening-cue strong { font-size: clamp(12px, 2.9cqw, 17px); line-height: 1.1; }
+  .listening-cue small { font-size: clamp(10px, 2.35cqw, 14px); line-height: 1.1; }
+  .listening-prompt { right: 5%; top: 49%; width: 90%; font-size: clamp(12px, 2.8cqw, 17px); }
+
+  .scene-reflection { padding: 7% 5% 12%; }
+  .reflection-heading { width: 96%; margin-inline-start: 0; }
+  .reflection-heading .first-scene-heading { max-width: 88%; font-size: clamp(26px, 5.7cqw, 42px); }
+  .reflection-heading > p { max-width: 92%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); line-height: 1.3; }
+  .reflection-heading .reflection-question { margin-top: 6px; padding-bottom: 3px; font-size: clamp(13px, 2.8cqw, 17px); }
+  .reflection-constellation { right: 19%; bottom: 8%; width: 77%; height: 48%; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0 3%; }
+  .reflection-star { width: min(100%, 145px); max-height: 115px; aspect-ratio: 1.1; padding: 5px; }
+  .reflection-star:nth-child(2n) { translate: 0 5px; }
+  .reflection-star .idea-orbit-icon { width: 29px; height: 29px; margin-bottom: 1px; }
+  .reflection-star .idea-orbit-icon svg { width: 19px; height: 19px; }
+  .reflection-star > strong { font-size: clamp(13px, 2.9cqw, 17px); line-height: 1.1; }
+  .reflection-star .idea-orbit-copy { margin-top: 1px; font-size: clamp(10px, 2.35cqw, 14px); line-height: 1.08; }
+  .reflection-actor { left: -5%; bottom: 0; width: 31%; height: 32%; }
+  .reflection-speech { left: 16%; bottom: 30%; max-width: 40%; }
+
+  .scene-ending { padding: 7% 5% 12%; }
+  .ending-copy { width: 96%; margin-inline-start: 0; padding-top: 0; }
+  .ending-kicker { font-size: clamp(13px, 2.8cqw, 17px); }
+  .ending-title { max-width: 83%; margin-top: 3px; font-size: clamp(32px, 7cqw, 48px); }
+  .ending-cheer { margin-top: 0; font-size: clamp(43px, 10cqw, 67px); }
+  .ending-message { margin-top: -2px; font-size: clamp(15px, 3.35cqw, 20px); }
+  .ending-reflection { max-width: 95%; margin-top: 7px; font-size: clamp(15px, 3.45cqw, 21px); line-height: 1.34; }
+  .ending-next { max-width: 90%; margin-top: 7px; padding: 4px 8px; font-size: clamp(13px, 3cqw, 18px); line-height: 1.3; }
+  .ending-finish { min-height: 42px; margin-top: 9px; padding: 7px 15px; font-size: clamp(14px, 3.1cqw, 18px); }
+  .ending-review-note { margin-top: 8px; font-size: 13px; }
+  .ending-actor { left: 0; bottom: 0; width: 45%; height: 39%; }
+  .ending-medal { left: 6%; right: auto; top: 42%; width: 47px; height: 47px; border-width: 2px; }
+  .ending-medal svg { width: 26px; height: 26px; }
+}
+
+@media (max-width: 420px) {
+  .first-scene-heading { font-size: clamp(25px, 6cqw, 34px); }
+  .scene-cover { padding-top: 9%; }
+  .cover-title { max-width: 91%; font-size: clamp(32px, 8.2cqw, 38px); }
+  .cover-description { max-width: 90%; font-size: clamp(16px, 4.2cqw, 18px); }
+  .cover-actor { width: 43%; height: 40%; }
+  .cover-copy { width: 91%; margin-inline-start: 0; }
+  .cover-speech { max-width: 63%; font-size: 15px; }
+  .cover-lightbulb { left: 44%; top: 48%; }
+  .journey-copy .first-scene-heading { max-width: 84%; font-size: 27px; }
+  .journey-stops { right: 17%; width: 81%; }
+  .journey-actor { left: -8%; width: 32%; height: 31%; }
+  .question-prompt { font-size: clamp(21px, 5.8cqw, 25px); }
+  .question-actor { width: 45%; height: 36%; }
+  .question-speech { left: 31%; bottom: 33%; max-width: 45%; }
+  .meaning-copy .first-scene-heading { max-width: 87%; font-size: 27px; }
+  .meaning-actor { width: 40%; height: 33%; }
+  .orbits-copy .first-scene-heading { max-width: 89%; font-size: 26px; }
+  .orbits-field { right: 16%; width: 83%; height: 50%; }
+  .idea-orbit { max-height: 120px; }
+  .idea-orbit-copy { font-size: 10.5px; }
+  .scene-step-interests .orbits-field { right: 21%; width: 76%; }
+  .safety-choice p { font-size: 11px; }
+  .safety-choice h3 { font-size: 15px; }
+  .safety-choices { top: 39%; }
+  .step-copy .first-scene-heading { max-width: 88%; font-size: 25px; }
+  .step-lead { font-size: 16px; }
+  .fact-example p { font-size: 21px; }
+  .connection-heading .first-scene-heading { max-width: 87%; font-size: 24px; }
+  .connection-node strong { font-size: 16px; }
+  .connection-node-title { font-size: 10px; }
+  .model-heading .first-scene-heading { max-width: 84%; font-size: 25px; }
+  .model-fragment { font-size: 12px; }
+  .model-map-part { font-size: 9px; }
+  .keywords-heading .first-scene-heading { font-size: 25px; }
+  .practice-heading .first-scene-heading { font-size: 25px; }
+  .practice-stop p { font-size: 11px; }
+  .trio-heading .first-scene-heading { max-width: 87%; font-size: 23px; }
+  .trio-line { font-size: 10px; }
+  .turn-heading .first-scene-heading { font-size: 25px; }
+  .turn-step p { font-size: 10.5px; }
+  .listening-heading .first-scene-heading { font-size: 25px; }
+  .listening-cue small { font-size: 9px; }
+  .reflection-heading .first-scene-heading { font-size: 25px; }
+  .reflection-star .idea-orbit-copy { font-size: 9px; }
+  .ending-title { font-size: 31px; }
+  .ending-cheer { font-size: 44px; }
+  .ending-reflection { font-size: 14px; }
+  .ending-next { font-size: 12px; }
+  .ending-actor { width: 43%; height: 34%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-stop,
+  .idea-orbit,
+  .model-fragment {
+    animation: none;
+  }
+}

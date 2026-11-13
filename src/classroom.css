@@ -9,8 +9,20 @@
   padding: 30px;
 }
 .speaker-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
   padding-inline-end: 28px;
+}
+.speaker-thinker {
+  flex-shrink: 0;
+  display: block;
+  animation: figure-bob 3s ease-in-out infinite;
+}
+.speaker-thinker .character {
+  height: 88px;
+  width: auto;
 }
 .speaker-heading h2 {
   color: #1b2a4e;
@@ -320,7 +332,11 @@
     padding: 25px 19px;
   }
   .speaker-heading {
+    gap: 12px;
     margin-bottom: 18px;
+  }
+  .speaker-thinker .character {
+    height: 68px;
   }
   .speaker-heading h2 {
     font-size: 27px;

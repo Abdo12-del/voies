@@ -827,14 +827,12 @@ img {
   overscroll-behavior: contain;
   background:
     radial-gradient(ellipse at 85% 6%, #dff0ff, transparent 55%),
-    radial-gradient(ellipse at 6% 96%, #e7f6ff, transparent 52%),
-    #f3f8ff;
+    radial-gradient(ellipse at 6% 96%, #e7f6ff, transparent 52%), #f3f8ff;
 }
 .lesson.level-2 {
   background:
     radial-gradient(ellipse at 85% 6%, #ffeec4, transparent 55%),
-    radial-gradient(ellipse at 6% 96%, #fff6da, transparent 52%),
-    #fdf7e8;
+    radial-gradient(ellipse at 6% 96%, #fff6da, transparent 52%), #fdf7e8;
 }
 .lesson h1:focus,
 .lesson h2:focus {
@@ -891,149 +889,476 @@ img {
 .lesson-chip:hover {
   background: #ffffff;
 }
+/* ═══ عرض الحصة كعرض تقديمي ═══
+ * لغة بصرية مستوحاة من عروض الأطفال: فكرة واحدة لكل شريحة، الشخصية بطلة
+ * تخرج من حافة البطاقة، شكل خلفي كبير لكل شريحة، عنوان بلونين، زخرفة على
+ * الأطراف فقط، وإيقاع صاخبة ← هادئة. الانتقال انزلاقي RTL والظهور متدرّج. */
+.lesson {
+  --slide-duration: 0.45s;
+  --slide-shift: min(16vw, 180px);
+  --ease-slide: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --reveal-base: 170ms;
+  --reveal-step: 100ms;
+  --accent: #c8336b;
+  --panel: #e3f2ff;
+  --blob: #ffd75e;
+}
+.lesson.level-2 {
+  --accent: #a8480c;
+  --panel: #ffedb8;
+  --blob: #ffb85c;
+}
 .slide-stage {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
   overflow: hidden;
-  padding: calc(max(14px, env(safe-area-inset-top)) + 58px) max(18px, 4vw)
-    calc(max(14px, env(safe-area-inset-bottom)) + 94px);
+  padding: calc(max(14px, env(safe-area-inset-top)) + 60px) max(18px, 3.4vw)
+    calc(max(14px, env(safe-area-inset-bottom)) + 96px);
   touch-action: pan-y pinch-zoom;
 }
-.slide {
-  width: min(880px, 100%);
-  max-height: 100%;
+/* قالب الشريحة: بطاقة بمقاس ثابت؛ وحدات cq تجعل الشخصيات والخطوط تتبع البطاقة */
+.slide-frame {
+  --pad-y: clamp(20px, 4.4vh, 46px);
+  --pad-x: clamp(22px, 4.2vw, 58px);
+  grid-area: 1 / 1;
+  position: relative;
+  isolation: isolate;
+  container-type: size;
+  width: min(1180px, 100%);
+  height: min(100%, 700px);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(10px, 2vh, 22px);
-  text-align: center;
+  padding: var(--pad-y) var(--pad-x);
+  padding-inline-start: calc(var(--pad-x) + 8px);
+  border: 1px solid #d9e7f5;
+  border-radius: clamp(24px, 3vw, 36px);
+  background: #ffffff;
+  box-shadow:
+    0 24px 50px -22px #234d6140,
+    0 4px 0 #d7e5f2;
+  overflow: hidden;
+  text-align: start;
+  color: #1b2a4e;
 }
+.level-2 .slide-frame {
+  border-color: #f0dfb4;
+  background: #fffdf7;
+  box-shadow:
+    0 24px 50px -22px #7a5a1038,
+    0 4px 0 #efdcae;
+}
+/* شريط لوني جانبي للشرائح الهادئة */
+.slide-frame::before {
+  content: "";
+  position: absolute;
+  inset-block: clamp(22px, 4vh, 40px);
+  inset-inline-start: 0;
+  width: 7px;
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+  background: linear-gradient(#1e78c5, #63b4f0);
+}
+.level-2 .slide-frame::before {
+  background: linear-gradient(#d99a14, #ffc93c);
+}
+/* الشرائح الصاخبة (الغلاف والنهاية): خلفية العالم كاملة.
+ * المستوى الأول أزرق بنص أبيض (≥4.8:1 في كل نقاط التدرّج)،
+ * والثاني ذهبي بنص بنّي داكن (≥7:1). */
+.tone-loud.slide-frame {
+  border-color: #0e4f93;
+  background: linear-gradient(135deg, #0e4f93 0%, #1767b8 55%, #1f74c2 100%);
+  box-shadow:
+    0 24px 50px -22px #0f4f9370,
+    0 5px 0 #0d3f75;
+  color: #ffffff;
+}
+.level-2 .tone-loud.slide-frame {
+  border-color: #e0a420;
+  background: linear-gradient(135deg, #f5aa2a 0%, #ffc93c 55%, #ffe07a 100%);
+  box-shadow:
+    0 24px 50px -22px #b0780070,
+    0 5px 0 #d99412;
+  color: #3d2600;
+}
+.tone-loud.slide-frame::before {
+  display: none;
+}
+/* ── الزخرفة: نُقط، موجات صوت، فقاعة كلام، مسار متقطع، وعلامة مائية ── */
+.slide-deco {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  animation: deco-in 0.8s ease-out both;
+}
+.slide-deco::before {
+  content: "المتحدث الصغير";
+  position: absolute;
+  top: 34%;
+  left: 2%;
+  font-family: var(--display);
+  font-size: 15cqh;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  color: #1b2a4e;
+  opacity: 0.035;
+  rotate: -6deg;
+}
+.tone-loud .slide-deco::before {
+  color: #ffffff;
+  opacity: 0.07;
+}
+.level-2 .tone-loud .slide-deco::before {
+  color: #7a4b03;
+  opacity: 0.07;
+}
+.deco-dot {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+.deco-waves,
+.deco-bubble,
+.deco-path {
+  position: absolute;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.deco-waves {
+  top: 7%;
+  left: 31%;
+  width: clamp(30px, 7cqh, 50px);
+  stroke: #1e78c5;
+  stroke-width: 4;
+  opacity: 0.32;
+}
+.deco-bubble {
+  top: 12%;
+  left: 3.5%;
+  width: clamp(30px, 7cqh, 48px);
+  stroke: #f0568c;
+  stroke-width: 3.5;
+  opacity: 0.4;
+}
+.deco-path {
+  bottom: 5%;
+  left: 38%;
+  width: clamp(110px, 18cqw, 190px);
+  stroke: #8f6bd8;
+  stroke-width: 3;
+  stroke-dasharray: 3 9;
+  opacity: 0.4;
+}
+.tone-loud .deco-waves,
+.tone-loud .deco-bubble,
+.tone-loud .deco-path {
+  stroke: #ffffff;
+  opacity: 0.45;
+}
+.level-2 .tone-loud .deco-waves,
+.level-2 .tone-loud .deco-bubble,
+.level-2 .tone-loud .deco-path {
+  stroke: #7a4b03;
+  opacity: 0.35;
+}
+@keyframes deco-in {
+  from {
+    opacity: 0;
+  }
+}
+/* ── الانتقال: التالية تدخل من اليسار والحالية تخرج يمينًا (والعكس للسابقة) ── */
 .enter-next {
-  animation: slide-in-next 0.34s ease-out;
+  animation: deck-in-next var(--slide-duration) var(--ease-slide) both;
 }
 .enter-prev {
-  animation: slide-in-prev 0.34s ease-out;
+  animation: deck-in-prev var(--slide-duration) var(--ease-slide) both;
 }
-@keyframes slide-in-next {
+.leave-next {
+  animation: deck-out-next var(--slide-duration) var(--ease-slide) forwards;
+}
+.leave-prev {
+  animation: deck-out-prev var(--slide-duration) var(--ease-slide) forwards;
+}
+.slide-frame.is-leaving {
+  z-index: 0;
+  pointer-events: none;
+}
+.slide-frame.is-leaving * {
+  animation: none !important;
+}
+.slide-frame.slide {
+  z-index: 1;
+}
+@keyframes deck-in-next {
   from {
     opacity: 0;
-    translate: -30px 0;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
+    translate: calc(-1 * var(--slide-shift)) 0;
   }
 }
-@keyframes slide-in-prev {
+@keyframes deck-in-prev {
   from {
     opacity: 0;
-    translate: 30px 0;
+    translate: var(--slide-shift) 0;
   }
+}
+@keyframes deck-out-next {
   to {
-    opacity: 1;
-    translate: 0 0;
+    opacity: 0;
+    translate: var(--slide-shift) 0;
   }
 }
-.slide-title-grid {
+@keyframes deck-out-prev {
+  to {
+    opacity: 0;
+    translate: calc(-1 * var(--slide-shift)) 0;
+  }
+}
+/* الظهور المتدرّج: العنوان ← الأيقونة ← النص ← الشخصية (100ms بين كل خطوة) */
+.reveal {
+  animation: reveal-rise 0.5s var(--ease-slide) both;
+  animation-delay: calc(var(--reveal-base) + var(--i, 0) * var(--reveal-step));
+}
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+/* ── التخطيط: عمود النص (يمين) وعمود الشخصية (يسار) الذي يلامس حافة البطاقة ── */
+.slide-layout {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: clamp(22px, 4vw, 58px);
-  width: 100%;
-  text-align: start;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(16px, 3vw, 44px);
 }
-.lesson-number {
-  display: block;
-  font-size: clamp(14px, 1.7vh, 16px);
-  color: #5d6b84;
-  margin: 4px 0 10px;
+.slide-title .slide-layout {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr);
 }
-.slide-hero-icon {
-  display: grid;
-  place-items: center;
-  width: clamp(50px, 8vh, 68px);
-  height: clamp(50px, 8vh, 68px);
-  border: 1px solid #c4e1fb;
-  border-radius: 20px;
-  background: #e3f2ff;
-  color: #1767b8;
-  margin-bottom: clamp(8px, 1.6vh, 15px);
+.slide-goal .slide-layout,
+.slide-challenge .slide-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
 }
-.level-2 .slide-hero-icon {
-  background: #ffedb3;
-  border-color: #ecd188;
-  color: #7a4b03;
+.slide-end .slide-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
-.lesson-hero h1 {
-  font-size: clamp(29px, min(3.6vw, 5.4vh), 44px);
-  line-height: 1.32;
-  color: #1b2a4e;
-  margin-bottom: clamp(6px, 1vh, 12px);
-}
-.lesson-hero p {
-  font-size: clamp(17px, min(1.9vw, 2.5vh), 21px);
-  line-height: 1.75;
-  color: #3c4b6e;
-}
-.slide-character {
+.slide-main {
+  align-self: center;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: clamp(8px, 1.6vh, 14px);
+  align-items: flex-start;
+  gap: clamp(8px, 2.2cqh, 18px);
 }
-.slide-character .character {
-  height: clamp(110px, 23vh, 188px);
-  width: auto;
-}
-.slide-speech {
-  position: relative;
-  max-width: 200px;
-  padding: 8px 13px;
-  border: 1px solid #b9d4e9;
-  border-radius: 14px 14px 3px 14px;
-  background: #ffffff;
-  box-shadow: 0 4px 0 #a6bed466;
-  color: #3c4b6e;
+.slide-running-head {
+  flex-shrink: 0;
+  display: block;
+  padding-block-end: 6px;
+  overflow: hidden;
+  color: #536278;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.slide-running-head > span {
+  margin-inline: 7px;
+}
+/* ── الشخصية: بطلة الشريحة، تخرج من الحافة السفلية، فوق شكل خلفي كبير ── */
+.slide-figure {
+  --fig-h: 80cqh;
+  position: relative;
+  align-self: stretch;
+  min-width: 0;
+  margin-block-end: calc(-1 * var(--pad-y));
+}
+.slide-figure::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -12%;
+  translate: -50% 0;
+  width: min(100%, 78cqh);
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.figure-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(0px, 2cqw, 26px);
+}
+.figure-bob,
+.figure-pop {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+.figure-bob {
+  transform-origin: 50% 100%;
+  animation: figure-bob 3s ease-in-out infinite;
+  animation-delay: calc(
+    var(--reveal-base) + 3 * var(--reveal-step) + 0.85s + var(--n, 0) * 0.4s
+  );
+}
+.figure-pop {
+  transform-origin: 50% 100%;
+  animation: figure-spring 0.8s ease-out both;
+  animation-delay: calc(
+    var(--reveal-base) + 3 * var(--reveal-step) + var(--n, 0) * 0.12s
+  );
+}
+.slide-figure .character {
+  height: min(100%, var(--fig-h));
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: bottom;
+}
+/* دخول بقفزة نابضية من حافة البطاقة، ثم «تنفّس» خفيف كل 3 ثوانٍ */
+@keyframes figure-spring {
+  0% {
+    opacity: 0;
+    translate: 0 60px;
+    scale: 0.86;
+  }
+  50% {
+    opacity: 1;
+    translate: 0 -10px;
+    scale: 1.03;
+  }
+  75% {
+    translate: 0 3px;
+    scale: 0.99;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes figure-bob {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+  50% {
+    scale: 1.012 1.025;
+  }
+}
+/* الأشكال الخلفية حسب نوع الشريحة */
+.figure-title {
+  --fig-h: 88cqh;
+}
+.figure-title::before,
+.figure-end::before {
+  width: min(118%, 86cqh);
+  bottom: -18%;
+  background: #ffffff1f;
+  box-shadow: 0 0 0 clamp(14px, 3cqh, 28px) #ffffff0f;
+}
+.level-2 .figure-title::before,
+.level-2 .figure-end::before {
+  background: #ffffff59;
+  box-shadow: 0 0 0 clamp(14px, 3cqh, 28px) #ffffff2e;
+}
+.figure-goal {
+  --fig-h: 64cqh;
+}
+.figure-goal::before {
+  width: min(96%, 70cqh);
+  bottom: 6%;
+  background: var(--blob);
+  opacity: 0.85;
+}
+.figure-activity {
+  --fig-h: 82cqh;
+}
+/* نصف شاشة ملوّن يمتد حتى حافتي البطاقة العليا واليسرى */
+.figure-activity::before {
+  left: calc(-1 * var(--pad-x));
+  right: 0;
+  top: calc(-1 * var(--pad-y));
+  bottom: 0;
+  translate: none;
+  width: auto;
+  aspect-ratio: auto;
+  border-radius: 0 clamp(36px, 7cqh, 60px) 0 0;
+  background: var(--panel);
+}
+.figure-challenge {
+  --fig-h: 70cqh;
+}
+.figure-challenge::before {
+  width: min(104%, 82cqh);
+  aspect-ratio: 1.05;
+  bottom: -10%;
+  border-radius: 62% 38% 46% 54% / 55% 45% 55% 45%;
+  background: var(--blob);
+}
+.figure-end {
+  --fig-h: 78cqh;
+}
+.figure-end .character.is-bust {
+  height: min(64%, calc(var(--fig-h) * 0.64));
+}
+.slide-speech {
+  position: absolute;
+  z-index: 2;
+  top: 5%;
+  right: 0;
+  max-width: 190px;
+  padding: 8px 14px;
+  border: 1px solid #b9d4e9;
+  border-radius: 16px 16px 16px 4px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 #0e4f9333;
+  color: #1b2a4e;
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1.55;
+  text-align: center;
+  animation: reveal-rise 0.45s var(--ease-slide) both;
+  animation-delay: calc(var(--reveal-base) + 4 * var(--reveal-step) + 0.35s);
 }
-.slide-goal {
-  width: 100%;
-  text-align: start;
-  background: #fff4cf;
-  border: 1px solid #f0d48c;
-  border-radius: 20px;
-  box-shadow: 0 4px 0 #e8cf8f66;
-  padding: clamp(13px, 2.3vh, 22px) clamp(17px, 2.8vw, 28px);
+/* ── العناوين: كبيرة، بلونين ── */
+.accent {
+  color: var(--accent);
 }
-.slide-goal h2 {
+.slide-heading {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: clamp(21px, min(2.6vw, 3.3vh), 27px);
-  line-height: 1.45;
-  color: #785114;
-  margin-bottom: 5px;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-family: var(--display);
+  font-size: clamp(30px, min(3.8vw, 7cqh), 52px);
+  font-weight: 800;
+  line-height: 1.35;
+  color: #1b2a4e;
 }
-.slide-goal h2 > svg {
-  color: #9b680a;
-}
-.slide-goal p {
-  font-size: clamp(17px, min(1.9vw, 2.5vh), 21px);
-  line-height: 1.75;
-  color: #785114;
+.slide-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 18px);
 }
 .slide-emblem {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: clamp(56px, 10vh, 84px);
-  height: clamp(56px, 10vh, 84px);
+  width: clamp(54px, 11cqh, 76px);
+  height: clamp(54px, 11cqh, 76px);
   border: 1px solid;
-  border-radius: 26px;
+  border-radius: 24px;
 }
 .emblem-blue {
   background: #e3f2ff;
@@ -1041,48 +1366,127 @@ img {
   color: #1767b8;
   box-shadow: 0 5px 0 #bfdcf5;
 }
-.emblem-gold {
+.emblem-gold,
+.emblem-target {
   background: #ffe7a2;
   border-color: #eccf8b;
   color: #7a4b03;
   box-shadow: 0 5px 0 #e3c887;
 }
-.slide > h2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: clamp(8px, 1.4vw, 14px);
-  font-size: clamp(27px, min(3.2vw, 4.8vh), 38px);
-  line-height: 1.4;
-  color: #1b2a4e;
-}
 .slide-part {
   font-family: var(--display);
   font-size: clamp(14px, 2vh, 16px);
   font-weight: 700;
-  color: #5d6b84;
+  color: #536278;
   background: #eef2f7;
   border: 1px solid #dbe4f0;
   border-radius: 999px;
-  padding: 4px 13px;
+  padding: 3px 13px;
 }
+/* ── الغلاف ── */
+.lesson-hero .slide-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 15px;
+}
+.slide-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #7a4b03;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.lesson-number {
+  display: block;
+  font-size: clamp(14px, 1.7vh, 16px);
+  font-weight: 700;
+  color: #5d6b84;
+}
+.slide-title-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 20px);
+}
+.slide-hero-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: clamp(56px, 12cqh, 84px);
+  height: clamp(56px, 12cqh, 84px);
+  border: 2px solid #ffffff80;
+  border-radius: 26px;
+  background: #ffffff40;
+  color: #3d2600;
+}
+.lesson-hero h1 {
+  font-family: var(--display);
+  font-size: clamp(32px, min(4.6vw, 9cqh), 64px);
+  font-weight: 800;
+  line-height: 1.28;
+  color: #3d2600;
+}
+.lesson-hero p {
+  font-size: clamp(18px, min(2.1vw, 3.8cqh), 25px);
+  line-height: 1.7;
+  color: #3d2600;
+}
+.level-1 .lesson-number,
+.level-1 .lesson-hero h1,
+.level-1 .lesson-hero .slide-lead,
+.level-1 .slide-hero-icon {
+  color: #ffffff;
+}
+.level-2 .lesson-number {
+  color: #3d2600;
+}
+.level-1 .slide-pill {
+  color: #0e4f93;
+}
+.level-1 .slide-hero-icon {
+  border-color: #ffffff59;
+  background: #ffffff26;
+}
+/* ── هدفي اليوم: شريحة هادئة، الهدف بخط كبير ── */
+.slide-goal-text {
+  max-width: 640px;
+  padding: clamp(14px, 3cqh, 26px) clamp(18px, 2.6vw, 28px);
+  border: 1px solid #f0d48c;
+  border-inline-start: 7px solid #f2b81f;
+  border-radius: 22px;
+  background: #fff6d9;
+  color: #5c3d0c;
+  font-size: clamp(21px, min(2.6vw, 4.6cqh), 32px);
+  font-weight: 700;
+  line-height: 1.7;
+}
+/* ── النشاط والتحدي ── */
 .slide-body {
-  font-size: clamp(19px, min(2.15vw, 2.9vh), 25px);
+  font-size: clamp(19px, min(2.2vw, 3.8cqh), 26px);
   line-height: 1.85;
   color: #3c4b6e;
-  max-width: 780px;
+  max-width: 720px;
 }
 .slide-challenge .slide-body {
   color: #1b2a4e;
   font-weight: 500;
+  padding: clamp(12px, 3cqh, 24px) clamp(16px, 2.4vw, 26px);
+  border: 1px solid #f0d48c;
+  border-inline-start: 7px solid #f2b81f;
+  border-radius: 22px;
+  background: #fff8e3;
 }
 .slide-steps {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.6vh, 15px);
+  gap: clamp(8px, 2cqh, 14px);
   width: 100%;
-  max-width: 790px;
+  max-width: 740px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1090,52 +1494,150 @@ img {
 .lesson-step {
   display: flex;
   align-items: flex-start;
-  gap: clamp(11px, 2vw, 17px);
+  gap: clamp(11px, 2vw, 16px);
   text-align: start;
   background: #ffffff;
   border: 1px solid #d2e3f5;
-  border-radius: 18px;
-  padding: clamp(12px, 2vh, 19px) clamp(14px, 2.4vw, 22px);
-  box-shadow: 0 3px 0 #d7e5f280;
+  border-radius: 20px;
+  padding: clamp(11px, 2.6cqh, 18px) clamp(14px, 2.2vw, 20px);
+  box-shadow: 0 4px 0 #d7e5f2;
+}
+.lesson-step:nth-child(3n + 1) .lesson-step-number {
+  background: #e3f2ff;
+}
+.lesson-step:nth-child(3n + 2) .lesson-step-number {
+  background: #ffe1ec;
+  color: #a3204f;
+}
+.lesson-step:nth-child(3n + 3) .lesson-step-number {
+  background: #ddf6f1;
+  color: #0b6b5f;
 }
 .lesson-step-number {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: clamp(34px, 5.4vh, 45px);
-  height: clamp(34px, 5.4vh, 45px);
+  width: clamp(36px, 7cqh, 48px);
+  height: clamp(36px, 7cqh, 48px);
   border-radius: 999px;
   background: #e3f2ff;
   color: #1767b8;
   font-family: var(--display);
-  font-size: clamp(18px, 2.6vh, 24px);
-  font-weight: 700;
+  font-size: clamp(18px, 3.4cqh, 24px);
+  font-weight: 800;
   line-height: 1;
 }
 .lesson-step p {
   margin: 0;
   padding-top: 2px;
-  font-size: clamp(17px, min(2vw, 2.7vh), 22px);
+  font-size: clamp(17px, min(2vw, 3.4cqh), 23px);
   line-height: 1.8;
   color: #3c4b6e;
 }
-.slide-end-character .character {
-  height: clamp(92px, 17vh, 148px);
-  width: auto;
+/* ── النهاية: «أحسنتم!» كبيرة على خلفية العالم، شخصيتان ونثار مرة واحدة ── */
+.slide-end-main {
+  gap: clamp(8px, 2cqh, 16px);
+}
+.slide-end .slide-heading {
+  font-size: clamp(24px, min(2.8vw, 5cqh), 34px);
+  color: #3d2600;
+}
+.end-cheer {
+  font-family: var(--display);
+  font-size: clamp(46px, min(7vw, 13cqh), 92px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #7c2d12;
+}
+.level-1 .slide-end .slide-heading {
+  color: #ffffff;
+}
+.level-1 .end-cheer {
+  color: #ffe9a6;
+}
+.end-medal {
+  display: grid;
+  place-items: center;
+  width: clamp(44px, 9cqh, 58px);
+  height: clamp(44px, 9cqh, 58px);
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffd65a, #f2b21b);
+  color: #7a4b03;
+  box-shadow: 0 4px 0 #b97f00;
+  animation: medal-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--reveal-base) + 0.25s);
+}
+.is-quiet .end-medal {
+  background: linear-gradient(180deg, #ffffff, #e3f2ff);
+  color: #1767b8;
+  box-shadow: 0 4px 0 #0d3f7555;
+}
+.end-confetti {
+  position: absolute;
+  left: 25%;
+  top: 40%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.end-confetti i {
+  position: absolute;
+  left: -4px;
+  top: -6px;
+  width: 8px;
+  height: 13px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-burst 2.6s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+  animation-delay: calc(0.5s + var(--d));
+}
+@keyframes confetti-burst {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  12% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+    translate: var(--x) var(--y);
+    rotate: var(--r);
+  }
+  100% {
+    opacity: 0;
+    translate: var(--x) calc(var(--y) + 110px);
+    rotate: calc(var(--r) + 160deg);
+  }
+}
+@keyframes medal-pop {
+  from {
+    opacity: 0;
+    scale: 0.3;
+    rotate: -25deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: 0deg;
+  }
 }
 .lesson-approval-note {
   display: flex;
   align-items: center;
   gap: 12px;
-  max-width: 720px;
+  max-width: 560px;
   text-align: start;
   background: #fff4cf;
   border: 1px solid #f0d48c;
   border-radius: 16px;
-  padding: clamp(12px, 2vh, 18px) clamp(15px, 2.6vw, 24px);
+  padding: clamp(10px, 2.4cqh, 16px) clamp(14px, 2.4vw, 22px);
   color: #785114;
-  font-size: clamp(15px, min(1.8vw, 2.3vh), 18px);
-  line-height: 1.8;
+  font-size: clamp(15px, min(1.8vw, 2.8cqh), 18px);
+  line-height: 1.75;
 }
 .lesson-approval-note svg {
   flex-shrink: 0;
@@ -1144,9 +1646,25 @@ img {
 .lesson-approval-note p {
   margin: 0;
 }
-.slide-end-actions {
-  justify-content: center;
+/* أزرار النهاية على الأزرق: أصفر للإجراء الرئيسي وأبيض للعودة */
+.level-1 .slide-end .btn-primary {
+  background: linear-gradient(180deg, #ffe680, #ffbd1a);
+  border-color: #e8ad28;
+  color: #4a3200;
+  box-shadow: 0 4px 0 #b97f00;
 }
+.level-1 .slide-end .btn-primary:hover:not(:disabled) {
+  background: #ffd23f;
+}
+.slide-end .btn-ghost {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0e4f93;
+}
+.slide-end .btn-ghost:hover:not(:disabled) {
+  background: #eaf5ff;
+}
+/* ── أداة التنقّل العائمة: عدّاد «شريحة N من M» بارز وشريط تقدّم رفيع مقسّم ── */
 .slide-nav {
   position: absolute;
   inset-inline: 0;
@@ -1157,7 +1675,7 @@ img {
   margin-inline: auto;
   display: flex;
   align-items: center;
-  gap: clamp(8px, 1.8vw, 15px);
+  gap: clamp(8px, 1.8vw, 16px);
   padding: 8px;
   border: 1px solid #ffffffc9;
   border-radius: 999px;
@@ -1200,25 +1718,31 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-width: 92px;
+  gap: 3px;
+  min-width: 112px;
 }
 .slide-counter {
-  font-size: 14px;
-  font-weight: 700;
-  color: #3c4b6e;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #1b2a4e;
   white-space: nowrap;
+}
+.slide-counter-label {
+  font-weight: 600;
+  color: #3c4b6e;
 }
 .slide-dots {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 .slide-dots .dot {
   display: block;
-  width: 24px;
-  height: 22px;
-  padding: 6px 7px;
+  width: clamp(18px, 4.2vw, 32px);
+  height: 20px;
+  padding: 7px 0;
   border: 0;
   border-radius: 999px;
   background: none;
@@ -1226,17 +1750,19 @@ img {
 .slide-dots .dot::before {
   content: "";
   display: block;
-  width: 10px;
-  height: 10px;
-  margin: auto;
+  width: 100%;
+  height: 6px;
   border-radius: 999px;
-  background: #c9d6e8;
-  transition:
-    width 0.25s,
-    background 0.25s;
+  background: #d3deec;
+  transition: background-color var(--slide-duration) var(--ease-slide);
+}
+.slide-dots .dot:hover:not(.active)::before {
+  background: #a9c8e8;
+}
+.slide-dots .dot.is-done::before {
+  background: #7fb0df;
 }
 .slide-dots .dot.active::before {
-  width: 22px;
   background: #1767b8;
 }
 @keyframes dialog-in {
@@ -1354,17 +1880,87 @@ img {
     inset-inline-end: max(10px, env(safe-area-inset-right));
   }
   .slide-stage {
-    padding: calc(max(12px, env(safe-area-inset-top)) + 50px) 16px
-      calc(max(12px, env(safe-area-inset-bottom)) + 86px);
+    padding: calc(max(12px, env(safe-area-inset-top)) + 54px) 12px
+      calc(max(12px, env(safe-area-inset-bottom)) + 90px);
   }
-  .slide-title-grid {
-    grid-template-columns: 1fr;
+  .slide-frame {
+    --pad-y: 16px;
+    --pad-x: 16px;
+    height: 100%;
+    padding-inline-start: 22px;
+    border-radius: 24px;
   }
-  .slide-character {
+  .slide-frame::before {
+    inset-block: 20px;
+    width: 5px;
+  }
+  /* الهاتف: النص في الأعلى، والشخصية تملأ ما تبقّى وتلامس الحافة السفلية */
+  .slide-frame .slide-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .slide-main {
+    align-self: stretch;
+    flex: none;
+  }
+  .slide-figure {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .figure-title {
+    --fig-h: 46cqh;
+  }
+  .figure-goal {
+    --fig-h: 38cqh;
+  }
+  .figure-activity {
+    --fig-h: 44cqh;
+  }
+  .figure-challenge {
+    --fig-h: 40cqh;
+  }
+  .figure-end {
+    --fig-h: 40cqh;
+  }
+  .figure-title::before,
+  .figure-end::before,
+  .figure-goal::before,
+  .figure-challenge::before {
+    width: min(86%, 100cqh);
+  }
+  .figure-activity::before {
+    left: calc(-1 * var(--pad-x));
+    right: calc(-1 * var(--pad-x));
+    top: 0;
+    border-radius: clamp(28px, 6cqh, 40px) clamp(28px, 6cqh, 40px) 0 0;
+  }
+  .slide-speech {
+    /* فوق رأس الشخصية مباشرة، لا في أعلى المساحة الفارغة */
+    top: auto;
+    bottom: calc(var(--fig-h) + 6px);
+    right: 6%;
+    max-width: 150px;
+    font-size: 13px;
+    padding: 6px 11px;
+  }
+  .slide-running-head {
+    font-size: 13px;
+    padding-block-end: 2px;
+  }
+  .deco-path,
+  .deco-bubble,
+  .slide-deco::before {
     display: none;
   }
-  .slide-end-character .character {
-    height: clamp(72px, 13vh, 104px);
+  .deco-waves {
+    top: auto;
+    bottom: 26%;
+    left: 4%;
+  }
+  .end-confetti {
+    left: 50%;
+    top: 70%;
   }
   .slide-end-actions > .btn {
     flex-grow: 0;
@@ -1375,11 +1971,14 @@ img {
   }
   .btn-nav {
     min-height: 44px;
-    padding: 8px 14px;
+    padding: 8px 13px;
     font-size: 14px;
   }
   .slide-status {
-    min-width: 74px;
+    min-width: 96px;
+  }
+  .slide-counter {
+    font-size: 15px;
   }
 }
 @media (max-height: 650px) and (min-width: 641px) {
@@ -1392,26 +1991,8 @@ img {
 }
 /* شاشات العرض القصيرة: نقلّص المساحات فقط، ولا نصغّر خط النصوص عن الحد المقروء */
 @media (max-height: 720px) and (min-width: 641px) {
-  .slide-character .character {
-    height: clamp(96px, 20vh, 150px);
-  }
-  .slide-end-character .character {
-    height: clamp(80px, 15vh, 120px);
-  }
-  .slide-hero-icon {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 8px;
-  }
-  .slide-hero-icon > svg {
-    width: 30px;
-    height: 30px;
-  }
-}
-@media (max-height: 560px) {
-  .slide-character,
-  .slide-end-character {
-    display: none;
+  .slide-running-head {
+    padding-block-end: 2px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1421,5 +2002,9 @@ img {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+  /* بلا حركة: لا نثار ولا انزلاق ولا تنفّس — الشريحة تظهر مباشرة */
+  .end-confetti {
+    display: none;
   }
 }

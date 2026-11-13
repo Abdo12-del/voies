@@ -45,9 +45,8 @@ async function expectSingleFittingSlide(page: Page, total: number) {
         lesson.scrollWidth > lesson.clientWidth + 1,
       clipped,
       slideTop: document.querySelector(".slide")!.getBoundingClientRect().top,
-      navBottom: document
-        .querySelector(".slide-nav")!
-        .getBoundingClientRect().bottom,
+      navBottom: document.querySelector(".slide-nav")!.getBoundingClientRect()
+        .bottom,
     };
   });
   expect(geometry.documentOverflow, "الصفحة لا تتمرر رأسيًا").toBe(false);
@@ -72,10 +71,10 @@ for (const [width, height] of [
     await page.setViewportSize({ width, height });
     await seedClassroom(page, 7);
     await openCurrentLesson(page);
-    // حصة 8: نشاط من خطوتين → 4 شرائح: العنوان والهدف، النشاط، التحدي، النهاية
+    // حصة 8: نشاط من خطوتين → 5 شرائح: الغلاف، هدفي اليوم، النشاط، التحدي، النهاية
     const total = Number(/من (\d+)/.exec(await counter(page).innerText())![1]);
-    expect(total).toBe(4);
-    await expect(counter(page)).toHaveText("1 من 4");
+    expect(total).toBe(5);
+    await expect(counter(page)).toHaveText("1 من 5");
     await expect(prev(page)).toBeDisabled();
     await expect(finishButton(page)).toHaveCount(0);
     await expectSingleFittingSlide(page, total);
@@ -88,6 +87,10 @@ for (const [width, height] of [
       await expect(counter(page)).toHaveText(`${i} من ${total}`);
       await expect(page.locator(".lesson .slide")).toHaveCount(1);
       await expectSingleFittingSlide(page, total);
+      if (width === 1440 || width === 390)
+        await page.screenshot({
+          path: `artifacts/screenshots/lesson-${width}x${height}-slide${i}.png`,
+        });
       // إنهاء الحصة لا يظهر إلا في شريحة النهاية
       await expect(finishButton(page)).toHaveCount(i === total ? 1 : 0);
     }
@@ -110,23 +113,23 @@ test("RTL keyboard: left arrow advances, right arrow returns, Home/End jump; bro
   await page.setViewportSize({ width: 1366, height: 768 });
   await seedClassroom(page, 7);
   await openCurrentLesson(page);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   await page.keyboard.press("ArrowLeft");
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await page.keyboard.press("ArrowRight");
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   await page.keyboard.press("End");
-  await expect(counter(page)).toHaveText("4 من 4");
+  await expect(counter(page)).toHaveText("5 من 5");
   await expect(finishButton(page)).toBeVisible();
   await page.keyboard.press("ArrowLeft");
-  await expect(counter(page)).toHaveText("4 من 4");
+  await expect(counter(page)).toHaveText("5 من 5");
   await page.keyboard.press("Home");
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   // النقاط تنقل مباشرة إلى شريحة
   await page
-    .getByRole("button", { name: "الشريحة 3: تحدّي المحطة", exact: true })
+    .getByRole("button", { name: "الشريحة 4: تحدّي المحطة", exact: true })
     .click();
-  await expect(counter(page)).toHaveText("3 من 4");
+  await expect(counter(page)).toHaveText("4 من 5");
   // التجوّل الكامل في الشرائح ثم العودة لا يغيّر التقدّم
   await page.locator(".lesson-float-start .lesson-chip").click();
   await expect(page.getByRole("progressbar")).toHaveAttribute(
@@ -164,12 +167,12 @@ test("horizontal swipe navigates on a phone without any vertical scroll", async 
   };
   // RTL: السحب نحو اليسار يقدّم الشريحة، ونحو اليمين يعيدها
   await swipe(320, 70);
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await swipe(70, 320);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   // سحب قصير أو شبه رأسي لا يبدّل الشريحة
   await swipe(300, 260);
-  await expect(counter(page)).toHaveText("1 من 4");
+  await expect(counter(page)).toHaveText("1 من 5");
   expect(await page.evaluate(() => scrollY)).toBe(0);
   await context.close();
 });
@@ -180,14 +183,14 @@ test("the wheel stays available mid-deck and closes back onto the same slide", a
   await seedClassroom(page, 7, ["ليان", "سامي"]);
   await openCurrentLesson(page);
   await next(page).click();
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await page.getByRole("button", { name: "مَن يتحدث؟", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "مَن يتحدث؟", exact: true }),
   ).toBeFocused();
-  await expect(counter(page)).toHaveText("2 من 4");
+  await expect(counter(page)).toHaveText("2 من 5");
   await expect(page.locator(".lesson")).toBeVisible();
 });
 
@@ -201,10 +204,10 @@ test("review mode never offers completion and never changes progress", async ({
   await expect(page.locator(".lesson-float-mode")).toContainText(
     "وضع المراجعة",
   );
-  for (let i = 1; i <= 4; i++) {
-    await expect(counter(page)).toHaveText(`${i} من 4`);
+  for (let i = 1; i <= 5; i++) {
+    await expect(counter(page)).toHaveText(`${i} من 5`);
     await expect(finishButton(page)).toHaveCount(0);
-    if (i < 4) await next(page).click();
+    if (i < 5) await next(page).click();
   }
   await expect(page.locator(".lesson-approval-note")).toContainText(
     "المراجعة لا تغيّر تقدّم الرحلة",
@@ -238,11 +241,140 @@ test("slide deck passes wcag checks on desktop and phone", async ({ page }) => {
         id: v.id,
         nodes: v.nodes.map((n) => n.target),
       }));
-      expect(violations[`${width}-${state}`], `${width}×${height} ${state}`).toEqual([]);
+      expect(
+        violations[`${width}-${state}`],
+        `${width}×${height} ${state}`,
+      ).toEqual([]);
     }
     writeFileSync(
       `artifacts/axe-lesson-${width}.json`,
       JSON.stringify(violations, null, 2),
     );
   }
+});
+
+/* كل شرائح الحصص الـ32 تتسع داخل بطاقة الشريحة (البطاقة تقصّ الفائض، فنفحص الحدود). */
+for (const [width, height] of [
+  [1440, 900],
+  [1366, 768],
+  [1024, 768],
+  [390, 844],
+])
+  test(`every slide of all 32 sessions fits its card at ${width}×${height}`, async ({
+    page,
+  }) => {
+    test.setTimeout(150000);
+    await page.setViewportSize({ width, height });
+    await seedClassroom(page, 32);
+    const problems: string[] = [];
+    for (let id = 1; id <= 32; id++) {
+      await page.goto(`/#/lesson/${id}?mode=review`);
+      await expect(page.locator(".lesson .slide")).toHaveCount(1);
+      await page.evaluate(() => document.fonts.ready);
+      const total = Number(
+        /من (\d+)/.exec(await counter(page).innerText())![1],
+      );
+      for (let i = 1; i <= total; i++) {
+        await expect(counter(page)).toHaveText(`${i} من ${total}`);
+        const issues = await page.evaluate(() => {
+          const card = document.querySelector(".lesson .slide")!;
+          const c = card.getBoundingClientRect();
+          const out: string[] = [];
+          if (document.documentElement.scrollHeight > innerHeight)
+            out.push("page scrolls");
+          for (const el of card.querySelectorAll("*")) {
+            if (el.closest(".slide-deco, .end-confetti")) continue;
+            const r = el.getBoundingClientRect();
+            if (r.width + r.height === 0) continue;
+            if (
+              r.top < c.top - 1 ||
+              r.bottom > c.bottom + 1 ||
+              r.left < c.left - 1 ||
+              r.right > c.right + 1
+            )
+              out.push(`${(el as HTMLElement).className || el.tagName}`);
+          }
+          return out;
+        });
+        if (issues.length)
+          problems.push(`#${id} s${i}: ${issues.slice(0, 3).join(", ")}`);
+        if (i < total) await page.keyboard.press("ArrowLeft");
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+test("slides glide RTL with a staggered reveal and a springy, breathing character", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await seedClassroom(page, 7);
+  await openCurrentLesson(page);
+  await next(page).click();
+  // التالية تدخل من اليسار والحالية تغادر يمينًا، بمدة 0.45s
+  const motion = await page.evaluate(() => {
+    const anim = (el: Element | null) => (el ? getComputedStyle(el) : null);
+    const live = anim(document.querySelector(".lesson .slide"))!;
+    const ghost = anim(document.querySelector(".slide-frame.is-leaving"));
+    const delay = (sel: string) =>
+      parseFloat(
+        anim(document.querySelector(`.lesson .slide ${sel}`))!.animationDelay,
+      ) * 1000;
+    return {
+      live: [live.animationName, live.animationDuration],
+      ghost: ghost && [ghost.animationName, ghost.animationDuration],
+      order: [
+        delay(".slide-heading"),
+        delay(".slide-emblem"),
+        delay(".slide-steps li, .slide-body, .slide-goal-text"),
+        delay(".figure-pop"),
+      ],
+      bob:
+        anim(document.querySelector(".lesson .slide .figure-bob"))!
+          .animationName +
+        " " +
+        anim(document.querySelector(".lesson .slide .figure-bob"))!
+          .animationDuration,
+    };
+  });
+  expect(motion.live).toEqual(["deck-in-next", "0.45s"]);
+  expect(motion.ghost).toEqual(["deck-out-next", "0.45s"]);
+  // العنوان ← الأيقونة ← النص ← الشخصية بفواصل 80–120ms
+  for (let n = 1; n < motion.order.length; n++) {
+    const gap = motion.order[n] - motion.order[n - 1];
+    expect(gap).toBeGreaterThanOrEqual(80);
+    expect(gap).toBeLessThanOrEqual(120);
+  }
+  expect(motion.bob).toBe("figure-bob 3s");
+  // الشريحة المغادرة تختفي بعد الانتقال، وتبقى شريحة واحدة
+  await expect(page.locator(".slide-frame.is-leaving")).toHaveCount(0);
+  await expect(page.locator(".lesson .slide")).toHaveCount(1);
+  // الرجوع: الدخول من اليمين
+  await prev(page).click();
+  expect(
+    await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector(".lesson .slide")!)
+          .animationName,
+    ),
+  ).toBe("deck-in-prev");
+});
+
+test("prefers-reduced-motion switches every animation off", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await seedClassroom(page, 7);
+  await openCurrentLesson(page);
+  await page.keyboard.press("End");
+  await expect(counter(page)).toHaveText("5 من 5");
+  await expect(page.locator(".slide-frame.is-leaving")).toHaveCount(0);
+  const running = await page.evaluate(() =>
+    [...document.querySelectorAll(".lesson *")]
+      .filter((el) => getComputedStyle(el).animationName !== "none")
+      .map((el) => (el as HTMLElement).className),
+  );
+  expect(running).toEqual([]);
+  await expect(page.locator(".end-confetti")).toBeHidden();
 });

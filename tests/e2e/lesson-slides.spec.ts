@@ -63,6 +63,8 @@ test("the first lesson is an 18-scene teaching deck, not a platform dashboard", 
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
   await expectFirstLessonSlide(page, 1);
+  await expect(page.locator(".cover-kicker")).toHaveText("المتحدث الصغير");
+  await expect(page.locator(".scene-cover")).not.toContainText("الحصة الأولى");
   const coverMotion = await page.locator(".scene-cover").evaluate((element) => ({
     layered: element.classList.contains("has-layered-cover"),
     panelDisplay: getComputedStyle(element.querySelector(".cover-panel")!).display,
@@ -82,9 +84,29 @@ test("the first lesson is an 18-scene teaching deck, not a platform dashboard", 
   expect(coverMotion.planeAnimation).toBe("cover-plane-glide");
   expect(coverMotion.staticComposite).toBe(false);
   await page.emulateMedia({ reducedMotion: "reduce" });
+  const coverCenters = await page.locator(".cover-copy").evaluate((copy) =>
+    [
+      ".cover-kicker",
+      ".cover-title",
+      ".cover-description",
+      ".cover-speech",
+    ].map((selector) => {
+      const rect = copy
+        .querySelector<HTMLElement>(selector)!
+        .getBoundingClientRect();
+      return (rect.left + rect.right) / 2;
+    }),
+  );
+  expect(
+    Math.max(...coverCenters) - Math.min(...coverCenters),
+  ).toBeLessThanOrEqual(2);
   const coverSpeechClearsPlane = await page.evaluate(() => {
-    const bubble = document.querySelector(".cover-speech")!.getBoundingClientRect();
-    const plane = document.querySelector(".cover-paper-plane")!.getBoundingClientRect();
+    const bubble = document
+      .querySelector(".cover-speech")!
+      .getBoundingClientRect();
+    const plane = document
+      .querySelector(".cover-paper-plane")!
+      .getBoundingClientRect();
     return (
       bubble.right <= plane.left ||
       bubble.left >= plane.right ||
@@ -196,7 +218,8 @@ test("the first lesson reflows as full-screen teaching scenes on a phone", async
   await openCurrentLesson(page);
   await expectFirstLessonSlide(page, 1);
   await expect(page.getByRole("heading", { name: "أهلًا بي في مساحة الكلام" })).toBeVisible();
-  await expect(page.locator(".cover-panel")).not.toBeVisible();
+  await expect(page.locator(".scene-cover")).not.toContainText("الحصة الأولى");
+  await expect(page.locator(".cover-panel")).toBeVisible();
   await expectCustomArtwork(page, 1);
   await expectSingleFittingSlide(page, 18);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide1.png" });

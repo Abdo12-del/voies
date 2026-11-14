@@ -656,11 +656,7 @@ export function FirstLessonScene({
           </svg>
         </div>
         <div className="cover-copy">
-          <p className="cover-kicker">
-            <span>الحصة الأولى</span>
-            <span className="cover-kicker-separator" aria-hidden="true">•</span>
-            <span>المتحدث الصغير</span>
-          </p>
+          <p className="cover-kicker">المتحدث الصغير</p>
           <h1
             ref={live ? headingRef : undefined}
             tabIndex={live ? -1 : undefined}

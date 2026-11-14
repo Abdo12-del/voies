@@ -59,9 +59,40 @@ test("the first lesson is an 18-scene teaching deck, not a platform dashboard", 
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
   await expectFirstLessonSlide(page, 1);
+  const coverMotion = await page.locator(".scene-cover").evaluate((element) => ({
+    layered: element.classList.contains("has-layered-cover"),
+    panelDisplay: getComputedStyle(element.querySelector(".cover-panel")!).display,
+    panelAnimation: getComputedStyle(element.querySelector(".cover-panel")!).animationName,
+    titleAnimation: getComputedStyle(element.querySelector(".cover-title-line")!).animationName,
+    speechAnimation: getComputedStyle(element.querySelector(".cover-speech")!).animationName,
+    actorAnimation: getComputedStyle(element.querySelector(".cover-actor")!).animationName,
+    planeAnimation: getComputedStyle(element.querySelector(".cover-paper-plane")!).animationName,
+    staticComposite: getComputedStyle(element).backgroundImage.includes("cover-composite"),
+  }));
+  expect(coverMotion.layered).toBe(true);
+  expect(coverMotion.panelDisplay).toBe("block");
+  expect(coverMotion.panelAnimation).toBe("cover-panel-enter");
+  expect(coverMotion.titleAnimation).toBe("cover-text-enter");
+  expect(coverMotion.speechAnimation).toBe("cover-speech-pop");
+  expect(coverMotion.actorAnimation).toBe("cover-actor-enter");
+  expect(coverMotion.planeAnimation).toBe("cover-plane-glide");
+  expect(coverMotion.staticComposite).toBe(false);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const coverSpeechClearsPlane = await page.evaluate(() => {
+    const bubble = document.querySelector(".cover-speech")!.getBoundingClientRect();
+    const plane = document.querySelector(".cover-paper-plane")!.getBoundingClientRect();
+    return (
+      bubble.right <= plane.left ||
+      bubble.left >= plane.right ||
+      bubble.bottom <= plane.top ||
+      bubble.top >= plane.bottom
+    );
+  });
+  expect(coverSpeechClearsPlane).toBe(true);
   const typography = await page.evaluate(() => {
     const title = document.querySelector(".cover-title")!;
     const copy = document.querySelector(".cover-description")!;
@@ -164,6 +195,8 @@ test("the first lesson reflows as full-screen teaching scenes on a phone", async
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
   await expectFirstLessonSlide(page, 1);
+  await expect(page.getByRole("heading", { name: "أهلًا بي في مساحة الكلام" })).toBeVisible();
+  await expect(page.locator(".cover-panel")).not.toBeVisible();
   await expectCustomArtwork(page, 1);
   await expectSingleFittingSlide(page, 18);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide1.png" });
@@ -216,6 +249,20 @@ test("the first lesson reflows as full-screen teaching scenes on a phone", async
   });
   expect(medalOverlapsHeadline).toBe(false);
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-phone-slide18.png" });
+});
+
+test("the animated first-lesson cover honors reduced motion", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await seedClassroom(page, 0);
+  await openCurrentLesson(page);
+  await expectFirstLessonSlide(page, 1);
+  const runningAnimations = await page.locator(".scene-cover").evaluate((scene) =>
+    [...scene.querySelectorAll("*")]
+      .filter((element) => getComputedStyle(element).animationName !== "none")
+      .map((element) => (element as HTMLElement).className),
+  );
+  expect(runningAnimations).toEqual([]);
 });
 
 /** شريحة واحدة مرئية، الصفحة لا تتمرر رأسيًا، ولا عنصر مقصوص خارج الشاشة. */

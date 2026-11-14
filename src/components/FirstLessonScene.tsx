@@ -624,16 +624,58 @@ export function FirstLessonScene({
 }: Props) {
   if (slide.kind === "title") {
     const actor = slide.illustration;
+    const titleBreakAt = session.title.indexOf("مساحة الكلام");
+    const titleLines =
+      titleBreakAt > 0
+        ? [
+            session.title.slice(0, titleBreakAt).trim(),
+            session.title.slice(titleBreakAt).trim(),
+          ]
+        : [session.title];
     return (
-      <div className="first-scene scene-cover" data-purpose={slide.purpose}>
+      <div
+        className={`first-scene scene-cover${review ? "" : " has-layered-cover"}`}
+        data-purpose={slide.purpose}
+      >
+        <div className="cover-panel" aria-hidden="true" />
+        <div className="cover-decorations" aria-hidden="true">
+          <span className="cover-ring" />
+          <span className="cover-star cover-star-one" />
+          <span className="cover-star cover-star-two" />
+          <span className="cover-star cover-star-three" />
+          <span className="cover-star cover-star-four" />
+          <span className="cover-cloud cover-cloud-left" />
+          <span className="cover-cloud cover-cloud-right" />
+          <svg className="cover-flight-path" viewBox="0 0 760 260" preserveAspectRatio="none">
+            <path d="M0 190C96 190 100 72 195 92S290 244 390 168 515 60 670 90" />
+          </svg>
+          <svg className="cover-paper-plane" viewBox="0 0 64 50" focusable="false">
+            <path className="cover-plane-fill" d="M4 5 60 24 9 46 18 28 4 5Z" />
+            <path className="cover-plane-fold" d="m18 28 42-4-35 12Z" />
+            <path className="cover-plane-line" d="m18 28 42-4" />
+          </svg>
+        </div>
         <div className="cover-copy">
-          <p className="cover-kicker">الحصة الأولى · المتحدث الصغير</p>
+          <p className="cover-kicker">
+            <span>الحصة الأولى</span>
+            <span className="cover-kicker-separator" aria-hidden="true">•</span>
+            <span>المتحدث الصغير</span>
+          </p>
           <h1
             ref={live ? headingRef : undefined}
             tabIndex={live ? -1 : undefined}
             className="cover-title"
+            aria-label={session.title}
           >
-            {session.title}
+            {titleLines.map((line, index) => (
+              <span
+                key={line}
+                className={`cover-title-line cover-title-line-${index + 1}`}
+                aria-hidden="true"
+              >
+                {line}
+              </span>
+            ))}
           </h1>
           <p className="cover-description">{session.desc}</p>
           <SceneSpeech className="cover-speech">

@@ -62,6 +62,28 @@ test("the first lesson is an 18-scene teaching deck, not a platform dashboard", 
   await seedClassroom(page, 0);
   await openCurrentLesson(page);
   await expectFirstLessonSlide(page, 1);
+  const typography = await page.evaluate(() => {
+    const title = document.querySelector(".cover-title")!;
+    const copy = document.querySelector(".cover-description")!;
+    const speech = document.querySelector(".cover-speech")!;
+    return {
+      titleFamily: getComputedStyle(title).fontFamily,
+      copyFamily: getComputedStyle(copy).fontFamily,
+      speechFamily: getComputedStyle(speech).fontFamily,
+      displayLoaded: document.fonts.check('700 36px "Lemonada"', "أهلًا"),
+      copyLoaded: document.fonts.check('500 24px "Tajawal"', "مساحة الكلام"),
+      speechLoaded: document.fonts.check('600 24px "Baloo Bhaijaan 2"', "أهلًا بكم"),
+    };
+  });
+  expect(typography.titleFamily).toContain("Lemonada");
+  expect(typography.copyFamily).toContain("Tajawal");
+  expect(typography.speechFamily).toContain("Baloo Bhaijaan 2");
+  expect(typography.displayLoaded).toBe(true);
+  expect(typography.copyLoaded).toBe(true);
+  expect(typography.speechLoaded).toBe(true);
+  const coverSpeechShape = page.locator(".cover-speech .first-speech-shape");
+  await expect(coverSpeechShape).toHaveAttribute("aria-hidden", "true");
+  await expect(coverSpeechShape.locator(".first-speech-outline")).toHaveCount(1);
   await expectCustomArtwork(page, 1);
   await expect(firstLessonSlide(page)).toHaveAttribute(
     "data-purpose",
@@ -109,10 +131,26 @@ test("the first lesson is an 18-scene teaching deck, not a platform dashboard", 
   await expect(page.locator(".trio-stage")).toContainText("الأخت الصغيرة");
   await page.screenshot({ path: "artifacts/screenshots/lesson-1-slide14.png" });
 
+  await jumpToFirstLessonSlide(page, 16);
+  await expect(page.locator(".conversation-bubble-speaker")).toContainText(
+    "أنا سامي، وأحب لعب كرة القدم.",
+  );
+
   await page.keyboard.press("End");
   await expectFirstLessonSlide(page, 18);
   await expectCustomArtwork(page, 18);
   await expect(page.getByRole("heading", { name: "إنجازي الأول" })).toBeVisible();
+  const endingTypography = await page.locator(".ending-cheer").evaluate(async (element) => {
+    const sample = element.textContent ?? "";
+    const font = '700 48px "Lemonada"';
+    await document.fonts.load(font, sample);
+    return {
+      family: getComputedStyle(element).fontFamily,
+      loaded: document.fonts.check(font, sample),
+    };
+  });
+  expect(endingTypography.family).toContain("Lemonada");
+  expect(endingTypography.loaded).toBe(true);
   await expect(page.locator(".ending-next")).toContainText("في الحصة القادمة");
   await expect(finishButton(page)).toBeVisible();
   await expect(page.locator(".slide-nav, .slide-counter, .slide-dots")).toHaveCount(0);

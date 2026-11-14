@@ -47,12 +47,39 @@ function SceneActor({
 function SceneSpeech({
   children,
   className = "",
+  tail = "bottom-left",
 }: {
   children: ReactNode;
   className?: string;
+  tail?: "bottom-left" | "bottom-right" | "top-center";
 }) {
   if (!children) return null;
-  return <p className={`first-speech ${className}`}>{children}</p>;
+  const bubblePath =
+    tail === "top-center"
+      ? "M34 27H128C141 27 149 19 160 7C171 19 179 27 192 27H284C301 27 313 39 313 56V88C313 105 301 117 284 117H34C17 117 7 105 7 88V56C7 39 17 27 34 27Z"
+      : "M34 7H284C301 7 313 19 313 36V68C313 85 301 97 284 97H82C70 97 61 105 48 118C52 109 54 103 55 97H34C17 97 7 85 7 68V36C7 19 17 7 34 7Z";
+  const flipTail = tail === "bottom-right";
+  return (
+    <p className={`first-speech ${className}`}>
+      <svg
+        className="first-speech-shape"
+        viewBox="0 0 320 124"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <g transform={flipTail ? "translate(320 0) scale(-1 1)" : undefined}>
+          <path
+            className="first-speech-shadow"
+            d={bubblePath}
+            transform="translate(0 5)"
+          />
+          <path className="first-speech-outline" d={bubblePath} />
+        </g>
+      </svg>
+      <span className="first-speech-copy">{children}</span>
+    </p>
+  );
 }
 
 function SceneHeading({
@@ -470,7 +497,9 @@ function GuidedScene({
                   className="trio-actor"
                 />
                 <strong>{item.title}</strong>
-                <SceneSpeech className="trio-line">{item.text}</SceneSpeech>
+                <SceneSpeech className="trio-line" tail="top-center">
+                  {item.text}
+                </SceneSpeech>
               </article>
             ))}
           </div>
@@ -526,8 +555,11 @@ function GuidedScene({
             <SceneSpeech className="conversation-bubble conversation-bubble-listener">
               {actor?.speech ?? "أستمع إليك، تفضّل."}
             </SceneSpeech>
-            <SceneSpeech className="conversation-bubble conversation-bubble-speaker">
-              {cards[0]?.text ?? "أشارك اسمي وشيئًا أحبه."}
+            <SceneSpeech
+              className="conversation-bubble conversation-bubble-speaker"
+              tail="bottom-right"
+            >
+              أنا سامي، وأحب لعب كرة القدم.
             </SceneSpeech>
           </div>
           <div className="listening-cues">

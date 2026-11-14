@@ -75,6 +75,7 @@
   height: 100%;
   overflow: hidden;
   direction: rtl;
+  font-family: "Tajawal", sans-serif;
   color: var(--deck-ink);
   background:
     radial-gradient(ellipse at 88% 4%, #e8f5ff 0, transparent 32%),
@@ -107,6 +108,7 @@
 .first-scene > * {
   z-index: 1;
 }
+/* Baloo handles most display and speech; Lemonada accents the opening and ending, prose stays Tajawal. */
 .first-scene-heading {
   max-width: 100%;
   color: var(--deck-deep);
@@ -136,40 +138,52 @@
   filter: drop-shadow(0 10px 14px #1c4b7020);
 }
 .first-speech {
+  --speech-fill: #ffffff;
+  --speech-stroke: #91c8f2;
+  --speech-shadow: #cde7fb;
   position: absolute;
   z-index: 4;
   max-width: min(37%, 430px);
-  padding: clamp(10px, 1.35cqh, 18px) clamp(16px, 1.8cqw, 25px);
-  border: 2px solid #a8d2f5;
-  border-radius: 30px 30px 30px 8px;
-  background: #ffffff;
-  box-shadow: 0 6px 0 #cde7fb;
+  padding: clamp(12px, 1.35cqh, 18px) clamp(23px, 2cqw, 28px) clamp(23px, 2.4cqh, 30px);
   color: var(--deck-deep);
+  font-family: "Baloo Bhaijaan 2", "Tajawal", sans-serif;
   font-size: clamp(19px, 2.05cqw, 30px);
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.3;
   text-align: center;
   text-wrap: balance;
 }
-.first-speech::after {
-  content: "";
+.first-speech-shape {
   position: absolute;
-  bottom: -12px;
-  inset-inline-start: 30px;
-  width: 20px;
-  height: 20px;
-  border-inline-start: 2px solid #a8d2f5;
-  border-bottom: 2px solid #a8d2f5;
-  border-bottom-left-radius: 5px;
-  background: #ffffff;
-  rotate: -18deg;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.first-speech-shadow {
+  fill: var(--speech-shadow);
+}
+.first-speech-outline {
+  fill: var(--speech-fill);
+  stroke: var(--speech-stroke);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.first-speech-copy {
+  position: relative;
+  z-index: 1;
+  display: block;
 }
 .scene-kicker,
 .cover-kicker,
 .ending-kicker {
   color: #3976ad;
   font-size: clamp(15px, 1.45cqw, 21px);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.01em;
 }
 
@@ -202,9 +216,9 @@
 .cover-title {
   max-width: 900px;
   color: #124f8f;
-  font-family: var(--display);
+  font-family: "Lemonada", "Baloo Bhaijaan 2", "Tajawal", sans-serif;
   font-size: clamp(42px, 6.05cqw, 92px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
   text-wrap: balance;
 }
@@ -213,21 +227,19 @@
   margin-top: clamp(14px, 2.5cqh, 28px);
   color: #315579;
   font-size: clamp(21px, 2.55cqw, 38px);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.5;
 }
 .cover-speech {
+  --speech-fill: #fffdf3;
+  --speech-stroke: #e7bd42;
+  --speech-shadow: #f8e5a0;
   position: relative;
   display: table;
   max-width: 78%;
   margin-top: clamp(18px, 3cqh, 32px);
   inset: auto;
-  border-color: #f1ce5b;
-  box-shadow: 0 6px 0 #f9e8a5;
   color: #124f8f;
-}
-.cover-speech::after {
-  border-color: #f1ce5b;
 }
 .cover-actor {
   left: 2.5%;
@@ -271,7 +283,7 @@
   display: inline-block;
   margin-top: 8px;
   color: #12675f;
-  font-weight: 800;
+  font-weight: 700;
 }
 .journey-trail {
   position: absolute;
@@ -337,7 +349,7 @@
 .journey-stop-title {
   color: var(--deck-deep);
   font-size: clamp(16px, 1.85cqw, 26px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.25;
 }
 .journey-stop-time {
@@ -430,7 +442,7 @@
   color: #104d88;
   font-family: var(--display);
   font-size: clamp(24px, 3.25cqw, 46px);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.38;
   text-align: center;
 }
@@ -449,7 +461,7 @@
   flex: none;
   color: #aa7300;
   font-size: clamp(15px, 1.5cqw, 20px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .meaning-example p {
   font-size: clamp(20px, 2.25cqw, 32px);
@@ -463,9 +475,9 @@
   height: 83%;
 }
 .meaning-speech {
-  left: 22%;
-  top: 20%;
-  max-width: 23%;
+  left: 3%;
+  top: 8%;
+  max-width: 25%;
 }
 
 /* 5 + 9 — أفكار تطفو حول الشخصية بدل البطاقات المتطابقة. */
@@ -487,7 +499,7 @@
 .orbits-field {
   position: absolute;
   z-index: 2;
-  right: 26%;
+  right: 4%;
   bottom: 10%;
   width: 68%;
   height: 54%;
@@ -573,9 +585,9 @@
   height: 61%;
 }
 .orbits-speech {
-  left: 19%;
-  bottom: 45%;
-  max-width: 23%;
+  left: 4%;
+  top: 24%;
+  max-width: 24%;
 }
 .scene-step-interests .orbits-field {
   height: 50%;
@@ -583,7 +595,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, 1fr);
   width: 61%;
-  right: 31%;
+  right: 4%;
   justify-items: center;
 }
 .scene-step-interests .idea-orbit {
@@ -620,8 +632,8 @@
   position: absolute;
   z-index: 2;
   top: 43%;
-  right: 29%;
-  width: 66%;
+  right: 4%;
+  width: 61%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(18px, 3.3cqw, 46px);
@@ -698,9 +710,9 @@
   height: 68%;
 }
 .safety-speech {
-  left: 20%;
-  top: 26%;
-  max-width: 22%;
+  left: 3%;
+  top: 18%;
+  max-width: 25%;
 }
 
 /* 7 — الاسم: أول جملة بصوت ليلى، كبيرة كأنها تخرج منها. */
@@ -718,7 +730,7 @@
   margin-top: 13px;
   color: #3b5b7d;
   font-size: clamp(20px, 2.35cqw, 34px);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.44;
 }
 .step-example-name {
@@ -762,7 +774,7 @@
   display: block;
   color: #9a700a;
   font-size: clamp(15px, 1.45cqw, 20px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .fact-example p {
   margin-top: 5px;
@@ -811,7 +823,7 @@
   position: absolute;
   z-index: 2;
   top: 40%;
-  right: 26%;
+  right: 5%;
   width: 68%;
   display: flex;
   align-items: center;
@@ -861,7 +873,7 @@
   left: -23px;
   color: #f0bd22;
   font-size: clamp(28px, 3.5cqw, 48px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .connection-example {
   position: absolute;
@@ -888,9 +900,9 @@
   height: 53%;
 }
 .connection-speech {
-  left: 17%;
-  bottom: 44%;
-  max-width: 24%;
+  left: 4%;
+  top: 22%;
+  max-width: 25%;
 }
 
 /* 11 — النموذج الكامل: جمل تظهر بالتتابع في فقاعة واحدة كبيرة. */
@@ -941,7 +953,7 @@
   padding-block: 5px;
   color: #20476c;
   font-size: clamp(18px, 2.05cqw, 29px);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.38;
   animation: scene-arrive 500ms cubic-bezier(.22,.8,.24,1) both;
   animation-delay: calc(160ms + var(--scene-order, 0) * 310ms);
@@ -975,7 +987,7 @@
   position: relative;
   color: #3d6a94;
   font-size: clamp(14px, 1.5cqw, 21px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .model-map-part:not(:last-child)::after {
   content: "";
@@ -1040,7 +1052,7 @@
 }
 .memory-word strong {
   font-size: clamp(17px, 1.9cqw, 27px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .memory-word span {
   color: #8b9bae;
@@ -1054,16 +1066,16 @@
   height: 69%;
 }
 .keywords-speech {
-  left: 20%;
-  top: 31%;
-  max-width: 23%;
+  left: 4%;
+  top: 21%;
+  max-width: 24%;
 }
 .keywords-prompt {
   position: absolute;
   z-index: 3;
-  right: 28%;
+  right: 6%;
   bottom: 7%;
-  width: 60%;
+  width: 64%;
   color: #8a630a;
   font-size: clamp(16px, 1.75cqw, 25px);
   font-weight: 700;
@@ -1089,8 +1101,8 @@
   position: absolute;
   z-index: 2;
   top: 38%;
-  right: 28%;
-  width: 66%;
+  right: 5%;
+  width: 62%;
   height: 42%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1148,6 +1160,7 @@
   color: #9a700a;
   font-family: "Tajawal", sans-serif;
   font-size: 0.7em;
+  font-weight: 700;
 }
 .practice-actor {
   left: 0.5%;
@@ -1156,9 +1169,9 @@
   height: 54%;
 }
 .practice-speech {
-  left: 18%;
-  bottom: 40%;
-  max-width: 24%;
+  left: 4%;
+  top: 23%;
+  max-width: 25%;
 }
 
 /* 14 — نموذج بثلاثة ممثلين: شخصيات واقفة في مساحة مشتركة، بلا بطاقات. */
@@ -1234,6 +1247,9 @@
   font-weight: 800;
 }
 .trio-line {
+  --speech-fill: #f7fbff;
+  --speech-stroke: #a9d3f1;
+  --speech-shadow: #cde7fb;
   position: relative;
   flex: none;
   inset: auto;
@@ -1241,20 +1257,14 @@
   width: min(92%, 330px);
   max-width: none;
   margin-top: 4px;
-  padding: 8px 12px;
-  border-radius: 20px 20px 20px 5px;
-  box-shadow: 0 4px 0 #cde7fb;
+  padding: 18px 15px 12px;
   font-size: clamp(14px, 1.55cqw, 22px);
-  line-height: 1.32;
-}
-.trio-performer-2 .trio-line {
-  border-color: #a9d3f1;
-  background: #f7fbff;
+  line-height: 1.3;
 }
 .trio-performer-3 .trio-line {
-  border-color: #b1dfd7;
-  box-shadow: 0 4px 0 #d6eee8;
-  background: #fbfffd;
+  --speech-fill: #fbfffd;
+  --speech-stroke: #9dd7cc;
+  --speech-shadow: #d6eee8;
 }
 .trio-prompt {
   position: absolute;
@@ -1263,7 +1273,7 @@
   right: 4%;
   color: #12685e;
   font-size: clamp(15px, 1.65cqw, 23px);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* 15 — دور الطفل: مشهد تقديم أمام المجموعة، وثلاثة رموز تساعد على التذكر. */
@@ -1284,9 +1294,9 @@
 .turn-steps {
   position: absolute;
   z-index: 3;
-  right: 29%;
+  right: 7%;
   bottom: 13%;
-  width: 65%;
+  width: 60%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
@@ -1327,16 +1337,16 @@
   height: 66%;
 }
 .turn-speech {
-  left: 18%;
-  top: 29%;
+  left: 4%;
+  top: 22%;
   max-width: 25%;
 }
 .turn-prompt {
   position: absolute;
   z-index: 4;
-  right: 31%;
+  right: 7%;
   bottom: 5%;
-  width: 61%;
+  width: 60%;
   color: #835e07;
   font-size: clamp(15px, 1.6cqw, 22px);
   font-weight: 700;
@@ -1388,16 +1398,12 @@
   bottom: 58%;
 }
 .conversation-bubble-speaker {
+  --speech-fill: #fffdf4;
+  --speech-stroke: #e5c95e;
+  --speech-shadow: #f5e6af;
   right: 26%;
   bottom: 74%;
-  border-color: #edd16d;
-  box-shadow: 0 6px 0 #f5e6af;
-  background: #fffdf4;
   color: #574813;
-}
-.conversation-bubble-speaker::after {
-  border-color: #edd16d;
-  background: #fffdf4;
 }
 .listening-cues {
   position: absolute;
@@ -1446,7 +1452,7 @@
   width: 59%;
   color: #12685e;
   font-size: clamp(16px, 1.75cqw, 25px);
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -1471,14 +1477,14 @@
   padding-bottom: 7px;
   border-bottom: 3px solid #f1cf56;
   color: #8a6407;
-  font-weight: 800;
+  font-weight: 700;
 }
 .reflection-constellation {
   position: absolute;
   z-index: 2;
-  right: 26%;
+  right: 5%;
   bottom: 8%;
-  width: 65%;
+  width: 62%;
   height: 45%;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1512,8 +1518,8 @@
   height: 60%;
 }
 .reflection-speech {
-  left: 18%;
-  bottom: 45%;
+  left: 4%;
+  top: 24%;
   max-width: 24%;
 }
 
@@ -1552,17 +1558,17 @@
 .ending-title {
   margin-top: 8px;
   color: #ffffff;
-  font-family: var(--display);
+  font-family: "Lemonada", "Baloo Bhaijaan 2", "Tajawal", sans-serif;
   font-size: clamp(36px, 5.3cqw, 76px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
 }
 .ending-cheer {
   margin-top: 2px;
   color: #ffe37b;
-  font-family: var(--display);
+  font-family: "Lemonada", "Baloo Bhaijaan 2", "Tajawal", sans-serif;
   font-size: clamp(48px, 7.1cqw, 102px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.12;
 }
 .ending-message {
@@ -1602,7 +1608,7 @@
   box-shadow: 0 4px 0 #d89506;
   color: #493500;
   font-size: clamp(16px, 1.7cqw, 24px);
-  font-weight: 800;
+  font-weight: 700;
 }
 .ending-finish:hover {
   background: #ffe99a;
@@ -1674,17 +1680,9 @@
   }
   .first-speech {
     max-width: min(50%, 260px);
-    padding: 7px 11px;
-    border-width: 1.5px;
-    border-radius: 20px 20px 20px 6px;
-    box-shadow: 0 4px 0 #cde7fb;
+    padding: 8px 15px 20px;
     font-size: clamp(15px, 3.8cqw, 20px);
-  }
-  .first-speech::after {
-    width: 13px;
-    height: 13px;
-    bottom: -8px;
-    border-width: 1.5px;
+    line-height: 1.22;
   }
 
   .scene-cover { padding: 8% 6% 14%; }
@@ -1720,7 +1718,7 @@
   .journey-stop-number { width: 31px; height: 31px; border-width: 2px; font-size: 17px; }
   .journey-stop-title { font-size: clamp(14px, 3.3cqw, 18px); line-height: 1.1; }
   .journey-stop-time { font-size: clamp(11px, 2.6cqw, 14px); line-height: 1.1; }
-  .journey-actor { left: -4%; bottom: 0; width: 31%; height: 34%; }
+  .journey-actor { left: -4%; bottom: 0; width: 26%; height: 30%; }
 
   .scene-question { padding: 8% 6% 12%; }
   .question-copy { width: 92%; margin-inline-start: 0; }
@@ -1746,7 +1744,7 @@
   .orbits-copy .first-scene-heading { max-width: 93%; font-size: clamp(26px, 5.8cqw, 42px); }
   .orbits-lead { max-width: 93%; margin-top: 6px; font-size: clamp(15px, 3.3cqw, 21px); line-height: 1.3; }
   .orbits-field {
-    right: 18%; bottom: 8%; width: 80%; height: 53%;
+    right: 4%; bottom: 8%; width: 70%; height: 53%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 0 4%;
@@ -1757,10 +1755,10 @@
   .idea-orbit-icon { width: 31px; height: 31px; margin-bottom: 2px; }
   .idea-orbit-icon svg { width: 21px; height: 21px; }
   .idea-orbit > strong { font-size: clamp(14px, 3.1cqw, 18px); line-height: 1.12; }
-  .idea-orbit-copy { margin-top: 2px; font-size: clamp(11px, 2.5cqw, 14px); line-height: 1.12; }
-  .orbits-actor { left: -5%; bottom: 0; width: 32%; height: 34%; }
-  .orbits-speech { left: 17%; bottom: 34%; max-width: 40%; }
-  .scene-step-interests .orbits-field { right: 24%; bottom: 9%; width: 72%; height: 49%; }
+  .idea-orbit-copy { margin-top: 2px; font-size: clamp(12px, 2.7cqw, 14px); line-height: 1.12; }
+  .orbits-actor { left: -4%; bottom: 0; width: 25%; height: 31%; }
+  .orbits-speech { left: 4%; top: 22%; max-width: 44%; }
+  .scene-step-interests .orbits-field { right: 4%; bottom: 9%; width: 70%; height: 49%; }
   .scene-step-interests .idea-orbit { max-height: 130px; }
 
   .scene-safety { padding: 7% 5% 12%; }
@@ -1774,9 +1772,9 @@
   .safety-choice-icon svg { width: 26px; height: 26px; }
   .safety-choice h3 { margin-top: 4px; font-size: clamp(16px, 3.3cqw, 20px); line-height: 1.2; }
   .safety-choice p { margin-top: 2px; font-size: clamp(12px, 2.6cqw, 16px); line-height: 1.25; }
-  .safety-prompt { right: 4%; bottom: 7%; max-width: 90%; font-size: clamp(13px, 2.9cqw, 17px); }
-  .safety-actor { left: -5%; bottom: 0; width: 32%; height: 33%; }
-  .safety-speech { left: 19%; top: auto; bottom: 28%; max-width: 37%; }
+  .safety-prompt { right: 4%; bottom: 7%; width: 70%; max-width: none; font-size: clamp(13px, 2.9cqw, 17px); }
+  .safety-actor { left: -4%; bottom: 0; width: 27%; height: 29%; }
+  .safety-speech { left: 4%; top: 22%; max-width: 44%; }
 
   .scene-step-name, .scene-step-fact { padding: 7% 6% 12%; }
   .step-copy { width: 97%; margin-inline-start: 0; }
@@ -1802,9 +1800,9 @@
   .connection-node-title { font-size: clamp(11px, 2.5cqw, 14px); }
   .connection-node strong { margin-top: 2px; font-size: clamp(17px, 3.9cqw, 23px); }
   .connection-arrow { left: -15px; font-size: 27px; }
-  .connection-example { right: 8%; bottom: 8%; width: 83%; font-size: clamp(15px, 3.2cqw, 19px); }
-  .connection-actor { left: -6%; bottom: 0; width: 28%; height: 31%; }
-  .connection-speech { left: 16%; bottom: 31%; max-width: 40%; }
+  .connection-example { right: 4%; bottom: 8%; width: 72%; font-size: clamp(15px, 3.2cqw, 19px); }
+  .connection-actor { left: -5%; bottom: 0; width: 25%; height: 29%; }
+  .connection-speech { left: 4%; top: 22%; max-width: 44%; }
 
   .scene-model { padding: 7% 5% 12%; }
   .model-heading { width: 96%; margin-inline-start: 0; }
@@ -1822,25 +1820,25 @@
   .keywords-heading { width: 96%; margin-inline-start: 0; }
   .keywords-heading .first-scene-heading { max-width: 90%; font-size: clamp(26px, 5.7cqw, 42px); }
   .keywords-heading > p { max-width: 90%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); line-height: 1.3; }
-  .memory-paper { top: 37%; right: 6%; width: 88%; min-height: 40%; gap: 3px 4%; padding: 3% 5%; background: repeating-linear-gradient(to bottom, transparent 0 31px, #d6e7f6 32px 33px), #fffef7; box-shadow: 0 5px 0 #e8e2cf, 0 9px 18px #1d4c6c18; }
+  .memory-paper { top: 37%; right: 4%; width: 72%; min-height: 40%; gap: 3px 4%; padding: 3% 5%; background: repeating-linear-gradient(to bottom, transparent 0 31px, #d6e7f6 32px 33px), #fffef7; box-shadow: 0 5px 0 #e8e2cf, 0 9px 18px #1d4c6c18; }
   .memory-word { padding: 4px 5px; }
   .memory-word strong { font-size: clamp(14px, 3.1cqw, 18px); }
   .memory-word span { font-size: 12px; }
-  .keywords-actor { left: -7%; bottom: 0; width: 35%; height: 31%; }
-  .keywords-speech { left: 16%; top: auto; bottom: 28%; max-width: 41%; }
-  .keywords-prompt { right: 7%; bottom: 6%; width: 87%; font-size: clamp(13px, 2.8cqw, 17px); }
+  .keywords-actor { left: -5%; bottom: 0; width: 28%; height: 29%; }
+  .keywords-speech { left: 4%; top: 22%; max-width: 44%; }
+  .keywords-prompt { right: 4%; bottom: 6%; width: 68%; font-size: clamp(14px, 2.9cqw, 17px); }
 
   .scene-practice { padding: 7% 5% 12%; }
   .practice-heading { width: 96%; margin-inline-start: 0; }
   .practice-heading .first-scene-heading { max-width: 90%; font-size: clamp(26px, 5.7cqw, 42px); }
   .practice-heading > p { margin-top: 5px; font-size: clamp(15px, 3.2cqw, 20px); line-height: 1.3; }
-  .practice-route { top: 40%; right: 4%; width: 92%; height: 38%; gap: 2%; }
+  .practice-route { top: 40%; right: 4%; width: 74%; height: 34%; gap: 2%; }
   .practice-stop { gap: 5px; }
   .practice-stop > span { width: 43px; height: 43px; border-width: 2px; font-size: 22px; }
   .practice-stop p { font-size: clamp(12px, 2.9cqw, 17px); line-height: 1.22; }
-  .practice-closing { right: 7%; bottom: 7%; max-width: 84%; font-size: clamp(15px, 3.4cqw, 20px); }
-  .practice-actor { left: -7%; bottom: 0; width: 32%; height: 31%; }
-  .practice-speech { left: 16%; bottom: 29%; max-width: 42%; }
+  .practice-closing { right: 4%; bottom: 7%; width: 72%; max-width: none; font-size: clamp(15px, 3.4cqw, 20px); }
+  .practice-actor { left: -6%; bottom: 0; width: 26%; height: 24%; }
+  .practice-speech { left: 4%; top: 22%; max-width: 40%; }
 
   .scene-trio { padding: 7% 3.5% 12%; }
   .trio-heading { width: 96%; }
@@ -1850,20 +1848,20 @@
   .trio-stage { inset-inline: 1%; top: 28%; bottom: 10%; gap: 0; }
   .trio-performer::before { width: 94%; }
   .trio-performer > strong { margin-top: 0; font-size: clamp(16px, 3.5cqw, 21px); }
-  .trio-line { width: 98%; margin-top: 3px; padding: 5px 6px; border-width: 1px; border-radius: 13px 13px 13px 4px; box-shadow: 0 3px 0 #cde7fb; font-size: clamp(11px, 2.65cqw, 15px); line-height: 1.18; }
+  .trio-line { width: 98%; margin-top: 3px; padding: 17px 7px 9px; font-size: clamp(11px, 2.65cqw, 15px); line-height: 1.18; }
 
   .scene-your-turn { padding: 7% 5% 12%; }
   .turn-heading { width: 96%; margin-inline-start: 0; }
   .turn-heading .first-scene-heading { max-width: 89%; font-size: clamp(26px, 5.7cqw, 42px); }
   .turn-heading > p { max-width: 94%; margin-top: 5px; font-size: clamp(15px, 3.3cqw, 20px); line-height: 1.3; }
-  .turn-steps { right: 5%; bottom: 17%; width: 89%; gap: 3%; }
+  .turn-steps { right: 4%; bottom: 31%; width: 66%; gap: 2%; }
   .turn-step { flex-direction: column; align-items: center; gap: 5px; padding-top: 6px; text-align: center; }
   .turn-step > span { width: 35px; height: 35px; }
   .turn-step > span svg { width: 21px; height: 21px; }
-  .turn-step p { font-size: clamp(11px, 2.7cqw, 16px); line-height: 1.18; }
-  .turn-actor { left: -5%; bottom: 0; width: 35%; height: 34%; }
-  .turn-speech { left: 20%; top: auto; bottom: 31%; max-width: 39%; }
-  .turn-prompt { right: 5%; bottom: 6%; width: 89%; font-size: clamp(12px, 2.8cqw, 17px); }
+  .turn-step p { font-size: clamp(12px, 3cqw, 16px); line-height: 1.18; }
+  .turn-actor { left: -4%; bottom: 0; width: 26%; height: 28%; }
+  .turn-speech { left: 4%; top: 22%; max-width: 40%; }
+  .turn-prompt { right: 4%; bottom: 6%; width: 66%; font-size: clamp(13px, 2.9cqw, 17px); }
 
   .scene-listening { padding: 7% 5% 12%; }
   .listening-heading { width: 96%; margin-inline-start: 0; }
@@ -1888,15 +1886,15 @@
   .reflection-heading .first-scene-heading { max-width: 88%; font-size: clamp(26px, 5.7cqw, 42px); }
   .reflection-heading > p { max-width: 92%; margin-top: 5px; font-size: clamp(14px, 3cqw, 18px); line-height: 1.3; }
   .reflection-heading .reflection-question { margin-top: 6px; padding-bottom: 3px; font-size: clamp(13px, 2.8cqw, 17px); }
-  .reflection-constellation { right: 19%; bottom: 8%; width: 77%; height: 48%; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0 3%; }
+  .reflection-constellation { right: 4%; bottom: 8%; width: 72%; height: 48%; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 0 3%; }
   .reflection-star { width: min(100%, 145px); max-height: 115px; aspect-ratio: 1.1; padding: 5px; }
   .reflection-star:nth-child(2n) { translate: 0 5px; }
   .reflection-star .idea-orbit-icon { width: 29px; height: 29px; margin-bottom: 1px; }
   .reflection-star .idea-orbit-icon svg { width: 19px; height: 19px; }
   .reflection-star > strong { font-size: clamp(13px, 2.9cqw, 17px); line-height: 1.1; }
-  .reflection-star .idea-orbit-copy { margin-top: 1px; font-size: clamp(10px, 2.35cqw, 14px); line-height: 1.08; }
-  .reflection-actor { left: -5%; bottom: 0; width: 31%; height: 32%; }
-  .reflection-speech { left: 16%; bottom: 30%; max-width: 40%; }
+  .reflection-star .idea-orbit-copy { margin-top: 1px; font-size: clamp(11px, 2.6cqw, 14px); line-height: 1.08; }
+  .reflection-actor { left: -4%; bottom: 0; width: 26%; height: 28%; }
+  .reflection-speech { left: 4%; top: 27%; max-width: 42%; }
 
   .scene-ending { padding: 7% 5% 12%; }
   .ending-copy { width: 96%; margin-inline-start: 0; padding-top: 0; }
@@ -1923,45 +1921,45 @@
   .cover-speech { max-width: 63%; font-size: 15px; }
   .cover-lightbulb { left: 44%; top: 48%; }
   .journey-copy .first-scene-heading { max-width: 84%; font-size: 27px; }
-  .journey-stops { right: 17%; width: 81%; }
-  .journey-actor { left: -8%; width: 32%; height: 31%; }
+  .journey-stops { right: 4%; width: 70%; }
+  .journey-actor { left: -5%; width: 27%; height: 30%; }
   .question-prompt { font-size: clamp(21px, 5.8cqw, 25px); }
   .question-actor { width: 45%; height: 36%; }
   .question-speech { left: 31%; bottom: 33%; max-width: 45%; }
   .meaning-copy .first-scene-heading { max-width: 87%; font-size: 27px; }
   .meaning-actor { width: 40%; height: 33%; }
   .orbits-copy .first-scene-heading { max-width: 89%; font-size: 26px; }
-  .orbits-field { right: 16%; width: 83%; height: 50%; }
+  .orbits-field { right: 4%; width: 72%; height: 50%; }
   .idea-orbit { max-height: 120px; }
-  .idea-orbit-copy { font-size: 10.5px; }
-  .scene-step-interests .orbits-field { right: 21%; width: 76%; }
-  .safety-choice p { font-size: 11px; }
-  .safety-choice h3 { font-size: 15px; }
+  .idea-orbit-copy { font-size: 12px; }
+  .scene-step-interests .orbits-field { right: 4%; width: 72%; }
+  .safety-choice p { font-size: 12px; }
+  .safety-choice h3 { font-size: 16px; }
   .safety-choices { top: 39%; }
   .step-copy .first-scene-heading { max-width: 88%; font-size: 25px; }
   .step-lead { font-size: 16px; }
   .fact-example p { font-size: 21px; }
   .connection-heading .first-scene-heading { max-width: 87%; font-size: 24px; }
   .connection-node strong { font-size: 16px; }
-  .connection-node-title { font-size: 10px; }
+  .connection-node-title { font-size: 12px; }
   .model-heading .first-scene-heading { max-width: 84%; font-size: 25px; }
   .model-fragment { font-size: 12px; }
-  .model-map-part { font-size: 9px; }
+  .model-map-part { font-size: 11px; line-height: 1.1; text-align: center; }
   .keywords-heading .first-scene-heading { font-size: 25px; }
   .practice-heading .first-scene-heading { font-size: 25px; }
-  .practice-stop p { font-size: 11px; }
+  .practice-stop p { font-size: 12px; }
   .trio-heading .first-scene-heading { max-width: 87%; font-size: 23px; }
-  .trio-line { font-size: 10px; }
+  .trio-line { font-size: 12px; }
   .turn-heading .first-scene-heading { font-size: 25px; }
-  .turn-step p { font-size: 10.5px; }
+  .turn-step p { font-size: 12px; }
   .listening-heading .first-scene-heading { font-size: 25px; }
-  .listening-cue small { font-size: 9px; }
+  .listening-cue small { font-size: 11px; }
   .reflection-heading .first-scene-heading { font-size: 25px; }
-  .reflection-star .idea-orbit-copy { font-size: 9px; }
+  .reflection-star .idea-orbit-copy { font-size: 11px; }
   .ending-title { font-size: 31px; }
   .ending-cheer { font-size: 44px; }
   .ending-reflection { font-size: 14px; }
-  .ending-next { font-size: 12px; }
+  .ending-next { font-size: 13px; }
   .ending-actor { width: 43%; height: 34%; }
 }
 

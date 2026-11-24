@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>تجربة الشخصية الحيّة | ليلى</title>
+  <title>حكاية تتحرّك | تجربة الشرائح</title>
   <style>
     @font-face{font-family:Tajawal;src:url('tajawal.woff2') format('woff2');font-display:swap}
     *{box-sizing:border-box}
@@ -11,54 +11,117 @@
     main{width:min(1200px,100%)}
     .intro{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:0 0 14px}
     .intro p{margin:0;color:#d7c6bd;font-size:.94rem}.intro strong{display:block;color:#fff9ed;font-size:1.05rem;margin-bottom:3px}
-    button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #f7c774;outline-offset:3px}
+    button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #f7c774;outline-offset:3px}button:disabled{cursor:not-allowed;opacity:.4}
     .motion{background:transparent;border:1px solid #aa8d83;border-radius:99px;color:#fff7ec;padding:9px 16px;white-space:nowrap}
-    .scene{position:relative;aspect-ratio:1376/768;overflow:hidden;isolation:isolate;border-radius:20px;background:#dfbf95 url('story-room.webp') center/cover;box-shadow:0 25px 65px #0006;border:1px solid #ffffff38}
+    .scene{position:relative;aspect-ratio:1376/768;overflow:hidden;isolation:isolate;border-radius:20px;background:#dfbf95 url('story-room.webp') center/cover;box-shadow:0 25px 65px #0006;border:1px solid #ffffff38;touch-action:pan-y}
     .scene::before{content:'';position:absolute;inset:0;background:linear-gradient(to left,rgba(39,20,28,.96) 0%,rgba(48,25,32,.88) 28%,rgba(48,25,32,.48) 45%,transparent 65%);pointer-events:none}
     .sunlight{position:absolute;inset:0;background:linear-gradient(110deg,transparent 0%,#fff0b335 23%,transparent 42%);pointer-events:none;animation:light 8s ease-in-out infinite alternate}
-    .laila{position:absolute;bottom:-10%;left:11%;height:91%;width:auto;max-width:43%;object-fit:contain;object-position:bottom;filter:drop-shadow(10px 9px 9px #4a271c55);transform-origin:50% 95%;animation:breathe 5s ease-in-out infinite}
+    .figure-wrap{position:absolute;bottom:-10%;left:11%;height:91%;max-width:45%;transform-origin:50% 95%;pointer-events:none}
+    .figure{height:100%;width:auto;max-width:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(10px 9px 9px #4a271c55);transform-origin:50% 95%;animation:breathe 5s ease-in-out infinite}
+    .figure-wrap.sami{left:7%;height:90%;max-width:48%}.figure-wrap.sister{left:9%;height:85%;max-width:46%}
     .words{position:absolute;right:7%;top:20%;width:36%;color:#fff9ef;text-align:right;text-shadow:0 2px 8px #1f0f19aa}
     .eyebrow{display:inline-block;font-size:clamp(.65rem,1.2vw,1rem);font-weight:700;color:#f5d298;letter-spacing:.02em;margin-bottom:clamp(3px,1vw,12px)}
     h1{font-size:clamp(1.2rem,3.7vw,3.3rem);line-height:1.25;margin:0 0 .25em;color:#fff9ed}
     .line{font-size:clamp(.8rem,2vw,1.6rem);line-height:1.75;margin:0;max-width:24ch;min-height:3.5em}
     .action{border:0;border-radius:999px;background:#f5d298;color:#4b252d;padding:.7em 1.25em;font-weight:700;font-size:clamp(.7rem,1.2vw,1rem);box-shadow:0 4px 0 #b78559;transition:transform .2s,background .2s}
     .action:hover{transform:translateY(-2px);background:#ffe0aa}
-    .note{font-size:.82rem;color:#cbb7ae;line-height:1.7;margin:12px 3px 0}
-    .paused *, .paused *::before, .paused *::after{animation-play-state:paused!important}
+    .sparkles{position:absolute;inset:0;pointer-events:none;overflow:hidden}.sparkles span{position:absolute;color:#ffe2a6;text-shadow:0 0 10px #ffd088;font-size:clamp(.7rem,1.2vw,1.2rem);opacity:.7;animation:twinkle 5s ease-in-out infinite}.sparkles span:nth-child(1){left:9%;top:19%}.sparkles span:nth-child(2){left:39%;top:23%;animation-delay:-2s}.sparkles span:nth-child(3){left:48%;top:60%;animation-delay:-3s}
+    .scene.entering .figure-wrap:not(.outgoing){animation:figure-in .65s cubic-bezier(.2,.75,.3,1) both}.scene.entering .words{animation:words-in .55s cubic-bezier(.2,.75,.3,1) both}.scene.entering .sparkles span{animation:arrival .7s ease-out both}.scene.reverse.entering .figure-wrap:not(.outgoing){animation-name:figure-in-reverse}.scene.reverse.entering .words{animation-name:words-in-reverse}.figure-wrap.outgoing{animation:figure-out .4s ease-in both!important}
+    @keyframes figure-out{to{opacity:0;transform:translateY(8px)}}
+    .navigation{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:16px}.nav-button{background:#ffffff0d;border:1px solid #a98c80;color:#fff8ed;border-radius:99px;padding:9px 18px;font-weight:bold}.nav-button:hover:not(:disabled){background:#ffffff19}.progress{display:flex;align-items:center;gap:10px;direction:rtl}.dot{width:12px;height:12px;padding:0;border:1px solid #e2c39e;border-radius:50%;background:transparent}.dot[aria-current=true]{background:#f5d298;box-shadow:0 0 0 4px #f5d29824}.counter{color:#e1c9b8;min-width:4em;text-align:center;font-size:.95rem}
+    .note{font-size:.82rem;color:#cbb7ae;line-height:1.7;margin:13px 3px 0;text-align:center}
+    .motion-off .figure,.motion-off .sunlight,.motion-off .sparkles span,.motion-off .scene.entering .figure-wrap,.motion-off .scene.entering .words,.motion-off .scene.entering .sparkles span{animation:none!important}.motion-off *{transition:none!important}
     @keyframes breathe{0%,100%{transform:rotate(-.45deg) scale(1)}50%{transform:rotate(.45deg) scale(1.008)}}
     @keyframes light{from{opacity:.35}to{opacity:.8}}
-    @media(prefers-reduced-motion:reduce){.laila,.sunlight{animation:none}.action{transition:none}}
-    @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.96) 0%,rgba(48,25,32,.87) 30%,rgba(48,25,32,.4) 48%,transparent 65%)}.words{right:8%;top:7%;width:84%}h1{font-size:2rem}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.laila{height:61%;left:12%;bottom:-4%;max-width:67%}.intro p{font-size:.8rem}}
+    @keyframes twinkle{0%,100%{opacity:.22;transform:scale(.8)}50%{opacity:.8;transform:scale(1)}}
+    @keyframes figure-in{from{opacity:0;transform:translateX(-22px) scale(.97)}to{opacity:1;transform:none}}
+    @keyframes figure-in-reverse{from{opacity:0;transform:translateX(22px) scale(.97)}to{opacity:1;transform:none}}
+    @keyframes words-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    @keyframes words-in-reverse{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+    @keyframes arrival{0%{opacity:0;transform:scale(.5)}55%{opacity:.8;transform:scale(1.15)}100%{opacity:.45;transform:scale(1)}}
+    @media(prefers-reduced-motion:reduce){.figure,.sunlight,.sparkles span,.scene.entering .figure-wrap,.scene.entering .words,.scene.entering .sparkles span{animation:none!important}*{transition:none!important}}
+    @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.intro p{font-size:.8rem}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.96) 0%,rgba(48,25,32,.87) 30%,rgba(48,25,32,.4) 48%,transparent 65%)}.words{right:8%;top:7%;width:84%}h1{font-size:clamp(1.5rem,8vw,2rem)}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.figure-wrap{height:61%;left:12%;bottom:-4%;max-width:67%}.figure-wrap.sami{left:7%;height:61%;max-width:70%}.figure-wrap.sister{left:9%;height:57%;max-width:70%}.sparkles span:nth-child(2){left:65%;top:57%}.navigation{gap:10px}.nav-button{padding:9px 12px}.counter{min-width:3.5em}.note{font-size:.78rem}}
+    @media(max-width:360px){.navigation{gap:6px}.progress{gap:7px}.nav-button{padding:8px}.line{font-size:.95rem}}
   </style>
 </head>
 <body>
 <main>
-  <header class="intro"><p><strong>تجربة الشخصية الحيّة</strong>نموذج مستقل لاستكشاف الفكرة</p><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></header>
-  <section class="scene" aria-labelledby="scene-title">
+  <header class="intro"><p><strong>حكاية تتحرّك ✦</strong>تجربة مرحة للانتقال بين الشرائح</p><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></header>
+  <section class="scene" aria-labelledby="scene-title" aria-roledescription="شريحة">
     <div class="sunlight" aria-hidden="true"></div>
-    <img class="laila" src="laila.webp" alt="ليلى تحمل كتابًا وتدعونا للاستماع إلى الحكاية">
-    <div class="words">
+    <div class="sparkles" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span></div>
+    <div class="figure-wrap"><img class="figure" src="laila.webp" alt="ليلى تحمل كتابًا وتدعونا إلى الحكاية"></div>
+    <div class="words" aria-live="polite" aria-atomic="true">
       <span class="eyebrow">✦ حكاية تبدأ من هنا</span>
       <h1 id="scene-title">هيا نفتح الحكاية!</h1>
-      <p class="line" aria-live="polite">أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.</p>
+      <p class="line">أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.</p>
       <button class="action" type="button">لنبدأ الحكاية ←</button>
     </div>
   </section>
-  <p class="note">هذه تجربة بصرية قصيرة وليست تصميمًا نهائيًا للدرس. الحركة هنا لطيفة لصورة كاملة، وليست تحريكًا منفصلًا للوجه أو اليدين.</p>
+  <nav class="navigation" aria-label="التنقّل بين الشرائح التجريبية">
+    <button class="nav-button previous" type="button" disabled>→ السابق</button>
+    <div class="progress" role="group" aria-label="اختيار شريحة">
+      <button class="dot" type="button" aria-label="الشريحة ١: هيا نفتح الحكاية" aria-current="true"></button>
+      <button class="dot" type="button" aria-label="الشريحة ٢: صوتك يصنع الحكاية"></button>
+      <button class="dot" type="button" aria-label="الشريحة ٣: والآن دورك"></button>
+    </div>
+    <span class="counter" aria-live="polite" dir="ltr">١ / ٣</span>
+    <button class="nav-button next" type="button">التالي ←</button>
+  </nav>
+  <p class="note">نموذج تجريبي بثلاث شرائح؛ الحركة للصورة كاملة وليست تحريكًا منفصلًا للوجه أو الأطراف.</p>
 </main>
 <script>
-  const motion = document.querySelector('.motion');
+  const slides = [
+    { eyebrow:'✦ حكاية تبدأ من هنا', title:'هيا نفتح الحكاية!', text:'أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.', character:'laila', alt:'ليلى تحمل كتابًا وتدعونا إلى الحكاية', action:'لنبدأ الحكاية ←' },
+    { eyebrow:'✦ فكرة صغيرة', title:'صوتك يصنع الحكاية', text:'أنا سامي، حين نتحدث بثقة تصبح أفكارنا حكاية يستمتع بها الجميع.', character:'sami', alt:'سامي يحمل الميكروفون ويتحدث بثقة', action:'وماذا بعد؟ ←' },
+    { eyebrow:'✦ لحظة المشاركة', title:'والآن دورك!', text:'أنا أستمع إليك! ما الحكاية الصغيرة التي تحب أن تخبرنا بها؟', character:'sister', alt:'الأخت الصغيرة تنصت باهتمام', action:'نعود إلى البداية ↻' }
+  ];
   const scene = document.querySelector('.scene');
+  const motion = document.querySelector('.motion');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let paused = reduced.matches;
-  function syncMotion(){scene.classList.toggle('paused',paused);motion.disabled=reduced.matches;motion.setAttribute('aria-pressed', String(paused));motion.textContent = reduced.matches ? 'الحركة مخفّضة في جهازك' : (paused ? 'تشغيل الحركة' : 'إيقاف الحركة');}
-  motion.addEventListener('click',()=>{paused=!paused;syncMotion();});
-  reduced.addEventListener('change',e=>{paused=e.matches;syncMotion();});
-  syncMotion();
-  const action = document.querySelector('.action');
+  const figureWrap = document.querySelector('.figure-wrap');
+  const figure = document.querySelector('.figure');
+  const eyebrow = document.querySelector('.eyebrow');
+  const title = document.querySelector('#scene-title');
   const line = document.querySelector('.line');
-  let started = false;
-  action.addEventListener('click',()=>{started=!started;line.textContent=started?'في كل كلمة فكرة، وفي كل حكاية فرصة لنعبّر بثقة. ما رأيك أن نبدأ؟':'أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.';action.textContent=started?'العودة إلى البداية ↻':'لنبدأ الحكاية ←';});
+  const action = document.querySelector('.action');
+  const previous = document.querySelector('.previous');
+  const next = document.querySelector('.next');
+  const counter = document.querySelector('.counter');
+  const dots = [...document.querySelectorAll('.dot')];
+  const digits = ['١','٢','٣'];
+  let index = 0;
+  let paused = reduced.matches;
+  let animationTimer;
+  function syncMotion(){document.body.classList.toggle('motion-off',paused);if(paused)scene.querySelector('.outgoing')?.remove();motion.disabled=reduced.matches;motion.setAttribute('aria-pressed',String(paused));motion.textContent=reduced.matches?'الحركة مخفّضة في جهازك':paused?'تشغيل الحركة':'إيقاف الحركة';}
+  motion.addEventListener('click',()=>{paused=!paused;syncMotion();});
+  reduced.addEventListener('change',event=>{paused=event.matches;syncMotion();});
+  syncMotion();
+  function goTo(target){
+    if(target<0 || target>=slides.length || target===index) return;
+    const reverse=target<index;
+    index=target;
+    const slide=slides[index];
+    clearTimeout(animationTimer);
+    scene.classList.remove('entering','reverse');
+    scene.querySelector('.outgoing')?.remove();
+    if(!paused && !reduced.matches){const outgoing=figureWrap.cloneNode(true);outgoing.classList.add('outgoing');outgoing.setAttribute('aria-hidden','true');figureWrap.before(outgoing);setTimeout(()=>outgoing.remove(),450);}
+    figureWrap.className='figure-wrap '+slide.character;
+    figure.src=slide.character+'.webp'; figure.alt=slide.alt;
+    eyebrow.textContent=slide.eyebrow;title.textContent=slide.title;line.textContent=slide.text;action.textContent=slide.action;
+    previous.disabled=index===0;next.disabled=index===slides.length-1;
+    counter.textContent=digits[index]+' / ٣';
+    dots.forEach((dot,i)=>{if(i===index)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current');});
+    if(!paused && !reduced.matches){void scene.offsetWidth;scene.classList.toggle('reverse',reverse);scene.classList.add('entering');animationTimer=setTimeout(()=>scene.classList.remove('entering','reverse'),720);}
+  }
+  previous.addEventListener('click',()=>goTo(index-1));next.addEventListener('click',()=>goTo(index+1));
+  action.addEventListener('click',()=>goTo(index===slides.length-1?0:index+1));
+  dots.forEach((dot,i)=>dot.addEventListener('click',()=>goTo(i)));
+  document.addEventListener('keydown',event=>{if(event.altKey||event.ctrlKey||event.metaKey||event.target.closest('input,textarea,select,[contenteditable]'))return;if(event.key==='ArrowLeft'){event.preventDefault();goTo(index+1)}else if(event.key==='ArrowRight'){event.preventDefault();goTo(index-1)}});
+  let touchStart=null;
+  scene.addEventListener('touchstart',event=>{const t=event.changedTouches[0];touchStart={x:t.clientX,y:t.clientY}},{passive:true});
+  scene.addEventListener('touchend',event=>{if(!touchStart)return;const t=event.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.2)goTo(index+(dx<0?1:-1))},{passive:true});
+  scene.addEventListener('touchcancel',()=>{touchStart=null},{passive:true});
 </script>
 </body>
 </html>

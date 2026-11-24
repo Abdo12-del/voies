@@ -42,13 +42,20 @@ for (const [width, height] of [[1440, 900], [820, 1180], [390, 844], [320, 568],
   });
 }
 
-test("motion is physical and respects reduced motion", async ({ page }) => {
+test("characters stay still and text respects reduced motion", async ({ page }) => {
   await seedClassroom(page, 0);
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/#/lesson/1");
   await expect(page.locator(".lesson-one-word").first()).toHaveCSS("animation-name", "lesson-one-word");
-  await expect(page.locator(".lesson-one-figure")).toHaveCSS("animation-name", "lesson-one-hello");
+  for (let i = 0; i < 5; i++) {
+    const figure = page.locator(".slide[role=group] .lesson-one-figure");
+    await expect(figure).toHaveCSS("animation-name", "none");
+    await expect(figure.locator("img")).toHaveCSS("animation-name", "none");
+    if (i < 4) {
+      await page.getByRole("button", { name: "التالي", exact: true }).click();
+      await expect(page.locator(".is-story-exiting")).toHaveCount(0);
+    }
+  }
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".lesson-one-word").first()).toHaveCSS("animation-name", "none");
-  await expect(page.locator(".lesson-one-figure")).toHaveCSS("animation-name", "none");
 });

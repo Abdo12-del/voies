@@ -4,8 +4,8 @@ import { seedClassroom } from "./classroom-fixture";
 
 const slides = [
   { heading: "أهلًا بي في مساحة الكلام", figure: "laila-welcome", background: "bg-cover" },
-  { heading: "هدفي اليوم", figure: "goal-sister", background: "bg-goal" },
-  { heading: "نجرّب معًا", figure: "activity-laila", background: "bg-activity" },
+  { heading: "هدفي اليوم", figure: "goal-introduce", background: "bg-cover" },
+  { heading: "نجرّب معًا", figure: "activity-listen", background: "bg-goal" },
   { heading: "تحدّي المحطة", figure: "challenge-sami", background: "bg-challenge" },
   { heading: "نهاية الحصة", figure: "end-sister", background: "bg-end" },
 ];
@@ -21,6 +21,11 @@ for (const [width, height] of [[1440, 900], [820, 1180], [390, 844], [320, 568],
       await expect(page.getByRole("heading", { name: slides[i].heading })).toBeVisible();
       await expect(scene.locator("img")).toHaveAttribute("src", `/lesson-one/${slides[i].figure}.webp`);
       await expect(scene).toHaveAttribute("style", new RegExp(slides[i].background));
+      if (i === 2) {
+        await expect(scene.getByText("سلّم على زميلك وعرّفه باسمك وشيء تحبه.", { exact: false })).toBeVisible();
+        await expect(scene.getByText("ما اسمك وماذا تحب؟", { exact: false })).toBeVisible();
+        await expect(scene).not.toContainText(/بطاقة|رسم|اصنع/);
+      }
       const geometry = await page.evaluate(() => {
         const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
         const overlaps = (a: DOMRect, b: DOMRect) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;

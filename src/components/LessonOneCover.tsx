@@ -5,8 +5,8 @@ import "./LessonOneCover.css";
 
 const scenes = {
   title: { background: "cover", figure: "laila-welcome", eyebrow: "الحصة الأولى · المتحدث الواثق" },
-  goal: { background: "goal", figure: "goal-sister", eyebrow: "لنكتشف هدفنا" },
-  activity: { background: "activity", figure: "activity-laila", eyebrow: "نصنع ونتعرّف" },
+  goal: { background: "cover", figure: "goal-introduce", eyebrow: "لنكتشف هدفنا" },
+  activity: { background: "goal", figure: "activity-listen", eyebrow: "نتحاور ونتعرّف" },
   challenge: { background: "challenge", figure: "challenge-sami", eyebrow: "صوتك له مكان" },
   end: { background: "end", figure: "end-sister", eyebrow: "خطوتنا الأولى" },
 } as const;

@@ -51,8 +51,6 @@
   height: 80%;
   max-width: 40%;
   filter: drop-shadow(0 12px 12px #24151b55);
-  transform-origin: center bottom;
-  animation: lesson-one-hello 3.5s ease-in-out infinite;
   pointer-events: none;
 }
 .lesson-one-figure::before {
@@ -123,7 +121,6 @@
 .lesson-one-start:hover { background: #ffedc7; }
 @keyframes lesson-one-word { from { transform: translateY(20px) rotate(-3deg); } 60% { transform: translateY(-4px) rotate(1deg); } to { transform: translateY(0) rotate(0); } }
 @keyframes lesson-one-intro { from { transform: translateX(24px); } to { transform: translateX(0); } }
-@keyframes lesson-one-hello { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg) translateY(-5px); } }
 @keyframes lesson-one-light { from { transform: translateX(-5%); } to { transform: translateX(5%); } }
 @media (max-width: 700px) and (orientation: portrait) {
   .lesson-one-cover { background-position: 32% center; }
@@ -136,7 +133,8 @@
   .lesson-one-figure { height: 47%; max-width: 65%; left: 17%; bottom: 11%; }
 }
 @media (min-width: 1001px) {
-  .lesson-one-goal .lesson-one-figure, .lesson-one-end .lesson-one-figure { left: 5%; }
+  .lesson-one-goal .lesson-one-figure { left: 3%; }
+  .lesson-one-end .lesson-one-figure { left: 5%; }
 }
 @media (min-width: 701px) and (max-width: 1000px) and (orientation: portrait) {
   .lesson-one-figure { height: 68%; max-width: 33%; left: 5%; bottom: 12%; }

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { SESSIONS, type LevelId } from "../data/sessions";
 import { CITY_MILESTONES, CITY_ROUTE } from "../lib/cityRoute";
 import { currentSessionId, isLevelComplete, statusOf, type ProgressState } from "../lib/progress";
@@ -19,8 +19,9 @@ export interface JourneyMapHandle {
   goToLevel: (id: LevelId) => void;
   goToMilestone: (id: LevelId) => void;
 }
-const WIDTH = 3600;
-const HEIGHT = WIDTH * 672 / 1584;
+const WIDTH = 1584;
+const HEIGHT = 672;
+const ZOOM_LEVELS = [100, 125, 150, 175, 200] as const;
 const point = ([x, y]: readonly [number, number]) => `${x * WIDTH / 100},${y * HEIGHT / 100}`;
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -28,14 +29,19 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
   { progress, unlockingId, justCompletedId, onOpenStation, onStart, onOpenMilestone, onVisibleLevel }, ref,
 ) {
   const viewport = useRef<HTMLDivElement>(null);
+  const world = useRef<HTMLDivElement>(null);
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const zoom = ZOOM_LEVELS[zoomIndex] / 100;
+  const zoomAnchor = useRef<readonly [number, number] | null>(null);
   const scrollFrame = useRef(0);
   const drag = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
   const currentId = currentSessionId(progress.completed);
   const current = currentId ? SESSIONS[currentId - 1] : null;
   const center = useCallback((coords: readonly [number, number], smooth = true) => {
     const el = viewport.current;
-    if (!el) return;
-    el.scrollTo({ left: coords[0] * WIDTH / 100 - el.clientWidth / 2, top: coords[1] * HEIGHT / 100 - el.clientHeight / 2, behavior: smooth && !reducedMotion() ? "smooth" : "instant" });
+    const map = world.current;
+    if (!el || !map) return;
+    el.scrollTo({ left: map.offsetLeft + coords[0] * map.offsetWidth / 100 - el.clientWidth / 2, top: map.offsetTop + coords[1] * map.offsetHeight / 100 - el.clientHeight / 2, behavior: smooth && !reducedMotion() ? "smooth" : "instant" });
   }, []);
   const goCurrent = useCallback((smooth = true) => {
     center(currentId ? CITY_ROUTE[currentId - 1] : CITY_MILESTONES[1], smooth);
@@ -47,6 +53,22 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
     goToMilestone: (id) => { center(CITY_MILESTONES[id - 1]); onVisibleLevel(id); },
   }), [center, goCurrent, onVisibleLevel]);
   useLayoutEffect(() => { goCurrent(false); }, [goCurrent]);
+  // Preserve the location at the centre of the viewport while zoom changes.
+  const changeZoom = (step: number) => {
+    const next = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomIndex + step));
+    const el = viewport.current, map = world.current;
+    if (!el || !map || next === zoomIndex) return;
+    zoomAnchor.current = [
+      (el.scrollLeft + el.clientWidth / 2 - map.offsetLeft) / map.offsetWidth * 100,
+      (el.scrollTop + el.clientHeight / 2 - map.offsetTop) / map.offsetHeight * 100,
+    ];
+    setZoomIndex(next);
+  };
+  useLayoutEffect(() => {
+    if (!zoomAnchor.current) return;
+    center(zoomAnchor.current, false);
+    zoomAnchor.current = null;
+  }, [zoomIndex, center]);
   useEffect(() => {
     const el = viewport.current;
     if (!el) return;
@@ -67,11 +89,12 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
     scrollFrame.current = requestAnimationFrame(() => {
       scrollFrame.current = 0;
       const el = viewport.current;
-      if (!el) return;
-      const x = el.scrollLeft + el.clientWidth / 2, y = el.scrollTop + el.clientHeight / 2;
+      const map = world.current;
+      if (!el || !map || el.scrollWidth - el.clientWidth < el.clientWidth * 0.4) return;
+      const x = el.scrollLeft + el.clientWidth / 2 - map.offsetLeft, y = el.scrollTop + el.clientHeight / 2 - map.offsetTop;
       let closest = 0, distance = Infinity;
       CITY_ROUTE.forEach(([px, py], index) => {
-        const d = Math.hypot(px * WIDTH / 100 - x, py * HEIGHT / 100 - y);
+        const d = Math.hypot(px * map.offsetWidth / 100 - x, py * map.offsetHeight / 100 - y);
         if (d < distance) { closest = index; distance = d; }
       });
       onVisibleLevel(closest < 16 ? 1 : 2);
@@ -105,7 +128,8 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
   return (
     <main className="city-shell" aria-label="مدينة المتحدث الصغير">
       <div className="map-viewport city-viewport" ref={viewport} tabIndex={0} role="region" aria-label="خريطة المدينة، اسحب للاستكشاف" onKeyDown={handleKey} onScroll={onScroll} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}>
-        <div className="city-world" style={{ width: WIDTH, height: HEIGHT }}>
+        <div className="city-canvas" style={{ width: `max(100%, ${WIDTH * zoom}px)`, height: `max(100%, ${HEIGHT * zoom}px)` }}>
+        <div ref={world} className="city-world" style={{ width: WIDTH * zoom, height: HEIGHT * zoom }}>
           <img src="/city/city-map.webp" alt="" draggable={false} className="city-art" />
           <svg className="city-route" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-hidden="true">
             <polyline className="city-route-outline" points={CITY_ROUTE.map(point).join(" ")} />
@@ -126,6 +150,12 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
             return <button key={level} className={`city-milestone ${isLevelComplete(level, progress.completed) ? "is-achieved" : ""}`} style={{ left: `${coords[0]}%`, top: `${coords[1]}%` }} onClick={() => onOpenMilestone(level)} aria-label={`إنجاز المستوى ${level === 1 ? "الأول" : "الثاني"}`}><Icon name={level === 1 ? "medal" : "crown"} size={24} /></button>;
           })}
         </div>
+        </div>
+      </div>
+      <div className="city-zoom" role="group" aria-label="تقريب الخريطة وإبعادها" dir="rtl">
+        <button type="button" onClick={() => changeZoom(1)} disabled={zoomIndex === ZOOM_LEVELS.length - 1} aria-label="تقريب الخريطة" title="تقريب الخريطة">+</button>
+        <output aria-live="polite" aria-label="مستوى التكبير">{ZOOM_LEVELS[zoomIndex]}٪</output>
+        <button type="button" onClick={() => changeZoom(-1)} disabled={zoomIndex === 0} aria-label="إبعاد الخريطة" title="إبعاد الخريطة">−</button>
       </div>
       <div className="city-intro" dir="rtl"><span>✦ مدينة المتحدث الصغير</span><strong>كل خطوة، حكاية جديدة</strong><small>اسحب الخريطة لتستكشف المدينة · المسار ومواقع الحصص تجريبية</small></div>
       {current ? <section className="city-current current-card" dir="rtl" aria-labelledby="current-station-title">

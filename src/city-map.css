@@ -69,3 +69,19 @@
 @media (max-height:550px) {
   .city-current.current-card { bottom:88px; }
 }
+/* The artwork keeps its aspect ratio. At the widest view it is displayed at
+   its native resolution; the soft surround fills tall screens. */
+.city-canvas { position:relative; display:flex; align-items:center; justify-content:center; }
+.city-canvas::before { content:""; position:absolute; inset:0; background:linear-gradient(#f5e8ce55, #d4debd66), url('/city/city-map.webp') center / cover; filter:blur(12px); pointer-events:none; }
+.city-world { flex:none; box-shadow:0 0 30px #403c3740; }
+.city-stop.station, .city-stop-button { width:40px; height:40px; }
+.city-stop-button { font-size:16px; }
+.city-stop-here { bottom:50px; }
+.city-milestone { width:42px; height:42px; }
+.city-zoom { position:absolute; z-index:12; left:24px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; padding:4px; border:1px solid #eadac3; border-radius:16px; background:#fffaf1f5; box-shadow:0 4px 16px #352c2e28; color:#683e46; }
+.city-zoom button { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:11px; background:transparent; color:#683e46; font-size:27px; font-weight:700; line-height:1; }
+.city-zoom button:hover:not(:disabled) { background:#f5e5d9; }
+.city-zoom button:disabled { opacity:.35; }
+.city-zoom output { font-size:12px; font-weight:700; direction:ltr; }
+@media (max-width:640px) { .city-zoom { left:10px; } .city-zoom button { width:40px; height:44px; } }
+@media (max-height:550px) { .city-zoom { left:10px; flex-direction:row; top:82px; transform:none; } .city-zoom button { width:44px; height:40px; } }

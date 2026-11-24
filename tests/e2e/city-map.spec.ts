@@ -41,3 +41,71 @@ test('completed lessons can be reviewed and level navigation keeps progress', as
   await page.getByRole('button', { name: 'مراجعة الحصة' }).click();
   await expect(page).toHaveURL(/#\/lesson\/1\?mode=review/);
 });
+
+for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 320, height: 568 }, { width: 844, height: 390 }]) {
+  test(`zoom controls stay usable and aligned at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await seedClassroom(page);
+    await page.goto('/#/map');
+    const world = page.locator('.city-world');
+    const zoom = page.getByRole('group', { name: 'تقريب الخريطة وإبعادها' });
+    const plus = zoom.getByRole('button', { name: 'تقريب الخريطة' });
+    const minus = zoom.getByRole('button', { name: 'إبعاد الخريطة' });
+    await expect(world).toHaveCSS('width', '1584px');
+    await expect(minus).toBeDisabled();
+    const zoomBox = (await zoom.boundingBox())!;
+    for (const sel of ['.app-header .brand', '.header-tools', '.city-intro', '.city-current', '.game-bar']) {
+      const other = page.locator(sel);
+      if (!await other.isVisible()) continue;
+      const r = (await other.boundingBox())!;
+      expect(zoomBox.x < r.x + r.width && zoomBox.x + zoomBox.width > r.x && zoomBox.y < r.y + r.height && zoomBox.y + zoomBox.height > r.y, `${sel} overlaps zoom`).toBe(false);
+    }
+    for (const width of [1980, 2376, 2772, 3168]) {
+      await plus.click();
+      await expect(world).toHaveCSS('width', `${width}px`);
+    }
+    await expect(plus).toBeDisabled();
+    await minus.click();
+    await expect(world).toHaveCSS('width', '2772px');
+    const aligned = await page.evaluate(() => {
+      const map = document.querySelector<HTMLElement>('.city-world')!.getBoundingClientRect();
+      const stop = document.querySelector<HTMLElement>('[data-station="1"]')!.getBoundingClientRect();
+      return { x: Math.abs((stop.left + stop.width / 2 - map.left) / map.width - 292 / 1584), y: Math.abs((stop.top + stop.height / 2 - map.top) / map.height - 201 / 672) };
+    });
+    expect(aligned.x).toBeLessThan(0.001);
+    expect(aligned.y).toBeLessThan(0.001);
+    await page.getByRole('button', { name: 'محطتي', exact: true }).click();
+    await expect(page.locator('[data-station="1"]')).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  });
+}
+
+test('zoom keeps the viewed part of the city centred when scrolling permits', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 600 });
+  await seedClassroom(page);
+  await page.goto('/#/map');
+  const viewport = page.locator('.city-viewport');
+  await viewport.evaluate((el) => { el.scrollLeft = 550; el.scrollTop = 35; });
+  const center = () => viewport.evaluate((el) => {
+    const map = el.querySelector<HTMLElement>('.city-world')!;
+    return [(el.scrollLeft + el.clientWidth / 2 - map.offsetLeft) / map.offsetWidth, (el.scrollTop + el.clientHeight / 2 - map.offsetTop) / map.offsetHeight];
+  });
+  const before = await center();
+  await page.getByRole('button', { name: 'تقريب الخريطة' }).click();
+  const after = await center();
+  expect(Math.abs(before[0] - after[0])).toBeLessThan(0.002);
+  expect(Math.abs(before[1] - after[1])).toBeLessThan(0.002);
+});
+
+test('all stops remain separately selectable at the widest view', async ({ page }) => {
+  await seedClassroom(page);
+  await page.goto('/#/map');
+  const overlaps = await page.evaluate(() => {
+    const stops = [...document.querySelectorAll<HTMLElement>('.city-stop')].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: el.dataset.station };
+    });
+    return stops.flatMap((a, i) => stops.slice(i + 1).filter((b) => Math.hypot(a.x - b.x, a.y - b.y) < 40).map((b) => `${a.id}/${b.id}`));
+  });
+  expect(overlaps).toEqual([]);
+});

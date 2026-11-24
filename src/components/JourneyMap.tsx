@@ -428,7 +428,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                     data-collision="world-sign"
                   >
                     <span>{info.shortName}</span>
-                    <h3>{info.name}</h3>
+                    <h2>{info.name}</h2>
                     <div>
                       <bdi>
                         الحصص {info.first}–{info.last}

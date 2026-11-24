@@ -668,6 +668,7 @@ export function StartVillage({ L }: { L: Layout }) {
   const { x, y } = L.start;
   return (
     <g
+      className="start-village"
       transform={`translate(${x} ${y})`}
       stroke="#7e7752"
       strokeWidth="1.3"

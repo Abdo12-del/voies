@@ -59,30 +59,48 @@ export function computeLayout(viewportW: number, height = 640): Layout {
   const H = Math.max(260, Math.round(height));
   const compact = viewportW < 640;
   const shortPhone = compact && H < 760;
-  const hudTop = compact ? (shortPhone ? 124 : 154) : 104;
-  const hudBottom = compact ? (shortPhone ? 86 : 96) : 98;
+  const tightHeight = H <= 550;
+  const shortPortrait = compact && H > 550 && H <= 620;
+  const hudTop = tightHeight
+    ? compact ? 124 : 84
+    : compact ? (shortPhone ? 124 : 154) : 104;
+  const hudBottom = tightHeight ? 80 : compact ? (shortPhone ? 86 : 96) : 98;
   const spacing = compact ? 144 : viewportW < 1000 ? 188 : 204;
-  const stationSize = compact ? (shortPhone ? 76 : 84) : 80;
-  const milestoneSize = compact ? 106 : 120;
+  const stationSize = tightHeight ? 68 : compact ? (shortPhone ? 76 : 84) : 80;
+  const milestoneSize = tightHeight ? 82 : compact ? 106 : 120;
   const labelW = spacing - (compact ? 10 : 18);
   const labelH = compact ? (shortPhone ? 72 : 80) : 66;
-  const roadW = compact ? 42 : 50;
-  const amplitude = compact
-    ? Math.min(shortPhone ? 20 : 26, H * 0.04)
-    : Math.min(62, H * 0.065);
-  const cardH = compact ? (shortPhone ? 148 : 164) : 152;
+  const roadW = compact || tightHeight ? 42 : 50;
+  const amplitude = tightHeight || shortPortrait
+    ? 8
+    : compact
+      ? Math.min(shortPhone ? 20 : 26, H * 0.04)
+      : Math.min(62, H * 0.065);
+  const cardH = tightHeight ? 120 : compact ? (shortPhone ? 148 : 164) : 152;
   const cardW = compact ? 248 : 304;
   // Full-screen coordinates: the grass/sky continues underneath the tools,
   // while stations, titles and the one current card stay clear of them.
-  const roadCenter = Math.min(
-    430,
-    hudTop + (H - hudTop - hudBottom) * 0.37,
-    H - hudBottom - cardH - amplitude - stationSize / 2 - labelH - 20,
-  );
-  const cardY = Math.min(
-    H - cardH - hudBottom,
-    roadCenter + amplitude + stationSize / 2 + labelH + 44,
-  );
+  // In very short viewports keep the road and the active card in two visible
+  // rows. Secondary labels are hidden visually at this height (their names
+  // remain on the station buttons), rather than pushing the road off-screen.
+  const roadCenter = tightHeight
+    ? H - hudBottom - cardH - amplitude - stationSize / 2 - 12
+    : shortPortrait
+      ? Math.max(
+          hudTop + 41 + stationSize / 2 + amplitude + 4,
+          H - hudBottom - cardH - amplitude - stationSize / 2 - 28,
+        )
+      : Math.min(
+          430,
+          hudTop + (H - hudTop - hudBottom) * 0.37,
+          H - hudBottom - cardH - amplitude - stationSize / 2 - labelH - 20,
+        );
+  const cardY = tightHeight || shortPortrait
+    ? H - cardH - hudBottom
+    : Math.min(
+        H - cardH - hudBottom,
+        roadCenter + amplitude + stationSize / 2 + labelH + 44,
+      );
   const firstD = Math.max(viewportW / 2 + 48, compact ? 610 : 740);
   const distances: Array<Omit<MapNode, "x"> & { d: number }> = [];
   const medalGap = spacing + 90;

@@ -1,0 +1,84 @@
+/* Small screens keep the active stop, its card, and the controls readable. */
+.station-you {
+  padding-inline: 9px;
+}
+
+@media (max-width: 360px) {
+  .world-switch button {
+    gap: 0;
+    font-size: 11px;
+  }
+  .world-switch button > svg {
+    display: none;
+  }
+  .current-card h2 {
+    font-size: 18px;
+  }
+  /* The reserved guide rectangle extends past the screen on narrow phones. */
+  .laila-guide {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 700px) {
+  /* The speech and guide would otherwise overlap the two-row header. */
+  .sister-guide,
+  .sister-speech,
+  .world-sign {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 620px) {
+  /* Names remain available as accessible labels on every station button. */
+  .station-label,
+  .milestone-label {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) and (max-height: 550px) and (orientation: landscape) {
+  .app-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    top: max(8px, env(safe-area-inset-top));
+  }
+  .brand h1 {
+    font-size: 15px;
+  }
+  .header-progress {
+    width: 140px;
+    padding: 5px 8px 3px;
+  }
+  .progress-caption {
+    font-size: 10px;
+  }
+  .speaker-launch {
+    font-size: 10px;
+  }
+  .speaker-launch > svg {
+    display: none;
+  }
+}
+
+@media (max-height: 550px) {
+  .station-label,
+  .milestone-label,
+  .world-sign,
+  .start-village {
+    display: none;
+  }
+  .current-card {
+    padding: 7px 12px 8px;
+    gap: 2px;
+  }
+  .current-card h2 {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .current-card .current-start {
+    min-height: 44px;
+    height: 44px;
+  }
+}

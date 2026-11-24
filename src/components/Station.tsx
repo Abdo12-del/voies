@@ -44,7 +44,7 @@ export function Station({
       >
         {status === "current" && (
           <span className="station-you" aria-hidden="true">
-            أنت هنا
+            أنت هنا · المسار ←
           </span>
         )}
         <button

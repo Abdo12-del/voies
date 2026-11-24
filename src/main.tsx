@@ -11,6 +11,7 @@ import "@fontsource/baloo-bhaijaan-2/latin-600.css";
 import "@fontsource/baloo-bhaijaan-2/latin-800.css";
 import "./styles.css";
 import "./map.css";
+import "./map-responsive.css";
 import "./classroom.css";
 import App from "./App";
 import { initializeClassroom } from "./lib/classroom";

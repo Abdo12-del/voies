@@ -375,7 +375,7 @@
   line-height: 1.2;
   display: block;
 }
-.world-sign h3 {
+.world-sign h2 {
   font-size: 25px;
   line-height: 1.35;
   margin: 4px 0 6px;
@@ -405,7 +405,7 @@
   background: linear-gradient(150deg, #fff8e4, #ffe9b5);
   transform: rotate(1deg);
 }
-.world-sign-2 h3 {
+.world-sign-2 h2 {
   font-size: 22px;
   color: #80500e;
 }
@@ -810,10 +810,10 @@
   .world-sign {
     padding: 10px 5px;
   }
-  .world-sign h3 {
+  .world-sign h2 {
     font-size: 22px;
   }
-  .world-sign-2 h3 {
+  .world-sign-2 h2 {
     font-size: 19px;
   }
   .world-sign > div {
@@ -864,7 +864,7 @@
   }
 }
 
-.world-sign-2 h3 {
+.world-sign-2 h2 {
   white-space: normal;
   font-size: 20px;
   line-height: 1.18;
@@ -885,7 +885,7 @@
   }
 }
 @media (max-width: 640px) {
-  .world-sign-2 h3 {
+  .world-sign-2 h2 {
     font-size: 18px;
   }
   .world-sign-2 > div {

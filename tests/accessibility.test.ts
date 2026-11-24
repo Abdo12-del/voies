@@ -75,7 +75,7 @@ describe("visual invariants independent of axe's visibility heuristics", () => {
     for (const background of ["#fff1d8", "#ffe9b5"]) {
       readable(".world-sign > span", background);
       readable(".world-sign > div", background);
-      readable(".world-sign-2 h3", background);
+      readable(".world-sign-2 h2", background);
     }
     for (const background of ["#ffe680", "#ffbd1a"])
       readable(".btn-start", background);

@@ -13,6 +13,7 @@ import "./styles.css";
 import "./map.css";
 import "./map-responsive.css";
 import "./classroom.css";
+import "./city-map.css";
 import App from "./App";
 import { initializeClassroom } from "./lib/classroom";
 import { initializeProgress } from "./lib/progress";

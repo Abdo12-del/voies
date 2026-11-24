@@ -245,7 +245,7 @@ export default function App() {
         </div>
       ) : (
         <div
-          className={`app${enteringMap ? " is-map-arriving" : ""}`}
+          className={`app city-app${enteringMap ? " is-map-arriving" : ""}`}
           ref={(element) => { if (element) element.inert = enteringMap; }}
           aria-hidden={enteringMap || undefined}
         >

@@ -5,6 +5,7 @@ import { Header } from "./components/Header";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
+import { LessonOneView } from "./components/LessonOneView";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
 import { SpeakerWheel } from "./components/SpeakerWheel";
 import { TeacherPanel } from "./components/TeacherPanel";
@@ -220,13 +221,14 @@ export default function App() {
     statusOf(route.id, progress.completed) !== "locked"
       ? route
       : null;
+  const LessonComponent = lesson?.id === 1 ? LessonOneView : LessonView;
   return (
     <>
       {route.name === "welcome" ? (
         <JourneyWelcome onStart={beginJourney} />
       ) : lesson ? (
         <div className="app lesson-app">
-          <LessonView
+          <LessonComponent
             key={lesson.id}
             id={lesson.id}
             mode={

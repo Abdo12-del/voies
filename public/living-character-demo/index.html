@@ -53,11 +53,25 @@
     @media(prefers-reduced-motion:reduce){.figure,.sunlight,.sparkles span,.scene.entering .figure-wrap,.scene.entering .sparkles span,.text-animate h1,.text-animate .title-word,.text-animate .line{animation:none!important}*{transition:none!important}}
     @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.intro p{font-size:.8rem}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.96) 0%,rgba(48,25,32,.87) 30%,rgba(48,25,32,.4) 48%,transparent 65%)}.words{right:8%;top:7%;width:84%}h1{font-size:clamp(1.5rem,8vw,2rem)}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.figure-wrap{height:61%;left:12%;bottom:-4%;max-width:67%}.figure-wrap.sami{left:7%;height:61%;max-width:70%}.figure-wrap.sister{left:9%;height:57%;max-width:70%}.sparkles span:nth-child(2){left:65%;top:57%}.navigation{gap:10px}.nav-button{padding:9px 12px}.counter{min-width:3.5em}.note{font-size:.78rem}}
     @media(max-width:360px){.navigation{gap:6px}.progress{gap:7px}.nav-button{padding:8px}.line{font-size:.95rem}}
+    /* Full-bleed presentation: controls sit over the scene rather than shrinking it. */
+    body{display:block;padding:0;min-height:100vh}
+    main{position:relative;isolation:isolate;display:flex;flex-direction:column;width:100%;min-height:100vh;min-height:100dvh;overflow:hidden}
+    .scene{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;background-size:cover;background-position:center;z-index:0}
+    .intro,.controls{position:relative;z-index:1}
+    .intro{margin:0;padding:max(14px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) 20px max(22px,env(safe-area-inset-left));background:linear-gradient(#201218c9,transparent)}
+    .header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .motion,.fullscreen{background:#281721aa;border:1px solid #d4b3a0;border-radius:99px;color:#fff7ec;padding:9px 14px;white-space:nowrap}
+    .controls{margin-top:auto;padding:20px 20px max(14px,env(safe-area-inset-bottom));background:linear-gradient(transparent,#20131fe8 38%,#20131ff5)}
+    .navigation{margin-top:0}.nav-button,.text-choice,.replay{background:#281721c7}
+    .text-options{margin:12px auto 0;text-align:center;max-width:900px}.text-options summary{display:inline-block;cursor:pointer;padding:6px 14px;border:1px solid #ad8e80;border-radius:99px;background:#281721c7;color:#fff3e3;font-size:.86rem}.text-options summary:focus-visible{outline:3px solid #f7c774;outline-offset:3px}.text-lab{margin-top:10px}.note{margin-top:5px}
+    .figure-wrap{height:82%;bottom:-4%}.figure-wrap.sami{height:81%}.figure-wrap.sister{height:76%}.words{top:22%}
+    @media(max-width:600px){body{padding:0}.intro{margin:0;padding:12px 14px 18px}.intro p{font-size:.75rem}.intro strong{font-size:.95rem}.header-actions{gap:5px}.motion,.fullscreen{font-size:.75rem;padding:7px 9px}.scene{aspect-ratio:auto;background-size:cover;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.93) 0%,rgba(48,25,32,.8) 28%,rgba(48,25,32,.25) 51%,transparent 70%)}.words{top:15%;right:7%;width:86%}.figure-wrap{height:56%;bottom:5%;left:12%}.figure-wrap.sami{height:55%;bottom:5%}.figure-wrap.sister{height:52%;bottom:5%}.controls{padding:22px 10px max(10px,env(safe-area-inset-bottom))}.text-options{margin-top:8px}.text-lab{gap:6px}.text-choice,.replay{font-size:.8rem;padding:6px 10px}.text-lab-status{font-size:.73rem}.note{font-size:.7rem}.navigation{gap:8px}}
+    @media(max-height:600px){main{min-height:600px}.figure-wrap,.figure-wrap.sami{height:70%}.figure-wrap.sister{height:65%}}
   </style>
 </head>
 <body>
 <main>
-  <header class="intro"><p><strong>حكاية تتحرّك ✦</strong>تجربة مرحة للانتقال بين الشرائح</p><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></header>
+  <header class="intro"><p><strong>حكاية تتحرّك ✦</strong>تجربة مرحة للانتقال بين الشرائح</p><div class="header-actions"><button class="fullscreen" type="button" hidden>ملء الشاشة ⛶</button><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></div></header>
   <section class="scene" aria-labelledby="scene-title" aria-roledescription="شريحة" data-text-motion="bounce">
     <div class="sunlight" aria-hidden="true"></div>
     <div class="sparkles" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span></div>
@@ -69,6 +83,7 @@
       <button class="action" type="button">لنبدأ الحكاية ←</button>
     </div>
   </section>
+  <div class="controls">
   <nav class="navigation" aria-label="التنقّل بين الشرائح التجريبية">
     <button class="nav-button previous" type="button" disabled>→ السابق</button>
     <div class="progress" role="group" aria-label="اختيار شريحة">
@@ -79,6 +94,8 @@
     <span class="counter" aria-live="polite" dir="rtl">١ من ٣</span>
     <button class="nav-button next" type="button">التالي ←</button>
   </nav>
+  <details class="text-options">
+  <summary>خيارات حركة النص ✦</summary>
   <div class="text-lab" role="group" aria-label="اختيار حركة النص">
     <strong>جرّب حركة النص:</strong>
     <button class="text-choice" type="button" data-choice="bounce" aria-pressed="true">قفزة مرحة</button>
@@ -88,6 +105,8 @@
   </div>
   <p class="text-lab-status" aria-live="polite">اختر حركة لتراها فورًا، ثم جرّبها عند الانتقال بين الشرائح.</p>
   <p class="note">نموذج تجريبي بثلاث شرائح؛ الحركة للشخصية كاملة وليست تحريكًا منفصلًا للوجه أو الأطراف.</p>
+  </details>
+  </div>
 </main>
 <script>
   const slides = [
@@ -97,6 +116,12 @@
   ];
   const scene = document.querySelector('.scene');
   const motion = document.querySelector('.motion');
+  const fullscreen = document.querySelector('.fullscreen');
+  if(document.fullscreenEnabled && document.documentElement.requestFullscreen){
+    fullscreen.hidden=false;
+    fullscreen.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{fullscreen.textContent='تعذّر ملء الشاشة';}});
+    document.addEventListener('fullscreenchange',()=>{fullscreen.textContent=document.fullscreenElement?'إنهاء ملء الشاشة ⛶':'ملء الشاشة ⛶';});
+  }
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const figureWrap = document.querySelector('.figure-wrap');
   const figure = document.querySelector('.figure');

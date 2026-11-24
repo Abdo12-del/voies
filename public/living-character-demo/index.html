@@ -26,11 +26,17 @@
     .action{border:0;border-radius:999px;background:#f5d298;color:#4b252d;padding:.7em 1.25em;font-weight:700;font-size:clamp(.7rem,1.2vw,1rem);box-shadow:0 4px 0 #b78559;transition:transform .2s,background .2s}
     .action:hover{transform:translateY(-2px);background:#ffe0aa}
     .sparkles{position:absolute;inset:0;pointer-events:none;overflow:hidden}.sparkles span{position:absolute;color:#ffe2a6;text-shadow:0 0 10px #ffd088;font-size:clamp(.7rem,1.2vw,1.2rem);opacity:.7;animation:twinkle 5s ease-in-out infinite}.sparkles span:nth-child(1){left:9%;top:19%}.sparkles span:nth-child(2){left:39%;top:23%;animation-delay:-2s}.sparkles span:nth-child(3){left:48%;top:60%;animation-delay:-3s}
-    .scene.entering .figure-wrap:not(.outgoing){animation:figure-in .65s cubic-bezier(.2,.75,.3,1) both}.scene.entering .words{animation:words-in .55s cubic-bezier(.2,.75,.3,1) both}.scene.entering .sparkles span{animation:arrival .7s ease-out both}.scene.reverse.entering .figure-wrap:not(.outgoing){animation-name:figure-in-reverse}.scene.reverse.entering .words{animation-name:words-in-reverse}.figure-wrap.outgoing{animation:figure-out .4s ease-in both!important}
+    .scene.entering .figure-wrap:not(.outgoing){animation:figure-in .65s cubic-bezier(.2,.75,.3,1) both}.scene.entering .sparkles span{animation:arrival .7s ease-out both}.scene.reverse.entering .figure-wrap:not(.outgoing){animation-name:figure-in-reverse}.figure-wrap.outgoing{animation:figure-out .4s ease-in both!important}
+    /* The Arabic text remains intact: animation applies to whole blocks, never individual letters. */
+    .text-animate[data-text-motion="fade"] h1{animation:text-fade .45s ease-out both}.text-animate[data-text-motion="fade"] .line{animation:text-fade .48s .1s ease-out both}
+    .text-animate[data-text-motion="rise"] h1{animation:text-rise .55s cubic-bezier(.2,.75,.3,1) both}.text-animate[data-text-motion="rise"] .line{animation:text-rise .55s .12s cubic-bezier(.2,.75,.3,1) both}
+    .text-animate[data-text-motion="reveal"] h1{animation:text-reveal .65s cubic-bezier(.2,.75,.3,1) both}.text-animate[data-text-motion="reveal"] .line{animation:text-fade .5s .12s ease-out both}
+    @keyframes text-fade{from{opacity:0}to{opacity:1}}@keyframes text-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@keyframes text-reveal{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0 0 0 0)}}
+    .text-lab{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 10px;margin:16px auto 0}.text-lab strong{font-size:.88rem;color:#ddc9ba;margin-inline-end:4px}.text-choice,.replay{border:1px solid #8b706b;background:#ffffff09;color:#fbece0;border-radius:99px;padding:7px 13px;font-size:.87rem}.text-choice[aria-pressed="true"]{background:#f5d298;color:#4b252d;border-color:#f5d298;font-weight:bold}.replay{border-style:dashed}.text-lab-status{text-align:center;margin:7px 0 0;font-size:.8rem;color:#cbb7ae;min-height:1.5em}
     @keyframes figure-out{to{opacity:0;transform:translateY(8px)}}
     .navigation{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:16px}.nav-button{background:#ffffff0d;border:1px solid #a98c80;color:#fff8ed;border-radius:99px;padding:9px 18px;font-weight:bold}.nav-button:hover:not(:disabled){background:#ffffff19}.progress{display:flex;align-items:center;gap:10px;direction:rtl}.dot{width:12px;height:12px;padding:0;border:1px solid #e2c39e;border-radius:50%;background:transparent}.dot[aria-current=true]{background:#f5d298;box-shadow:0 0 0 4px #f5d29824}.counter{color:#e1c9b8;min-width:4em;text-align:center;font-size:.95rem}
     .note{font-size:.82rem;color:#cbb7ae;line-height:1.7;margin:13px 3px 0;text-align:center}
-    .motion-off .figure,.motion-off .sunlight,.motion-off .sparkles span,.motion-off .scene.entering .figure-wrap,.motion-off .scene.entering .words,.motion-off .scene.entering .sparkles span{animation:none!important}.motion-off *{transition:none!important}
+    .motion-off .figure,.motion-off .sunlight,.motion-off .sparkles span,.motion-off .scene.entering .figure-wrap,.motion-off .scene.entering .sparkles span,.motion-off .text-animate h1,.motion-off .text-animate .line{animation:none!important}.motion-off *{transition:none!important}
     @keyframes breathe{0%,100%{transform:rotate(-.45deg) scale(1)}50%{transform:rotate(.45deg) scale(1.008)}}
     @keyframes light{from{opacity:.35}to{opacity:.8}}
     @keyframes twinkle{0%,100%{opacity:.22;transform:scale(.8)}50%{opacity:.8;transform:scale(1)}}
@@ -39,7 +45,7 @@
     @keyframes words-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     @keyframes words-in-reverse{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
     @keyframes arrival{0%{opacity:0;transform:scale(.5)}55%{opacity:.8;transform:scale(1.15)}100%{opacity:.45;transform:scale(1)}}
-    @media(prefers-reduced-motion:reduce){.figure,.sunlight,.sparkles span,.scene.entering .figure-wrap,.scene.entering .words,.scene.entering .sparkles span{animation:none!important}*{transition:none!important}}
+    @media(prefers-reduced-motion:reduce){.figure,.sunlight,.sparkles span,.scene.entering .figure-wrap,.scene.entering .sparkles span,.text-animate h1,.text-animate .line{animation:none!important}*{transition:none!important}}
     @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.intro p{font-size:.8rem}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.96) 0%,rgba(48,25,32,.87) 30%,rgba(48,25,32,.4) 48%,transparent 65%)}.words{right:8%;top:7%;width:84%}h1{font-size:clamp(1.5rem,8vw,2rem)}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.figure-wrap{height:61%;left:12%;bottom:-4%;max-width:67%}.figure-wrap.sami{left:7%;height:61%;max-width:70%}.figure-wrap.sister{left:9%;height:57%;max-width:70%}.sparkles span:nth-child(2){left:65%;top:57%}.navigation{gap:10px}.nav-button{padding:9px 12px}.counter{min-width:3.5em}.note{font-size:.78rem}}
     @media(max-width:360px){.navigation{gap:6px}.progress{gap:7px}.nav-button{padding:8px}.line{font-size:.95rem}}
   </style>
@@ -47,7 +53,7 @@
 <body>
 <main>
   <header class="intro"><p><strong>حكاية تتحرّك ✦</strong>تجربة مرحة للانتقال بين الشرائح</p><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></header>
-  <section class="scene" aria-labelledby="scene-title" aria-roledescription="شريحة">
+  <section class="scene" aria-labelledby="scene-title" aria-roledescription="شريحة" data-text-motion="fade">
     <div class="sunlight" aria-hidden="true"></div>
     <div class="sparkles" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span></div>
     <div class="figure-wrap"><img class="figure" src="laila.webp" alt="ليلى تحمل كتابًا وتدعونا إلى الحكاية"></div>
@@ -65,10 +71,18 @@
       <button class="dot" type="button" aria-label="الشريحة ٢: صوتك يصنع الحكاية"></button>
       <button class="dot" type="button" aria-label="الشريحة ٣: والآن دورك"></button>
     </div>
-    <span class="counter" aria-live="polite" dir="ltr">١ / ٣</span>
+    <span class="counter" aria-live="polite" dir="rtl">١ من ٣</span>
     <button class="nav-button next" type="button">التالي ←</button>
   </nav>
-  <p class="note">نموذج تجريبي بثلاث شرائح؛ الحركة للصورة كاملة وليست تحريكًا منفصلًا للوجه أو الأطراف.</p>
+  <div class="text-lab" role="group" aria-label="اختيار حركة النص">
+    <strong>جرّب حركة النص:</strong>
+    <button class="text-choice" type="button" data-choice="fade" aria-pressed="true">ظهور هادئ</button>
+    <button class="text-choice" type="button" data-choice="rise" aria-pressed="false">صعود قصصي</button>
+    <button class="text-choice" type="button" data-choice="reveal" aria-pressed="false">كشف من اليمين</button>
+    <button class="replay" type="button">إعادة الحركة ↻</button>
+  </div>
+  <p class="text-lab-status" aria-live="polite">اختر حركة لتراها فورًا، ثم جرّبها عند الانتقال بين الشرائح.</p>
+  <p class="note">نموذج تجريبي بثلاث شرائح؛ الحركة للشخصية كاملة وليست تحريكًا منفصلًا للوجه أو الأطراف.</p>
 </main>
 <script>
   const slides = [
@@ -90,10 +104,16 @@
   const counter = document.querySelector('.counter');
   const dots = [...document.querySelectorAll('.dot')];
   const digits = ['١','٢','٣'];
+  const textChoices = [...document.querySelectorAll('.text-choice')];
+  const replay = document.querySelector('.replay');
+  const textStatus = document.querySelector('.text-lab-status');
   let index = 0;
   let paused = reduced.matches;
-  let animationTimer;
-  function syncMotion(){document.body.classList.toggle('motion-off',paused);if(paused)scene.querySelector('.outgoing')?.remove();motion.disabled=reduced.matches;motion.setAttribute('aria-pressed',String(paused));motion.textContent=reduced.matches?'الحركة مخفّضة في جهازك':paused?'تشغيل الحركة':'إيقاف الحركة';}
+  let animationTimer, textTimer;
+  function syncMotion(){document.body.classList.toggle('motion-off',paused);if(paused){scene.querySelector('.outgoing')?.remove();scene.classList.remove('text-animate');clearTimeout(textTimer);}motion.disabled=reduced.matches;motion.setAttribute('aria-pressed',String(paused));motion.textContent=reduced.matches?'الحركة مخفّضة في جهازك':paused?'تشغيل الحركة':'إيقاف الحركة';textStatus.textContent=reduced.matches?'الحركة مخفّضة في إعدادات جهازك؛ النص ظاهر دون حركة.':paused?'الحركة متوقفة؛ شغّلها لمعاينة أساليب النص.':'اختر حركة لتراها فورًا، ثم جرّبها عند الانتقال بين الشرائح.';}
+  function animateText(){clearTimeout(textTimer);scene.classList.remove('text-animate');if(paused||reduced.matches)return;void scene.offsetWidth;scene.classList.add('text-animate');textTimer=setTimeout(()=>scene.classList.remove('text-animate'),800);}
+  textChoices.forEach(button=>button.addEventListener('click',()=>{scene.dataset.textMotion=button.dataset.choice;textChoices.forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));animateText();}));
+  replay.addEventListener('click',animateText);
   motion.addEventListener('click',()=>{paused=!paused;syncMotion();});
   reduced.addEventListener('change',event=>{paused=event.matches;syncMotion();});
   syncMotion();
@@ -110,8 +130,9 @@
     figure.src=slide.character+'.webp'; figure.alt=slide.alt;
     eyebrow.textContent=slide.eyebrow;title.textContent=slide.title;line.textContent=slide.text;action.textContent=slide.action;
     previous.disabled=index===0;next.disabled=index===slides.length-1;
-    counter.textContent=digits[index]+' / ٣';
+    counter.textContent=digits[index]+' من ٣';
     dots.forEach((dot,i)=>{if(i===index)dot.setAttribute('aria-current','true');else dot.removeAttribute('aria-current');});
+    animateText();
     if(!paused && !reduced.matches){void scene.offsetWidth;scene.classList.toggle('reverse',reverse);scene.classList.add('entering');animationTimer=setTimeout(()=>scene.classList.remove('entering','reverse'),720);}
   }
   previous.addEventListener('click',()=>goTo(index-1));next.addEventListener('click',()=>goTo(index+1));

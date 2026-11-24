@@ -5,7 +5,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #281821;
+  background: linear-gradient(145deg, #147faa, #075076);
   color: #fff8eb;
 }
 .journey-welcome-art, .journey-welcome-shade {
@@ -17,7 +17,7 @@
   background: url('/journey-intro/welcome.webp') 30% center / cover no-repeat;
 }
 .journey-welcome-shade {
-  background: linear-gradient(to left, #271522fa 0%, #301b29e8 25%, #301b2980 43%, transparent 62%);
+  background: linear-gradient(to left, #074b70f0 0%, #075b76d9 25%, #0a6c8055 43%, transparent 62%);
 }
 .journey-welcome-copy {
   position: absolute;
@@ -79,7 +79,7 @@
 }
 @media (max-width: 1100px) and (orientation: portrait) {
   .journey-welcome-art { inset: 38% 0 0; background-position: left center; }
-  .journey-welcome-shade { background: linear-gradient(to bottom, #281822 0%, #281822 29%, #281822bd 42%, transparent 58%, #28182299 100%); }
+  .journey-welcome-shade { background: linear-gradient(to bottom, transparent 28%, #0c6d9288 38%, transparent 53%, #06435c55 100%); }
   .journey-welcome-copy { top: max(5%, env(safe-area-inset-top)); right: 7%; width: 86%; transform: none; }
   .journey-welcome-kicker { font-size: .82rem; margin-bottom: 7px; }
   .journey-welcome h1 { font-size: clamp(2rem, 8vw, 2.8rem); margin-bottom: .25em; }

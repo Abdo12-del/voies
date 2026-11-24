@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>تجربة الشخصية الحيّة | ليلى</title>
+  <style>
+    @font-face{font-family:Tajawal;src:url('tajawal.woff2') format('woff2');font-display:swap}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:#211b25;color:#fff9ed;font-family:Tajawal,system-ui,sans-serif;display:grid;place-items:center;padding:24px}
+    main{width:min(1200px,100%)}
+    .intro{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:0 0 14px}
+    .intro p{margin:0;color:#d7c6bd;font-size:.94rem}.intro strong{display:block;color:#fff9ed;font-size:1.05rem;margin-bottom:3px}
+    button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #f7c774;outline-offset:3px}
+    .motion{background:transparent;border:1px solid #aa8d83;border-radius:99px;color:#fff7ec;padding:9px 16px;white-space:nowrap}
+    .scene{position:relative;aspect-ratio:1376/768;overflow:hidden;isolation:isolate;border-radius:20px;background:#dfbf95 url('story-room.webp') center/cover;box-shadow:0 25px 65px #0006;border:1px solid #ffffff38}
+    .sunlight{position:absolute;inset:0;background:linear-gradient(110deg,transparent 0%,#fff0b335 23%,transparent 42%);pointer-events:none;animation:light 8s ease-in-out infinite alternate}
+    .laila{position:absolute;bottom:-10%;left:11%;height:91%;width:auto;max-width:43%;object-fit:contain;object-position:bottom;filter:drop-shadow(10px 9px 9px #4a271c55);transform-origin:50% 95%;animation:breathe 5s ease-in-out infinite}
+    .words{position:absolute;right:7%;top:18%;width:36%;color:#573a35;text-align:right}
+    .eyebrow{display:inline-block;font-size:clamp(.65rem,1.2vw,1rem);font-weight:700;color:#864347;letter-spacing:.02em;margin-bottom:clamp(3px,1vw,12px)}
+    h1{font-size:clamp(1.2rem,3.7vw,3.3rem);line-height:1.25;margin:0 0 .25em;color:#713541}
+    .line{font-size:clamp(.8rem,2vw,1.6rem);line-height:1.75;margin:0;max-width:24ch;min-height:3.5em}
+    .action{border:0;border-radius:999px;background:#844452;color:#fffaf2;padding:.7em 1.25em;font-weight:700;font-size:clamp(.7rem,1.2vw,1rem);box-shadow:0 4px 0 #64333d;transition:transform .2s,background .2s}
+    .action:hover{transform:translateY(-2px);background:#6f3541}
+    .note{font-size:.82rem;color:#cbb7ae;line-height:1.7;margin:12px 3px 0}
+    .paused *, .paused *::before, .paused *::after{animation-play-state:paused!important}
+    @keyframes breathe{0%,100%{transform:rotate(-.45deg) scale(1)}50%{transform:rotate(.45deg) scale(1.008)}}
+    @keyframes light{from{opacity:.35}to{opacity:.8}}
+    @media(prefers-reduced-motion:reduce){.laila,.sunlight{animation:none}.action{transition:none}}
+    @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene:after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,#fff2d6ed 0%,#fff2d6d9 37%,transparent 58%);z-index:-1}.words{right:8%;top:7%;width:84%}h1{font-size:2rem}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.laila{height:61%;left:12%;bottom:-4%;max-width:67%}.intro p{font-size:.8rem}}
+  </style>
+</head>
+<body>
+<main>
+  <header class="intro"><p><strong>تجربة الشخصية الحيّة</strong>نموذج مستقل لاستكشاف الفكرة</p><button class="motion" type="button" aria-pressed="false">إيقاف الحركة</button></header>
+  <section class="scene" aria-labelledby="scene-title">
+    <div class="sunlight" aria-hidden="true"></div>
+    <img class="laila" src="laila.webp" alt="ليلى تحمل كتابًا وتدعونا للاستماع إلى الحكاية">
+    <div class="words">
+      <span class="eyebrow">✦ حكاية تبدأ من هنا</span>
+      <h1 id="scene-title">هيا نفتح الحكاية!</h1>
+      <p class="line" aria-live="polite">أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.</p>
+      <button class="action" type="button">لنبدأ الحكاية ←</button>
+    </div>
+  </section>
+  <p class="note">هذه تجربة بصرية قصيرة وليست تصميمًا نهائيًا للدرس. الحركة هنا لطيفة لصورة كاملة، وليست تحريكًا منفصلًا للوجه أو اليدين.</p>
+</main>
+<script>
+  const motion = document.querySelector('.motion');
+  const scene = document.querySelector('.scene');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let paused = reduced.matches;
+  function syncMotion(){scene.classList.toggle('paused',paused);motion.disabled=reduced.matches;motion.setAttribute('aria-pressed', String(paused));motion.textContent = reduced.matches ? 'الحركة مخفّضة في جهازك' : (paused ? 'تشغيل الحركة' : 'إيقاف الحركة');}
+  motion.addEventListener('click',()=>{paused=!paused;syncMotion();});
+  reduced.addEventListener('change',e=>{paused=e.matches;syncMotion();});
+  syncMotion();
+  const action = document.querySelector('.action');
+  const line = document.querySelector('.line');
+  let started = false;
+  action.addEventListener('click',()=>{started=!started;line.textContent=started?'في كل كلمة فكرة، وفي كل حكاية فرصة لنعبّر بثقة. ما رأيك أن نبدأ؟':'أنا ليلى، تعالوا نجلس معًا ونكتشف ماذا تخبّئ لنا الكلمات.';action.textContent=started?'العودة إلى البداية ↻':'لنبدأ الحكاية ←';});
+</script>
+</body>
+</html>

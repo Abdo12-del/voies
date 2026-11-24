@@ -14,20 +14,21 @@
     button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #f7c774;outline-offset:3px}
     .motion{background:transparent;border:1px solid #aa8d83;border-radius:99px;color:#fff7ec;padding:9px 16px;white-space:nowrap}
     .scene{position:relative;aspect-ratio:1376/768;overflow:hidden;isolation:isolate;border-radius:20px;background:#dfbf95 url('story-room.webp') center/cover;box-shadow:0 25px 65px #0006;border:1px solid #ffffff38}
+    .scene::before{content:'';position:absolute;inset:0;background:linear-gradient(to left,rgba(39,20,28,.96) 0%,rgba(48,25,32,.88) 28%,rgba(48,25,32,.48) 45%,transparent 65%);pointer-events:none}
     .sunlight{position:absolute;inset:0;background:linear-gradient(110deg,transparent 0%,#fff0b335 23%,transparent 42%);pointer-events:none;animation:light 8s ease-in-out infinite alternate}
     .laila{position:absolute;bottom:-10%;left:11%;height:91%;width:auto;max-width:43%;object-fit:contain;object-position:bottom;filter:drop-shadow(10px 9px 9px #4a271c55);transform-origin:50% 95%;animation:breathe 5s ease-in-out infinite}
-    .words{position:absolute;right:7%;top:18%;width:36%;color:#573a35;text-align:right}
-    .eyebrow{display:inline-block;font-size:clamp(.65rem,1.2vw,1rem);font-weight:700;color:#864347;letter-spacing:.02em;margin-bottom:clamp(3px,1vw,12px)}
-    h1{font-size:clamp(1.2rem,3.7vw,3.3rem);line-height:1.25;margin:0 0 .25em;color:#713541}
+    .words{position:absolute;right:7%;top:20%;width:36%;color:#fff9ef;text-align:right;text-shadow:0 2px 8px #1f0f19aa}
+    .eyebrow{display:inline-block;font-size:clamp(.65rem,1.2vw,1rem);font-weight:700;color:#f5d298;letter-spacing:.02em;margin-bottom:clamp(3px,1vw,12px)}
+    h1{font-size:clamp(1.2rem,3.7vw,3.3rem);line-height:1.25;margin:0 0 .25em;color:#fff9ed}
     .line{font-size:clamp(.8rem,2vw,1.6rem);line-height:1.75;margin:0;max-width:24ch;min-height:3.5em}
-    .action{border:0;border-radius:999px;background:#844452;color:#fffaf2;padding:.7em 1.25em;font-weight:700;font-size:clamp(.7rem,1.2vw,1rem);box-shadow:0 4px 0 #64333d;transition:transform .2s,background .2s}
-    .action:hover{transform:translateY(-2px);background:#6f3541}
+    .action{border:0;border-radius:999px;background:#f5d298;color:#4b252d;padding:.7em 1.25em;font-weight:700;font-size:clamp(.7rem,1.2vw,1rem);box-shadow:0 4px 0 #b78559;transition:transform .2s,background .2s}
+    .action:hover{transform:translateY(-2px);background:#ffe0aa}
     .note{font-size:.82rem;color:#cbb7ae;line-height:1.7;margin:12px 3px 0}
     .paused *, .paused *::before, .paused *::after{animation-play-state:paused!important}
     @keyframes breathe{0%,100%{transform:rotate(-.45deg) scale(1)}50%{transform:rotate(.45deg) scale(1.008)}}
     @keyframes light{from{opacity:.35}to{opacity:.8}}
     @media(prefers-reduced-motion:reduce){.laila,.sunlight{animation:none}.action{transition:none}}
-    @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene:after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,#fff2d6ed 0%,#fff2d6d9 37%,transparent 58%);z-index:-1}.words{right:8%;top:7%;width:84%}h1{font-size:2rem}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.laila{height:61%;left:12%;bottom:-4%;max-width:67%}.intro p{font-size:.8rem}}
+    @media(max-width:600px){body{padding:14px;display:block}.intro{margin-top:12px}.scene{aspect-ratio:4/5;background-size:auto 100%;background-position:30% center}.scene::before{background:linear-gradient(to bottom,rgba(39,20,28,.96) 0%,rgba(48,25,32,.87) 30%,rgba(48,25,32,.4) 48%,transparent 65%)}.words{right:8%;top:7%;width:84%}h1{font-size:2rem}.line{font-size:1.05rem;min-height:3.5em}.eyebrow{font-size:.8rem}.action{font-size:.85rem}.laila{height:61%;left:12%;bottom:-4%;max-width:67%}.intro p{font-size:.8rem}}
   </style>
 </head>
 <body>

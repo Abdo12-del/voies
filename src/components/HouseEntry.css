@@ -1,0 +1,20 @@
+/* The first half-second is the actual map moving toward the house. */
+.house-departing .city-viewport { animation: house-map-approach 1.15s cubic-bezier(.35,0,.55,1) forwards; }
+.house-departing .app-header, .house-departing .game-bar, .house-departing .city-intro,
+.house-departing .city-zoom, .house-departing .city-current, .house-departing .city-stop,
+.house-departing .city-milestone, .house-departing .city-route { animation: house-ui-away .45s ease forwards; }
+@keyframes house-map-approach { to { transform:scale(1.8); } }
+@keyframes house-ui-away { to { opacity:0; } }
+.house-entry { position:fixed; z-index:100; inset:0; overflow:hidden; pointer-events:none; }
+.house-entry-frame { position:absolute; inset:0; background-size:cover; background-repeat:no-repeat; opacity:0; will-change:opacity, transform; }
+.house-entry-approach { background-image:url('/house-entry/01-approach.webp'); background-position:58% center; transform-origin:60% 58%; animation:house-approach 4.3s ease-in-out forwards; }
+.house-entry-door { background-image:url('/house-entry/02-doorway.webp'); background-position:50% center; animation:house-door 4.3s ease-in-out forwards; }
+.house-entry-inside { background-image:url('/house-entry/03-inside.webp'); background-position:center; animation:house-inside 4.3s ease-in-out forwards; }
+@keyframes house-approach { 0%, 10% { opacity:0; transform:scale(1); } 19%, 31% { opacity:1; } 43%, 100% { opacity:0; transform:scale(1.10); } }
+@keyframes house-door { 0%, 30% { opacity:0; transform:scale(1); } 44%, 57% { opacity:1; } 70%, 100% { opacity:0; transform:scale(1.12); } }
+@keyframes house-inside { 0%, 57% { opacity:0; transform:scale(1.04); } 72%, 100% { opacity:1; transform:scale(1); } }
+.house-entry-status { position:absolute; bottom:max(28px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border-radius:999px; padding:9px 18px; white-space:nowrap; background:#fff9ebed; color:#663b42; font-size:15px; font-weight:700; box-shadow:0 4px 18px #503a3a30; opacity:0; animation: house-status-in .3s .4s forwards; }
+.house-entry-skip { pointer-events:auto; position:absolute; top:max(18px, env(safe-area-inset-top)); left:max(18px, env(safe-area-inset-left)); min-height:44px; padding:9px 15px; border:1px solid #ead7bf; border-radius:14px; background:#fffaf1ef; color:#653c44; box-shadow:0 4px 16px #352c2e28; font-size:14px; font-weight:700; }
+@keyframes house-status-in { to { opacity:1; } }
+@media (max-width:640px) { .house-entry-status { bottom:max(20px, env(safe-area-inset-bottom)); font-size:13px; } .house-entry-skip { top:10px; left:10px; } }
+@media (prefers-reduced-motion: reduce) { .house-departing .city-viewport, .house-departing .app-header, .house-departing .game-bar, .house-departing .city-intro, .house-departing .city-zoom, .house-departing .city-current, .house-departing .city-stop, .house-departing .city-milestone, .house-departing .city-route { animation:none; } }

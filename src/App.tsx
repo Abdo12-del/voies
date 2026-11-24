@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
+import { HouseEntry } from "./components/HouseEntry";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
@@ -48,6 +49,9 @@ export default function App() {
   const [zone2Entering, setZone2Entering] = useState(false);
   const map = useRef<JourneyMapHandle>(null);
   const transitionTimer = useRef<ReturnType<typeof setTimeout>>();
+  const houseTimer = useRef<ReturnType<typeof setTimeout>>();
+  const houseDestination = useRef<string | null>(null);
+  const [enteringHouse, setEnteringHouse] = useState(false);
   const arrivalTimer = useRef<ReturnType<typeof setTimeout>>();
   const focusMapAfterArrival = useRef(false);
   const [enteringMap, setEnteringMap] = useState(false);
@@ -55,6 +59,11 @@ export default function App() {
   useEffect(() => {
     const onHash = () => {
       const next = parseHash();
+      if (houseDestination.current) {
+        clearTimeout(houseTimer.current);
+        houseDestination.current = null;
+        setEnteringHouse(false);
+      }
       if (next.name !== "map") {
         clearTimeout(arrivalTimer.current);
         focusMapAfterArrival.current = false;
@@ -106,16 +115,49 @@ export default function App() {
       window.location.replace(`#/lesson/${route.id}`);
   }, [route, progress.completed, goMap]);
 
+  const finishHouseEntry = useCallback(() => {
+    const destination = houseDestination.current;
+    if (!destination) return;
+    clearTimeout(houseTimer.current);
+    houseDestination.current = null;
+    setEnteringHouse(false);
+    window.location.hash = destination;
+  }, []);
+  useEffect(() => {
+    // Begin loading the frames while the user explores the map.
+    if (route.name !== "map") return;
+    for (const frame of ["01-approach", "02-doorway", "03-inside"]) {
+      const image = new Image();
+      image.src = `/house-entry/${frame}.webp`;
+    }
+  }, [route.name]);
   const startLesson = (id: number) => {
     if (statusOf(id, progress.completed) === "locked") {
       setSheet({ kind: "station", id });
       return;
     }
+    if (houseDestination.current) return;
     setSheet(null);
-    window.location.hash = `#/lesson/${id}${statusOf(id, progress.completed) === "completed" ? "?mode=review" : ""}`;
+    const destination = `#/lesson/${id}${statusOf(id, progress.completed) === "completed" ? "?mode=review" : ""}`;
+    if (id !== 1 || reducedMotion() || route.name !== "map") {
+      window.location.hash = destination;
+      return;
+    }
+    // Start from the actual house on the map, even if the user had scrolled away.
+    map.current?.goToLevel(1, false);
+    const viewport = document.querySelector<HTMLElement>(".city-viewport");
+    const world = document.querySelector<HTMLElement>(".city-world");
+    if (viewport && world) {
+      const view = viewport.getBoundingClientRect(), image = world.getBoundingClientRect();
+      viewport.style.transformOrigin = `${image.left - view.left + image.width * 155 / 1584}px ${image.top - view.top + image.height * 145 / 672}px`;
+    }
+    houseDestination.current = destination;
+    setEnteringHouse(true);
+    houseTimer.current = setTimeout(finishHouseEntry, 4300);
   };
   const openStation = (id: number) => {
     if (statusOf(id, progress.completed) === "current") {
+      if (id === 1) { startLesson(id); return; }
       map.current?.goToCurrent();
       document
         .querySelector<HTMLButtonElement>(".current-start")
@@ -171,6 +213,7 @@ export default function App() {
   useEffect(() => () => {
     clearTimeout(transitionTimer.current);
     clearTimeout(arrivalTimer.current);
+    clearTimeout(houseTimer.current);
   }, []);
   useEffect(() => {
     const id = progress.pendingUnlock;
@@ -245,9 +288,9 @@ export default function App() {
         </div>
       ) : (
         <div
-          className={`app city-app${enteringMap ? " is-map-arriving" : ""}`}
-          ref={(element) => { if (element) element.inert = enteringMap; }}
-          aria-hidden={enteringMap || undefined}
+          className={`app city-app${enteringMap ? " is-map-arriving" : ""}${enteringHouse ? " house-departing" : ""}`}
+          ref={(element) => { if (element) element.inert = enteringMap || enteringHouse; }}
+          aria-hidden={enteringMap || enteringHouse || undefined}
         >
           <Header
             progress={progress}
@@ -287,6 +330,7 @@ export default function App() {
         </div>
       )}
       {enteringMap && route.name === "map" && <JourneyWelcome onStart={beginJourney} exiting />}
+      {enteringHouse && route.name === "map" && <HouseEntry onSkip={finishHouseEntry} />}
       <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
     </>
   );

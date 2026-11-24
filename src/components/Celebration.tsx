@@ -35,9 +35,9 @@ export function Celebration({
         ))}
       </div>
       <div className="celebrate-stage">
-        <Character who="lailaPoint" height={134} />
-        <Character who="samiCheer" height={162} />
-        <Character who="sisterWave" height={119} />
+        <Character who="lailaWave" height={134} />
+        <Character who="samiSuccess" height={162} />
+        <Character who="sisterMapWelcome" height={119} />
       </div>
       <span className="celebrate-medal">
         <Icon name={milestone.icon} size={56} />

@@ -462,7 +462,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                 data-collision="sister"
               >
                 <Character
-                  who="sisterWave"
+                  who="sisterMapWelcome"
                   height={sisterRect(L).h}
                   decorative={false}
                 />
@@ -539,7 +539,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                       data-collision="sami"
                     >
                       <Character
-                        who={achieved ? "samiCheer" : "sami"}
+                        who="samiSuccess"
                         height={sami.h}
                         decorative={false}
                       />
@@ -582,9 +582,8 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(
                     data-collision="laila"
                   >
                     <Character
-                      who="lailaPoint"
+                      who="lailaWave"
                       height={guideRect(current, L).h}
-                      flip
                       decorative={false}
                     />
                   </div>

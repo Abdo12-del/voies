@@ -41,7 +41,7 @@ export function StationSheet({
         className="station-sheet milestone-sheet"
       >
         <div className="sheet-characters">
-          <Character who={achieved ? "samiCheer" : "sami"} height={140} />
+          <Character who="samiSuccess" height={140} />
           <span className="sheet-award">
             <Icon name={info.icon} size={70} />
           </span>

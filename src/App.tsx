@@ -47,9 +47,20 @@ export default function App() {
   const [zone2Entering, setZone2Entering] = useState(false);
   const map = useRef<JourneyMapHandle>(null);
   const transitionTimer = useRef<ReturnType<typeof setTimeout>>();
+  const arrivalTimer = useRef<ReturnType<typeof setTimeout>>();
+  const focusMapAfterArrival = useRef(false);
+  const [enteringMap, setEnteringMap] = useState(false);
   const lastCompleted = useRef(progress.completed);
   useEffect(() => {
-    const onHash = () => setRoute(parseHash());
+    const onHash = () => {
+      const next = parseHash();
+      if (next.name !== "map") {
+        clearTimeout(arrivalTimer.current);
+        focusMapAfterArrival.current = false;
+        setEnteringMap(false);
+      }
+      setRoute(next);
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -59,6 +70,23 @@ export default function App() {
     setRoute({ name: "map" });
     window.location.hash = "#/map";
   }, []);
+  const beginJourney = useCallback(() => {
+    focusMapAfterArrival.current = true;
+    if (reducedMotion()) {
+      goMap();
+      return;
+    }
+    setEnteringMap(true);
+    goMap();
+    clearTimeout(arrivalTimer.current);
+    arrivalTimer.current = setTimeout(() => setEnteringMap(false), 1550);
+  }, [goMap]);
+  useEffect(() => {
+    if (route.name === "map" && !enteringMap && focusMapAfterArrival.current) {
+      focusMapAfterArrival.current = false;
+      document.querySelector<HTMLElement>(".map-viewport")?.focus({ preventScroll: true });
+    }
+  }, [route.name, enteringMap]);
   const goToCurrent = useCallback(() => {
     setSheet(null);
     map.current?.goToCurrent();
@@ -101,6 +129,7 @@ export default function App() {
   useEffect(() => {
     if (
       route.name !== "map" ||
+      enteringMap ||
       !progress.pendingCelebration ||
       teacherOpen ||
       speakerOpen ||
@@ -118,6 +147,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [
     route.name,
+    enteringMap,
     progress.pendingCelebration,
     teacherOpen,
     speakerOpen,
@@ -137,12 +167,16 @@ export default function App() {
       );
     }
   };
-  useEffect(() => () => clearTimeout(transitionTimer.current), []);
+  useEffect(() => () => {
+    clearTimeout(transitionTimer.current);
+    clearTimeout(arrivalTimer.current);
+  }, []);
   useEffect(() => {
     const id = progress.pendingUnlock;
     if (
       !id ||
       route.name !== "map" ||
+      enteringMap ||
       teacherOpen ||
       speakerOpen ||
       celebrating ||
@@ -173,6 +207,7 @@ export default function App() {
     };
   }, [
     route.name,
+    enteringMap,
     progress.pendingUnlock,
     progress.pendingCelebration,
     teacherOpen,
@@ -188,7 +223,7 @@ export default function App() {
   return (
     <>
       {route.name === "welcome" ? (
-        <JourneyWelcome onStart={goMap} />
+        <JourneyWelcome onStart={beginJourney} />
       ) : lesson ? (
         <div className="app lesson-app">
           <LessonView
@@ -207,7 +242,11 @@ export default function App() {
           />
         </div>
       ) : (
-        <div className="app">
+        <div
+          className={`app${enteringMap ? " is-map-arriving" : ""}`}
+          ref={(element) => { if (element) element.inert = enteringMap; }}
+          aria-hidden={enteringMap || undefined}
+        >
           <Header
             progress={progress}
             onPickSpeaker={() => setSpeakerOpen(true)}
@@ -245,6 +284,7 @@ export default function App() {
           <Celebration level={celebrating} onClose={closeCelebration} />
         </div>
       )}
+      {enteringMap && route.name === "map" && <JourneyWelcome onStart={beginJourney} exiting />}
       <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
     </>
   );

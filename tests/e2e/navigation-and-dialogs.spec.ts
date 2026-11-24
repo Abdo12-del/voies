@@ -41,7 +41,7 @@ test("award, golden world, locked dialog, lesson and classroom controls pass acc
 }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
   await seedClassroom(page, 16);
-  await page.goto("/");
+  await page.goto("/#/map");
   const violations: Record<string, unknown[]> = {};
   const check = async (name: string) => {
     await page.evaluate(() => document.fonts.ready);

@@ -14,7 +14,7 @@ const finishButton = (page: Page) =>
 const counter = (page: Page) => page.locator(".slide-counter bdi");
 
 async function openCurrentLesson(page: Page) {
-  await page.goto("/");
+  await page.goto("/#/map");
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
   await expect(page.locator(".lesson")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);

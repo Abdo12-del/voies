@@ -1,0 +1,100 @@
+.journey-welcome {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #281821;
+  color: #fff8eb;
+}
+.journey-welcome-art, .journey-welcome-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.journey-welcome-art {
+  background: url('/journey-intro/welcome.webp') 30% center / cover no-repeat;
+}
+.journey-welcome-shade {
+  background: linear-gradient(to left, #271522fa 0%, #301b29e8 25%, #301b2980 43%, transparent 62%);
+}
+.journey-welcome-copy {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: clamp(30px, 7vw, 120px);
+  width: min(40%, 520px);
+  transform: translateY(-50%);
+  text-align: right;
+  text-shadow: 0 3px 16px #1b101bb3;
+}
+.journey-welcome-kicker {
+  color: #f5d298;
+  font-size: clamp(.85rem, 1.3vw, 1.1rem);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.journey-welcome h1 {
+  font-family: Tajawal, sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 4.6vw, 4.5rem);
+  line-height: 1.25;
+  color: #fff9ef;
+  margin: 0 0 .4em;
+  animation: journey-title-bounce 1.1s ease-in-out both;
+}
+.journey-welcome h1 span { color: #f8d393; }
+.journey-welcome-description {
+  max-width: 25ch;
+  font-size: clamp(1.05rem, 1.65vw, 1.55rem);
+  line-height: 1.8;
+  margin: 0 0 1.4em;
+}
+.journey-welcome-start {
+  border: 0;
+  border-radius: 999px;
+  padding: .85em 1.55em;
+  background: #f7d398;
+  color: #482635;
+  font-weight: 700;
+  box-shadow: 0 4px 0 #af7957;
+  transition: transform .2s, background .2s;
+}
+.journey-welcome-start:hover { transform: translateY(-3px); background: #ffe3b4; }
+.journey-welcome-start:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.journey-welcome-hint {
+  position: absolute;
+  right: clamp(30px, 7vw, 120px);
+  bottom: max(24px, env(safe-area-inset-bottom));
+  color: #f1d9c4;
+  font-size: .85rem;
+  text-shadow: 0 2px 8px #25111a;
+}
+@keyframes journey-title-bounce {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-12px); }
+  60% { transform: translateY(0); }
+  80% { transform: translateY(-4px); }
+}
+@media (max-width: 1100px) and (orientation: portrait) {
+  .journey-welcome-art { inset: 38% 0 0; background-position: left center; }
+  .journey-welcome-shade { background: linear-gradient(to bottom, #281822 0%, #281822 29%, #281822bd 42%, transparent 58%, #28182299 100%); }
+  .journey-welcome-copy { top: max(5%, env(safe-area-inset-top)); right: 7%; width: 86%; transform: none; }
+  .journey-welcome-kicker { font-size: .82rem; margin-bottom: 7px; }
+  .journey-welcome h1 { font-size: clamp(2rem, 8vw, 2.8rem); margin-bottom: .25em; }
+  .journey-welcome-description { font-size: 1rem; line-height: 1.6; margin-bottom: .8em; }
+  .journey-welcome-start { font-size: .95rem; padding: .75em 1.35em; }
+  .journey-welcome-hint { right: 7%; bottom: max(12px, env(safe-area-inset-bottom)); font-size: .75rem; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .journey-welcome h1 { font-size: clamp(1.7rem, 5vw, 2.6rem); margin-bottom: .2em; }
+  .journey-welcome-kicker { margin-bottom: 4px; }
+  .journey-welcome-description { font-size: .95rem; margin-bottom: .7em; }
+  .journey-welcome-start { padding: .6em 1.2em; }
+  .journey-welcome-hint { bottom: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-welcome h1 { animation: none; }
+  .journey-welcome-start { transition: none; }
+}

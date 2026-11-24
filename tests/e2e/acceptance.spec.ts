@@ -21,7 +21,7 @@ for (const [width, height] of sizes)
       await seedClassroom(page, count);
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(error.message));
-      await page.goto("/");
+      await page.goto("/#/map");
       await page.evaluate(() => document.fonts.ready);
       // The award dialog intentionally makes the map/header inert. Include the hidden
       // progressbar while waiting for the saved classroom count, then dismiss the award.
@@ -211,7 +211,7 @@ test("wheel, drag, both arrows, keyboard, world switch and My station", async ({
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await seedClassroom(page, 7);
-  await page.goto("/");
+  await page.goto("/#/map");
   const map = page.locator(".map-viewport");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   const position = () => map.evaluate((el) => el.scrollLeft);
@@ -312,7 +312,7 @@ test("simple completion, one-step undo, persistence and confirmed reset without 
   page,
 }) => {
   await seedClassroom(page, 7, ["ليان", "سامي"]);
-  await page.goto("/");
+  await page.goto("/#/map");
   const manage = () =>
     page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
   await manage();
@@ -366,7 +366,7 @@ test("finishing the sixteenth lesson celebrates once, including after reload", a
   page,
 }) => {
   await seedClassroom(page, 15);
-  await page.goto("/");
+  await page.goto("/#/map");
   await page.getByRole("button", { name: "إدارة الحصص", exact: true }).click();
   await page
     .getByRole("button", { name: "إنهاء الحصة وفتح التالية", exact: true })
@@ -393,7 +393,7 @@ test("Arabic accessibility, contrast and keyboard focus trap", async ({
   page,
 }) => {
   await seedClassroom(page, 7);
-  await page.goto("/");
+  await page.goto("/#/map");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   await page.evaluate(() => document.fonts.ready);
   const results = await new AxeBuilder({ page })
@@ -437,7 +437,7 @@ test("touch swipe stays horizontal on a phone", async ({ browser }) => {
   });
   const page = await context.newPage();
   await seedClassroom(page, 7);
-  await page.goto("/");
+  await page.goto("/#/map");
   await expect(page.locator('[data-station="8"]')).toHaveClass(/is-current/);
   const map = page.locator(".map-viewport"),
     before = await map.evaluate((el) => el.scrollLeft);

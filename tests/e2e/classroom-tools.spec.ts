@@ -19,7 +19,7 @@ test("optional names are entered directly, deduplicated and saved without an acc
   page,
 }) => {
   await seedClassroom(page);
-  await page.goto("/");
+  await page.goto("/#/map");
   await expect(
     page.getByText(/دخول التلميذ|دخول المدرّب|وضع تجريبي/),
   ).toHaveCount(0);
@@ -51,7 +51,7 @@ test("no repeats until all students speak; the round persists and can restart", 
   page,
 }) => {
   await seedClassroom(page, 7, names);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   const selected: string[] = [];
   for (let i = 0; i < names.length; i++) {
@@ -97,7 +97,7 @@ test("repeat selection is optional, including a single-name classroom", async ({
   page,
 }) => {
   await seedClassroom(page, 0, ["سامي"]);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   await page
     .getByLabel("دون تكرار حتى يشارك الجميع", { exact: true })
@@ -117,7 +117,7 @@ test("editing/deleting names restarts only the round, not lesson progress", asyn
   page,
 }) => {
   await seedClassroom(page, 7, names);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   await draw(page);
   await page
@@ -146,7 +146,7 @@ test("the wheel is available while teaching a lesson, and completion stays one s
   page,
 }) => {
   await seedClassroom(page, 0, names);
-  await page.goto("/");
+  await page.goto("/#/map");
   await page.getByRole("button", { name: "ابدأ الحصة", exact: true }).click();
   await expect(page.locator(".lesson")).toBeVisible();
   await openWheel(page);
@@ -174,7 +174,7 @@ test("normal-motion spinning locks duplicate draws and reveals one result only a
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await seedClassroom(page, 0, names);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   await page.getByRole("button", { name: "أدر العجلة", exact: true }).click();
   // Observe one instant atomically: separate browser round trips can outlast
@@ -208,7 +208,7 @@ test("closing mid-spin cancels the draw, with no stale timer selecting a student
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await seedClassroom(page, 0, names);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   await page.getByRole("button", { name: "أدر العجلة", exact: true }).click();
   await expect(page.locator(".is-spinning")).toHaveCount(1);
@@ -232,7 +232,7 @@ for (const [width, height] of [
     test.setTimeout(90000);
     await page.setViewportSize({ width, height });
     await seedClassroom(page, 7, names);
-    await page.goto("/");
+    await page.goto("/#/map");
     await openWheel(page);
     await page.evaluate(() => document.fonts.ready);
     const violations: Record<string, unknown> = {};
@@ -284,7 +284,7 @@ test("large/long names remain plain text; numeric sectors keep a large class rea
   roster[0] = "<img src=x onerror=alert(1)>";
   await page.setViewportSize({ width: 390, height: 844 });
   await seedClassroom(page, 0, roster);
-  await page.goto("/");
+  await page.goto("/#/map");
   await openWheel(page);
   await expect(page.locator(".names-list li")).toHaveCount(60);
   await expect(page.locator(".wheel-disc text").first()).toHaveText("1");

@@ -3,6 +3,7 @@ import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
+import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
 import { SpeakerWheel } from "./components/SpeakerWheel";
@@ -17,7 +18,7 @@ import {
 } from "./lib/progress";
 
 type Route =
-  { name: "map" } | { name: "lesson"; id: number; mode: "learn" | "review" };
+  { name: "welcome" } | { name: "map" } | { name: "lesson"; id: number; mode: "learn" | "review" };
 function parseHash(): Route {
   const match = window.location.hash.match(
     /^#\/lesson\/(\d{1,2})(?:\?mode=(review|learn))?$/,
@@ -28,7 +29,7 @@ function parseHash(): Route {
       id: Number(match[1]),
       mode: match[2] === "review" ? "review" : "learn",
     };
-  return { name: "map" };
+  return window.location.hash ? { name: "map" } : { name: "welcome" };
 }
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -56,7 +57,7 @@ export default function App() {
     // Update React in the same batch as completion. Waiting for hashchange can
     // otherwise let the review redirect reclaim the just-finished lesson.
     setRoute({ name: "map" });
-    window.location.hash = "";
+    window.location.hash = "#/map";
   }, []);
   const goToCurrent = useCallback(() => {
     setSheet(null);
@@ -186,7 +187,9 @@ export default function App() {
       : null;
   return (
     <>
-      {lesson ? (
+      {route.name === "welcome" ? (
+        <JourneyWelcome onStart={goMap} />
+      ) : lesson ? (
         <div className="app lesson-app">
           <LessonView
             key={lesson.id}

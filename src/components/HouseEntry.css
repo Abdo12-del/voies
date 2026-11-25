@@ -18,3 +18,12 @@
 @keyframes house-status-in { to { opacity:1; } }
 @media (max-width:640px) { .house-entry-status { bottom:max(20px, env(safe-area-inset-bottom)); font-size:13px; } .house-entry-skip { top:10px; left:10px; } }
 @media (prefers-reduced-motion: reduce) { .house-departing .city-viewport, .house-departing .app-header, .house-departing .game-bar, .house-departing .city-intro, .house-departing .city-zoom, .house-departing .city-current, .house-departing .city-stop, .house-departing .city-milestone, .house-departing .city-route { animation:none; } }
+
+/* Each newly drawn view follows the same layout: rose bed left, sage bed
+   right, window on the left wall. The camera moves toward a normal doorway. */
+.house-entry-hall { background-image:url('/sisters-story/hallway.webp'); background-position:center; transform-origin:51% 52%; animation:house-hall 6.8s ease-in-out forwards; }
+.house-entry-bedroom-door { background-image:url('/sisters-story/bedroom-door.webp'); background-position:center; transform-origin:50% 52%; animation:house-bedroom-door 6.8s ease-in-out forwards; }
+.house-entry-bedroom { background-image:url('/sisters-story/bedroom.webp'); background-position:center; animation:house-bedroom 6.8s ease-in-out forwards; }
+@keyframes house-hall { 0%, 47% { opacity:0; transform:scale(1); } 56%, 100% { opacity:1; } 77%, 100% { transform:scale(1.16); } }
+@keyframes house-bedroom-door { 0%, 64% { opacity:0; transform:scale(1); } 76%, 100% { opacity:1; } 93%, 100% { transform:scale(1.07); } }
+@keyframes house-bedroom { 0%, 82% { opacity:0; } 93%, 100% { opacity:1; } }

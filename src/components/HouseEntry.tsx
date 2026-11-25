@@ -11,6 +11,9 @@ export function HouseEntry({ onSkip }: { onSkip: () => void }) {
       <div className="house-entry-frame house-entry-approach" aria-hidden="true" />
       <div className="house-entry-frame house-entry-door" aria-hidden="true" />
       <div className="house-entry-frame house-entry-inside" aria-hidden="true" />
+      <div className="house-entry-frame house-entry-hall" aria-hidden="true" />
+      <div className="house-entry-frame house-entry-bedroom-door" aria-hidden="true" />
+      <div className="house-entry-frame house-entry-bedroom" aria-hidden="true" />
       <p className="house-entry-status" role="status">هيا ندخل منزل العائلة...</p>
       <button ref={skip} type="button" className="house-entry-skip" onClick={onSkip}>تخطّي الانتقال <span aria-hidden="true">←</span></button>
     </main>

@@ -6,7 +6,7 @@ import { HouseEntry } from "./components/HouseEntry";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
-import { LessonOneView } from "./components/LessonOneView";
+import { SistersLesson } from "./components/SistersLesson";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
 import { SpeakerWheel } from "./components/SpeakerWheel";
 import { TeacherPanel } from "./components/TeacherPanel";
@@ -126,9 +126,9 @@ export default function App() {
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
     if (route.name !== "map") return;
-    for (const frame of ["01-approach", "02-doorway", "03-inside"]) {
+    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom.webp", "/sisters-story/solo/young-worried.webp"]) {
       const image = new Image();
-      image.src = `/house-entry/${frame}.webp`;
+      image.src = path;
     }
   }, [route.name]);
   const startLesson = (id: number) => {
@@ -153,7 +153,7 @@ export default function App() {
     }
     houseDestination.current = destination;
     setEnteringHouse(true);
-    houseTimer.current = setTimeout(finishHouseEntry, 4300);
+    houseTimer.current = setTimeout(finishHouseEntry, 6800);
   };
   const openStation = (id: number) => {
     if (statusOf(id, progress.completed) === "current") {
@@ -264,7 +264,7 @@ export default function App() {
     statusOf(route.id, progress.completed) !== "locked"
       ? route
       : null;
-  const LessonComponent = lesson?.id === 1 ? LessonOneView : LessonView;
+  const LessonComponent = lesson?.id === 1 ? SistersLesson : LessonView;
   return (
     <>
       {route.name === "welcome" ? (

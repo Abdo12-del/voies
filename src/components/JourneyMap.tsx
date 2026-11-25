@@ -1,6 +1,6 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { SESSIONS, type LevelId } from "../data/sessions";
-import { CITY_MILESTONES, CITY_ROUTE } from "../lib/cityRoute";
+import { CITY_MILESTONES, CITY_ROUTE, HOME_TO_SCHOOL_DOTS } from "../lib/cityRoute";
 import { currentSessionId, isLevelComplete, statusOf, type ProgressState } from "../lib/progress";
 import { Icon } from "./icons";
 
@@ -132,15 +132,19 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
         <div ref={world} className="city-world" style={{ width: WIDTH * zoom, height: HEIGHT * zoom }}>
           <img src="/city/city-map.webp" alt="" draggable={false} className="city-art" />
           <svg className="city-route" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} aria-hidden="true">
-            <polyline className="city-route-outline" points={CITY_ROUTE.map(point).join(" ")} />
-            <polyline className="city-route-dashes" points={CITY_ROUTE.map(point).join(" ")} />
-            {progress.completed > 0 && <polyline className="city-route-complete" points={CITY_ROUTE.slice(0, Math.min(32, progress.completed + 1)).map(point).join(" ")} />}
+            {/* The first journey has only unnumbered dots. Later locations remain provisional. */}
+            <g className={`city-home-school${progress.completed >= 1 && progress.pendingUnlock !== 2 ? " is-complete" : ""}${unlockingId === 2 ? " is-animating" : ""}`}>
+              {HOME_TO_SCHOOL_DOTS.map(([x, y], index) => <circle key={index} className="city-travel-dot" cx={x * WIDTH / 100} cy={y * HEIGHT / 100} r="4.5" style={{ "--dot-index": index } as CSSProperties} />)}
+            </g>
+            <polyline className="city-route-outline" points={CITY_ROUTE.slice(2).map(point).join(" ")} />
+            <polyline className="city-route-dashes" points={CITY_ROUTE.slice(2).map(point).join(" ")} />
+            {progress.completed >= 3 && <polyline className="city-route-complete" points={CITY_ROUTE.slice(2, Math.min(32, progress.completed + 1)).map(point).join(" ")} />}
           </svg>
           {SESSIONS.map((session, index) => {
             const status = statusOf(session.id, progress.completed);
             return <div key={session.id} className={`city-stop station is-${status} ${unlockingId === session.id ? "is-unlocking" : ""} ${justCompletedId === session.id ? "is-just-completed" : ""}`} data-station={session.id} style={{ left: `${CITY_ROUTE[index][0]}%`, top: `${CITY_ROUTE[index][1]}%` }}>
               {status === "current" && <span className="city-stop-here">محطتك هنا</span>}
-              <button type="button" className="city-stop-button" data-station-button={session.id} onClick={() => onOpenStation(session.id)} aria-label={`الحصة ${session.id}، ${status === "current" ? "متاحة الآن" : status === "completed" ? "مكتملة" : "مغلقة"}: ${session.title}`} aria-current={status === "current" ? "step" : undefined}>
+              <button type="button" className="city-stop-button" data-station-button={session.id} onClick={() => onOpenStation(session.id)} aria-label={`الحصة ${session.id}${session.id === 1 ? "، المنزل" : session.id === 2 ? "، المدرسة" : ""}، ${status === "current" ? "متاحة الآن" : status === "completed" ? "مكتملة" : "مغلقة"}: ${session.title}`} aria-current={status === "current" ? "step" : undefined}>
                 {status === "completed" ? <Icon name="check" size={21} /> : <span>{session.id}</span>}
               </button>
             </div>;
@@ -160,7 +164,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
       <div className="city-intro" dir="rtl"><span>✦ مدينة المتحدث الصغير</span><strong>كل خطوة، حكاية جديدة</strong><small>اسحب الخريطة لتستكشف المدينة · المسار ومواقع الحصص تجريبية</small></div>
       {current ? <section className="city-current current-card" dir="rtl" aria-labelledby="current-station-title">
         <div className="city-current-icon"><Icon name={current.icon} size={25} /></div>
-        <div className="city-current-copy"><span>محطتنا القادمة · الحصة {current.id}</span><h2 id="current-station-title">{current.title}</h2></div>
+        <div className="city-current-copy"><span>محطتنا القادمة · الحصة {current.id}{current.id === 1 ? " · المنزل" : current.id === 2 ? " · المدرسة" : ""}</span><h2 id="current-station-title">{current.title}</h2></div>
         <button type="button" className="city-start current-start" onClick={() => onStart(current.id)} disabled={!!unlockingId}><Icon name="play" size={17} /> ابدأ الحصة</button>
       </section> : <div className="city-current city-finished" dir="rtl">✦ أكملت رحلتك في المدينة!</div>}
     </main>

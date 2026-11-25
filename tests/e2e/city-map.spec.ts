@@ -109,3 +109,69 @@ test('all stops remain separately selectable at the widest view', async ({ page 
   });
   expect(overlaps).toEqual([]);
 });
+
+test('the home and school are distinct stops with only non-interactive dots between them', async ({ page }) => {
+  await seedClassroom(page);
+  await page.goto('/#/map');
+  const dots = page.locator('.city-home-school .city-travel-dot');
+  await expect(dots).toHaveCount(5);
+  await expect(page.locator('.city-home-school')).not.toHaveClass(/is-complete/);
+  await expect(dots.first()).toHaveCSS('fill', 'rgb(255, 248, 223)');
+  await expect(page.locator('.city-home-school polyline, .city-home-school button, .city-home-school text')).toHaveCount(0);
+  await expect(page.locator('[data-station-button]')).toHaveCount(32);
+  await expect(page.locator('[data-station-button="1"]')).toHaveAccessibleName(/المنزل/);
+  await expect(page.locator('[data-station-button="2"]')).toHaveAccessibleName(/المدرسة/);
+  await expect(page.locator('.city-current-copy')).toContainText('المنزل');
+  const geometry = await page.evaluate(() => {
+    const a = document.querySelector('[data-station="1"]')!.getBoundingClientRect();
+    const b = document.querySelector('[data-station="2"]')!.getBoundingClientRect();
+    const waypoints = [...document.querySelectorAll('.city-travel-dot')].map(el => {
+      const r = el.getBoundingClientRect(); return { x:r.x + r.width / 2, y:r.y + r.height / 2 };
+    });
+    const later = [...document.querySelectorAll('[data-station]')].slice(2).map(el => {
+      const r = el.getBoundingClientRect(); return { x:r.x + r.width / 2, y:r.y + r.height / 2 };
+    });
+    return { separation:Math.hypot(a.x - b.x, a.y - b.y), unobstructed:waypoints.every(p => later.every(s => Math.hypot(p.x - s.x, p.y - s.y) > 25)) };
+  });
+  expect(geometry.separation).toBeGreaterThan(100);
+  expect(geometry.unobstructed).toBe(true);
+});
+
+test('finishing lesson one colors the dots in order and keeps them colored on reload', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion:'no-preference' });
+  await seedClassroom(page);
+  await page.goto('/#/lesson/1');
+  await expect(page.getByRole('heading', {name:'واجب الغد'})).toBeFocused();
+  await page.keyboard.press('End');
+  await page.getByRole('button', {name:/إنهاء الحصة/}).click();
+  await expect(page).toHaveURL(/#\/map/);
+  const path = page.locator('.city-home-school'), dots = path.locator('.city-travel-dot');
+  await expect(path).toHaveClass(/is-animating/);
+  await expect(dots.first()).toHaveCSS('animation-name', 'city-travel-arrival');
+  await expect(dots.last()).toHaveCSS('animation-delay', '0.56s');
+  await expect(path).toHaveClass(/is-complete/, {timeout:10000});
+  await expect(dots.first()).toHaveCSS('fill', 'rgb(255, 202, 78)');
+  await expect(dots.last()).toHaveCSS('fill', 'rgb(255, 202, 78)');
+  await expect(page.locator('[data-station="2"]')).toHaveClass(/is-current/);
+  await expect(page.locator('.city-current-copy')).toContainText('المدرسة');
+  await page.reload();
+  await expect(path).toHaveClass(/is-complete/);
+  await expect(dots.last()).toHaveCSS('fill', 'rgb(255, 202, 78)');
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+  await page.getByRole('button', {name:'إدارة الحصص'}).click();
+  await page.getByRole('button', {name:'التراجع عن آخر حصة'}).click();
+  await expect(path).not.toHaveClass(/is-complete/);
+  await expect(dots.last()).toHaveCSS('fill', 'rgb(255, 248, 223)');
+  await expect(page.locator('[data-station="1"]')).toHaveClass(/is-current/);
+});
+
+test('home-to-school dots turn colored without animation when motion is reduced', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  await seedClassroom(page);
+  await page.goto('/#/lesson/1');
+  await expect(page.getByRole('heading', {name:'واجب الغد'})).toBeFocused();
+  await page.keyboard.press('End');
+  await page.getByRole('button', {name:/إنهاء الحصة/}).click();
+  await expect(page.locator('.city-home-school')).toHaveClass(/is-complete/);
+  await expect(page.locator('.city-travel-dot').last()).toHaveCSS('fill', 'rgb(255, 202, 78)');
+});

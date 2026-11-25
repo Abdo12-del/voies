@@ -1,7 +1,7 @@
 /** Provisional artwork coordinates. Change these once the story locations are
  * decided; the city image is 1584 × 672 and all route positions scale with it. */
 const artworkPoints: ReadonlyArray<readonly [number, number]> = [
-  [292, 201], [335, 207], [300, 245], [260, 225], [220, 235], [175, 253],
+  [292, 201], [418, 260], [300, 245], [260, 225], [220, 235], [175, 253],
   [135, 278], [125, 320], [140, 360], [165, 395], [205, 415], [250, 438],
   [300, 460], [350, 478], [400, 478], [440, 450],
   [490, 420], [540, 405], [590, 410], [640, 425], [695, 442], [750, 464],
@@ -10,4 +10,7 @@ const artworkPoints: ReadonlyArray<readonly [number, number]> = [
 ];
 const toPercent = ([x, y]: readonly [number, number]) => [x / 1584 * 100, y / 672 * 100] as const;
 export const CITY_ROUTE = artworkPoints.map(toPercent);
+// These are visual waypoints, not lessons: the family travels from the home
+// to the school after the first lesson. Remaining locations are provisional.
+export const HOME_TO_SCHOOL_DOTS = ([[321, 203], [342, 207], [362, 216], [379, 230], [395, 245]] as const).map(toPercent);
 export const CITY_MILESTONES = ([[460, 405], [1270, 354]] as const).map(toPercent);

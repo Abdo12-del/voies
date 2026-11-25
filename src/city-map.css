@@ -9,6 +9,12 @@
 .city-route-outline { stroke:#563c42; stroke-width:13; opacity:.53; }
 .city-route-dashes { stroke:#fff8df; stroke-width:8; stroke-dasharray:4 17; }
 .city-route-complete { stroke:#ffca4e; stroke-width:8; }
+/* The first trip is a set of waypoints, not extra numbered lesson stops. */
+.city-travel-dot { fill:#fff8df; stroke:#735658; stroke-width:2; }
+.city-home-school.is-complete .city-travel-dot { fill:#ffca4e; stroke:#9a602f; }
+.city-home-school.is-animating .city-travel-dot { animation:city-travel-arrival .28s ease-out both; animation-delay:calc(var(--dot-index) * 140ms); }
+@keyframes city-travel-arrival { from { fill:#fff8df; stroke:#735658; } to { fill:#ffca4e; stroke:#9a602f; } }
+@media (prefers-reduced-motion:reduce) { .city-home-school.is-animating .city-travel-dot { animation:none; fill:#ffca4e; stroke:#9a602f; } }
 .city-stop.station { width:48px; height:48px; transform:translate(-50%,-50%); z-index:4; }
 .city-stop.station::after { bottom:-7px; height:10px; background:#34282d55; }
 .city-stop-button { width:48px; height:48px; display:grid; place-items:center; border:3px solid #fff7e6; border-radius:50%; background:#756975; color:white; box-shadow:0 3px 0 #4b3d48, 0 5px 10px #352b3066; font-family:var(--display); font-size:19px; font-weight:800; line-height:1; }
@@ -17,6 +23,8 @@
 .city-stop.is-completed .city-stop-button { background:#468a68; box-shadow:0 3px 0 #2a6146, 0 5px 10px #352b3066; }
 .city-stop-button:hover { transform:translateY(-3px); }
 .city-stop-here { position:absolute; white-space:nowrap; bottom:58px; left:50%; transform:translateX(-50%); background:#fff9e9; color:#6c303b; padding:4px 11px; border-radius:10px; border:1px solid #e6c17e; box-shadow:0 3px 8px #46333333; font-size:13px; font-weight:700; direction:rtl; }
+/* Keep the school label clear of the home-to-school dots. */
+.city-stop[data-station="2"] .city-stop-here { left:calc(50% + 55px); }
 .city-milestone { position:absolute; transform:translate(-50%,-50%); z-index:4; width:50px; height:50px; border-radius:15px; border:3px solid #fff5d7; background:#b68131; color:white; box-shadow:0 3px 0 #77502b, 0 5px 9px #392d3266; }
 .city-milestone.is-achieved { background:#dc9c25; }
 .city-intro { position:absolute; top:100px; right:24px; z-index:5; display:flex; flex-direction:column; gap:1px; padding:12px 16px; border:1px solid #e8dcc8; border-radius:18px; color:#473540; background:#fffaf0ed; box-shadow:0 7px 24px #352c2e20; pointer-events:none; }

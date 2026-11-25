@@ -1,4 +1,4 @@
-.sisters-lesson { position:relative; isolation:isolate; width:100%; height:100%; overflow:hidden; color:#3d303a; background:#f5ecdb url('/sisters-story/bedroom.webp') center / cover no-repeat; }
+.sisters-lesson { position:relative; isolation:isolate; width:100%; height:100%; overflow:hidden; color:#3d303a; background:#f5ecdb url('/sisters-story/bedroom-hd.webp') center / cover no-repeat; }
 /* The room itself stays unchanged when the entry frame becomes the lesson.
    Only the lesson elements fade in; the speaker remains still afterwards. */
 .is-room-arriving .sisters-figures,
@@ -18,7 +18,7 @@
 .sisters-stage { position:absolute; inset:0; overflow:hidden; }
 /* The drawing and character share one camera, so zooming does not change their
    proportions relative to the room. It moves only between story and teaching. */
-.sisters-room { position:absolute; inset:0; background:#f5ecdb url('/sisters-story/bedroom.webp') center / cover no-repeat; transform-origin:24.5% 97%; transition:transform .7s ease-in-out; }
+.sisters-room { position:absolute; inset:0; background:#f5ecdb url('/sisters-story/bedroom-hd.webp') center / cover no-repeat; transform-origin:24.5% 97%; transition:transform .7s ease-in-out; }
 .sisters-stage.is-teaching .sisters-room { transform:scale(var(--camera-zoom, 1)); }
 .sisters-stage.is-teaching.needs-camera .sisters-card { animation:sisters-teaching-in .85s ease-out both; }
 @keyframes sisters-teaching-in { 0%, 70% { opacity:0; } 100% { opacity:1; } }

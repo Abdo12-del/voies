@@ -72,11 +72,20 @@ test('separate hallway and doorway drawings lead to the lesson room', async ({pa
   const images = await page.evaluate(() => ['.house-entry-hall', '.house-entry-bedroom-door', '.house-entry-bedroom'].map(selector => getComputedStyle(document.querySelector(selector)!).backgroundImage));
   expect(images[0]).toContain('/sisters-story/hallway.webp');
   expect(images[1]).toContain('/sisters-story/bedroom-door.webp');
-  expect(images[2]).toContain('/sisters-story/bedroom.webp');
+  expect(images[2]).toContain('/sisters-story/bedroom-hd.webp');
   expect(new Set(images).size).toBe(3);
   await page.getByRole('button', {name:/تخطّي الانتقال/}).click();
   const lessonImage = await page.locator('.sisters-lesson').evaluate(el => getComputedStyle(el).backgroundImage);
+  const cameraImage = await page.locator('.sisters-room').evaluate(el => getComputedStyle(el).backgroundImage);
   expect(images[2]).toEqual(lessonImage);
+  expect(images[2]).toEqual(cameraImage);
+  const dimensions = await page.evaluate(async () => {
+    const image = new Image();
+    image.src = '/sisters-story/bedroom-hd.webp';
+    await image.decode();
+    return [image.naturalWidth, image.naturalHeight];
+  });
+  expect(dimensions).toEqual([2752, 1536]);
 });
 
 test('the bedroom remains in place while lesson elements appear without a map flash', async ({ page }) => {

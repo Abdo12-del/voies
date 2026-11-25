@@ -71,7 +71,7 @@ test('one speaker speaks at a time and the reply waits for the learner', async (
 test('the story teaches beginning, a shareable middle, privacy and an ending before practice', async ({page}) => {
   await seedClassroom(page);
   await page.goto('/#/lesson/1');
-  const ids = ['name-answer', 'middle-ideas', 'private-examples', 'private-guidance', 'ending-answer', 'model-intro', 'try-young', 'challenge'];
+  const ids = ['name-answer', 'age-answer', 'age-learner', 'school-answer', 'class-answer', 'school-learner', 'middle-ideas', 'hobby-example', 'hobby-learner', 'private-examples', 'private-context', 'private-guidance', 'ending-answer', 'model-intro', 'model-school', 'model-interests', 'try-young', 'learner', 'challenge'];
   const indexes = ids.map(id => scenes.findIndex(scene => scene.id === id));
   expect(indexes.every((index, i) => index >= 0 && (i === 0 || index > indexes[i - 1]))).toBe(true);
   for (let i = 0; i < scenes.length; i++) {
@@ -79,6 +79,8 @@ test('the story teaches beginning, a shareable middle, privacy and an ending bef
       await expect(page.locator('.sisters-line p')).toHaveText(scenes[i].text);
       if (scenes[i].id === 'private-examples') await expect(page.locator('.sisters-line p')).toContainText('عنوان المنزل ورقم الهاتف وكلمات المرور');
       if (scenes[i].id === 'private-guidance') await expect(page.locator('.sisters-line p')).toContainText('شخصًا بالغًا تثقين به');
+      if (scenes[i].id === 'private-context') await expect(page.locator('.sisters-line p')).toContainText('لا مع الغرباء أو على الإنترنت');
+      if (scenes[i].id === 'learner') for (const detail of ['اسمك', 'عمرك', 'مدرستك', 'صفّك', 'تحبّه', 'هوايتك']) await expect(page.locator('.sisters-line p')).toContainText(detail);
     }
     if (i < scenes.length - 1) await page.getByRole('button', {name:'التالي', exact:true}).click();
   }

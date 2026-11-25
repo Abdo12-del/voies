@@ -16,6 +16,7 @@ interface Props {
 }
 export interface JourneyMapHandle {
   goToCurrent: (smooth?: boolean) => void;
+  goToStation: (id: number, smooth?: boolean) => void;
   goToLevel: (id: LevelId, smooth?: boolean) => void;
   goToMilestone: (id: LevelId) => void;
 }
@@ -49,6 +50,7 @@ export const JourneyMap = forwardRef<JourneyMapHandle, Props>(function JourneyMa
   }, [center, currentId, onVisibleLevel]);
   useImperativeHandle(ref, () => ({
     goToCurrent: goCurrent,
+    goToStation: (id, smooth = true) => { const coords = CITY_ROUTE[id - 1]; if (coords) center(coords, smooth); },
     goToLevel: (id, smooth = true) => { center(CITY_ROUTE[id === 1 ? 0 : 16], smooth); onVisibleLevel(id); },
     goToMilestone: (id) => { center(CITY_MILESTONES[id - 1]); onVisibleLevel(id); },
   }), [center, goCurrent, onVisibleLevel]);

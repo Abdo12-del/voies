@@ -3,6 +3,7 @@ import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
 import { HouseEntry } from "./components/HouseEntry";
+import { SchoolEntry, SchoolHall, SchoolClassroom } from "./components/SchoolEntry";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
@@ -52,6 +53,10 @@ export default function App() {
   const houseTimer = useRef<ReturnType<typeof setTimeout>>();
   const houseDestination = useRef<string | null>(null);
   const [enteringHouse, setEnteringHouse] = useState(false);
+  const schoolTimer = useRef<ReturnType<typeof setTimeout>>();
+  const schoolDestination = useRef<string | null>(null);
+  const [schoolPhase, setSchoolPhase] = useState<"approach" | "hall" | "enter" | null>(null);
+  const [classroomIntro, setClassroomIntro] = useState(true);
   const [arrivingInRoom, setArrivingInRoom] = useState(false);
   const arrivalTimer = useRef<ReturnType<typeof setTimeout>>();
   const focusMapAfterArrival = useRef(false);
@@ -66,6 +71,12 @@ export default function App() {
         houseDestination.current = null;
         setEnteringHouse(false);
       }
+      if (schoolDestination.current) {
+        clearTimeout(schoolTimer.current);
+        schoolDestination.current = null;
+        setSchoolPhase(null);
+      }
+      if (next.name !== "lesson" || next.id !== 2) setClassroomIntro(true);
       if (next.name !== "map") {
         clearTimeout(arrivalTimer.current);
         focusMapAfterArrival.current = false;
@@ -130,10 +141,38 @@ export default function App() {
     setRoute(parseHash());
     setEnteringHouse(false);
   }, []);
+  const finishSchoolEntry = useCallback(() => {
+    const destination = schoolDestination.current;
+    if (!destination) return;
+    clearTimeout(schoolTimer.current);
+    schoolDestination.current = null;
+    window.location.hash = destination;
+    setClassroomIntro(true);
+    setRoute(parseHash());
+    setSchoolPhase(null);
+  }, []);
+  const reachSchoolHall = useCallback(() => {
+    if (!schoolDestination.current) return;
+    clearTimeout(schoolTimer.current);
+    setSchoolPhase("hall");
+  }, []);
+  const enterSchoolClassroom = useCallback(() => {
+    if (!schoolDestination.current) return;
+    if (reducedMotion()) { finishSchoolEntry(); return; }
+    setSchoolPhase("enter");
+    clearTimeout(schoolTimer.current);
+    schoolTimer.current = setTimeout(finishSchoolEntry, 10000);
+  }, [finishSchoolEntry]);
+  const cancelSchoolEntry = useCallback(() => {
+    clearTimeout(schoolTimer.current);
+    schoolDestination.current = null;
+    setSchoolPhase(null);
+    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".current-start")?.focus({ preventScroll: true }));
+  }, []);
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
     if (route.name !== "map") return;
-    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp"]) {
+    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/sisters-story/solo/young-greet.webp"]) {
       const image = new Image();
       image.src = path;
     }
@@ -143,11 +182,27 @@ export default function App() {
       setSheet({ kind: "station", id });
       return;
     }
-    if (houseDestination.current) return;
+    if (houseDestination.current || schoolDestination.current) return;
     setSheet(null);
     const destination = `#/lesson/${id}${statusOf(id, progress.completed) === "completed" ? "?mode=review" : ""}`;
-    if (id !== 1 || reducedMotion() || route.name !== "map") {
+    if ((id !== 1 && id !== 2) || (id === 1 && reducedMotion()) || route.name !== "map") {
       window.location.hash = destination;
+      return;
+    }
+    if (id === 2) {
+      map.current?.goToStation(2, false);
+      const viewport = document.querySelector<HTMLElement>(".city-viewport");
+      const world = document.querySelector<HTMLElement>(".city-world");
+      if (viewport && world) {
+        const view = viewport.getBoundingClientRect(), image = world.getBoundingClientRect();
+        viewport.style.transformOrigin = `${image.left - view.left + image.width * 418 / 1584}px ${image.top - view.top + image.height * 260 / 672}px`;
+      }
+      schoolDestination.current = destination;
+      if (reducedMotion()) setSchoolPhase("hall");
+      else {
+        setSchoolPhase("approach");
+        schoolTimer.current = setTimeout(reachSchoolHall, 10000);
+      }
       return;
     }
     // Start from the actual house on the map, even if the user had scrolled away.
@@ -223,6 +278,7 @@ export default function App() {
     clearTimeout(transitionTimer.current);
     clearTimeout(arrivalTimer.current);
     clearTimeout(houseTimer.current);
+    clearTimeout(schoolTimer.current);
   }, []);
   useEffect(() => {
     const id = progress.pendingUnlock;
@@ -280,7 +336,7 @@ export default function App() {
         <JourneyWelcome onStart={beginJourney} />
       ) : lesson ? (
         <div key="lesson" className={`app lesson-app${arrivingInRoom && lesson.id === 1 ? " is-room-arriving" : ""}`}>
-          <LessonComponent
+          {lesson.id === 2 && classroomIntro ? <SchoolClassroom onBack={goMap} onContinue={() => setClassroomIntro(false)} review={statusOf(lesson.id, progress.completed) === "completed"} /> : <LessonComponent
             key={lesson.id}
             id={lesson.id}
             mode={
@@ -293,14 +349,14 @@ export default function App() {
             onComplete={() => {
               if (approveNext(progress.completed)) goMap();
             }}
-          />
+          />}
         </div>
       ) : (
         <div
           key="map"
-          className={`app city-app${enteringMap ? " is-map-arriving" : ""}${enteringHouse ? " house-departing" : ""}`}
-          ref={(element) => { if (element) element.inert = enteringMap || enteringHouse; }}
-          aria-hidden={enteringMap || enteringHouse || undefined}
+          className={`app city-app${enteringMap ? " is-map-arriving" : ""}${enteringHouse ? " house-departing" : ""}${schoolPhase ? " school-departing" : ""}`}
+          ref={(element) => { if (element) element.inert = enteringMap || enteringHouse || !!schoolPhase; }}
+          aria-hidden={enteringMap || enteringHouse || !!schoolPhase || undefined}
         >
           <Header
             progress={progress}
@@ -341,6 +397,8 @@ export default function App() {
       )}
       {enteringMap && route.name === "map" && <JourneyWelcome onStart={beginJourney} exiting />}
       {enteringHouse && route.name === "map" && <HouseEntry onSkip={finishHouseEntry} onComplete={finishHouseEntry} />}
+      {schoolPhase === "approach" && route.name === "map" && <SchoolEntry onSkip={reachSchoolHall} onComplete={reachSchoolHall} />}
+      {(schoolPhase === "hall" || schoolPhase === "enter") && route.name === "map" && <SchoolHall entering={schoolPhase === "enter"} onEnter={enterSchoolClassroom} onBack={cancelSchoolEntry} onComplete={finishSchoolEntry} />}
       <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
     </>
   );

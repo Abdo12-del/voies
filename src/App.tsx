@@ -52,6 +52,7 @@ export default function App() {
   const houseTimer = useRef<ReturnType<typeof setTimeout>>();
   const houseDestination = useRef<string | null>(null);
   const [enteringHouse, setEnteringHouse] = useState(false);
+  const [arrivingInRoom, setArrivingInRoom] = useState(false);
   const arrivalTimer = useRef<ReturnType<typeof setTimeout>>();
   const focusMapAfterArrival = useRef(false);
   const [enteringMap, setEnteringMap] = useState(false);
@@ -59,6 +60,7 @@ export default function App() {
   useEffect(() => {
     const onHash = () => {
       const next = parseHash();
+      if (next.name !== "lesson" || next.id !== 1) setArrivingInRoom(false);
       if (houseDestination.current) {
         clearTimeout(houseTimer.current);
         houseDestination.current = null;
@@ -77,6 +79,7 @@ export default function App() {
   const goMap = useCallback(() => {
     // Update React in the same batch as completion. Waiting for hashchange can
     // otherwise let the review redirect reclaim the just-finished lesson.
+    setArrivingInRoom(false);
     setRoute({ name: "map" });
     window.location.hash = "#/map";
   }, []);
@@ -120,8 +123,12 @@ export default function App() {
     if (!destination) return;
     clearTimeout(houseTimer.current);
     houseDestination.current = null;
-    setEnteringHouse(false);
+    // Swap the final bedroom frame for the lesson in one render. Waiting for
+    // hashchange leaves a frame of the map visible between the two scenes.
     window.location.hash = destination;
+    setArrivingInRoom(true);
+    setRoute(parseHash());
+    setEnteringHouse(false);
   }, []);
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
@@ -153,7 +160,9 @@ export default function App() {
     }
     houseDestination.current = destination;
     setEnteringHouse(true);
-    houseTimer.current = setTimeout(finishHouseEntry, 6800);
+    // Normally the room animation finishes the handoff. This fallback covers
+    // a canceled animation without cutting it short under a busy browser.
+    houseTimer.current = setTimeout(finishHouseEntry, 15000);
   };
   const openStation = (id: number) => {
     if (statusOf(id, progress.completed) === "current") {
@@ -270,7 +279,7 @@ export default function App() {
       {route.name === "welcome" ? (
         <JourneyWelcome onStart={beginJourney} />
       ) : lesson ? (
-        <div className="app lesson-app">
+        <div key="lesson" className={`app lesson-app${arrivingInRoom && lesson.id === 1 ? " is-room-arriving" : ""}`}>
           <LessonComponent
             key={lesson.id}
             id={lesson.id}
@@ -288,6 +297,7 @@ export default function App() {
         </div>
       ) : (
         <div
+          key="map"
           className={`app city-app${enteringMap ? " is-map-arriving" : ""}${enteringHouse ? " house-departing" : ""}`}
           ref={(element) => { if (element) element.inert = enteringMap || enteringHouse; }}
           aria-hidden={enteringMap || enteringHouse || undefined}
@@ -330,7 +340,7 @@ export default function App() {
         </div>
       )}
       {enteringMap && route.name === "map" && <JourneyWelcome onStart={beginJourney} exiting />}
-      {enteringHouse && route.name === "map" && <HouseEntry onSkip={finishHouseEntry} />}
+      {enteringHouse && route.name === "map" && <HouseEntry onSkip={finishHouseEntry} onComplete={finishHouseEntry} />}
       <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
     </>
   );

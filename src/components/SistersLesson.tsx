@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { SISTERS_STORY } from '../data/sistersStory';
 import { Icon } from './icons';
 import './SistersLesson.css';
@@ -8,9 +8,30 @@ interface Props { id: number; mode: 'learn' | 'review'; onBack: () => void; onPi
 /** Static poses change only as the learner advances the dialogue. */
 export function SistersLesson({ mode, onBack, onPickSpeaker, onComplete }: Props) {
   const [index, setIndex] = useState(0);
+  const [cameraZoom, setCameraZoom] = useState(1);
+  const room = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const gesture = useRef<{ x: number; y: number } | null>(null);
   const scene = SISTERS_STORY[index];
+  // The opening is a room-sized story shot. The lesson addresses the learner
+  // from the first explanation onward, without automatically advancing a turn.
+  const teaching = index >= SISTERS_STORY.findIndex(item => item.id === 'name-answer');
+  useEffect(() => {
+    const element = room.current;
+    if (!element) return;
+    const measure = () => {
+      const { width, height } = element.getBoundingClientRect();
+      // Estimate the younger speaker's visible width from her natural room size.
+      // Small portrait screens already frame her closely; do not zoom just to zoom.
+      const naturalWidth = height * .44 * .4;
+      const desiredWidth = Math.min(180, width * .40);
+      setCameraZoom(naturalWidth >= desiredWidth * .9 ? 1 : Math.min(2, desiredWidth / naturalWidth));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const goTo = useCallback((n: number) => setIndex(Math.max(0, Math.min(SISTERS_STORY.length - 1, n))), []);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [index]);
   useEffect(() => {
@@ -35,11 +56,13 @@ export function SistersLesson({ mode, onBack, onPickSpeaker, onComplete }: Props
       {mode === 'review' && <span className="sisters-review">وضع المراجعة</span>}
       <button className="sisters-tool" onClick={onPickSpeaker} type="button"><Icon name="wheel" size={18} /> مَن يتحدث؟</button>
     </div>
-    <section className="sisters-stage" aria-label={`المشهد ${index + 1} من ${SISTERS_STORY.length}: ${scene.title}`}
+    <section ref={room} className={`sisters-stage${teaching ? ' is-teaching' : ''}${cameraZoom > 1 ? ' needs-camera' : ''}`} style={{ '--camera-zoom': cameraZoom } as CSSProperties} aria-label={`المشهد ${index + 1} من ${SISTERS_STORY.length}: ${scene.title}`}
       onTouchStart={(e) => { const p = e.changedTouches[0]; gesture.current = { x:p.clientX, y:p.clientY }; }}
       onTouchEnd={(e) => { const p = e.changedTouches[0], start = gesture.current; gesture.current = null; if (start && Math.abs(p.clientX-start.x) >= 48 && Math.abs(p.clientX-start.x) > Math.abs(p.clientY-start.y)*1.2) goTo(index + (p.clientX < start.x ? 1 : -1)); }}
       onTouchCancel={() => { gesture.current = null; }}>
-      <div className="sisters-figures" aria-hidden="true"><img src={`/sisters-story/solo/${scene.pose}.webp`} alt="" /></div>
+      <div className="sisters-room" aria-hidden="true">
+        <div className={`sisters-figures ${scene.speaker === 'ليلى' ? 'is-laila' : 'is-young'}`}><img src={`/sisters-story/solo/${scene.pose}.webp`} alt="" /></div>
+      </div>
       <article className="sisters-card">
         <p className="sisters-eyebrow">✦ الحصة الأولى · أهلًا بي في مساحة الكلام</p>
         <h1 ref={heading} tabIndex={-1} aria-describedby="sisters-turn-description">{scene.title}</h1>

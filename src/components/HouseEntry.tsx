@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import "./HouseEntry.css";
 
 /** A short illustrated bridge between the real city map and the lesson room. */
-export function HouseEntry({ onSkip }: { onSkip: () => void }) {
+export function HouseEntry({ onSkip, onComplete }: { onSkip: () => void; onComplete: () => void }) {
   const skip = useRef<HTMLButtonElement>(null);
   useEffect(() => { skip.current?.focus(); }, []);
   return (
@@ -13,7 +13,8 @@ export function HouseEntry({ onSkip }: { onSkip: () => void }) {
       <div className="house-entry-frame house-entry-inside" aria-hidden="true" />
       <div className="house-entry-frame house-entry-hall" aria-hidden="true" />
       <div className="house-entry-frame house-entry-bedroom-door" aria-hidden="true" />
-      <div className="house-entry-frame house-entry-bedroom" aria-hidden="true" />
+      <div className="house-entry-frame house-entry-bedroom" aria-hidden="true"
+        onAnimationEnd={(event) => { if (event.animationName === 'house-bedroom') onComplete(); }} />
       <p className="house-entry-status" role="status">هيا ندخل منزل العائلة...</p>
       <button ref={skip} type="button" className="house-entry-skip" onClick={onSkip}>تخطّي الانتقال <span aria-hidden="true">←</span></button>
     </main>

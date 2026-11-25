@@ -83,3 +83,31 @@ test('the story teaches beginning, a shareable middle, privacy and an ending bef
     if (i < scenes.length - 1) await page.getByRole('button', {name:'التالي', exact:true}).click();
   }
 });
+
+test('the room begins at a natural scale and the camera focuses only when clarity needs it', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1568, height: 735 });
+  await seedClassroom(page);
+  await page.goto('/#/lesson/1');
+  const stage = page.locator('.sisters-stage'), room = page.locator('.sisters-room');
+  await expect(stage).not.toHaveClass(/is-teaching/);
+  await expect(room).toHaveCSS('transform', 'none');
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name:'التالي', exact:true }).click();
+  await expect(stage).toHaveClass(/is-teaching/);
+  await expect(stage).toHaveClass(/needs-camera/);
+  await expect.poll(() => room.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a)).toBeGreaterThan(1.3);
+  await page.waitForTimeout(900);
+  const camera = await room.evaluate(el => getComputedStyle(el).transform);
+  await page.getByRole('button', { name:'التالي', exact:true }).click();
+  await expect(room).toHaveCSS('transform', camera);
+  await expect(page.locator('.sisters-figures img')).toHaveCSS('animation-name', 'none');
+  await page.waitForTimeout(800);
+  await expect(room).toHaveCSS('transform', camera);
+  await expect(page.locator('.sisters-speaker')).toHaveText('الأخت الصغيرة');
+
+  // On a narrow portrait screen the speaker is already large enough; the room
+  // stays wide instead of applying a gratuitous camera move.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(stage).not.toHaveClass(/needs-camera/);
+  await expect(room).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+});

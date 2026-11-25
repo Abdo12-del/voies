@@ -1,43 +1,22 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SCHOOL_STORY } from '../data/schoolStory';
 import { Icon } from './icons';
 import './SistersLesson.css';
 import './SchoolLesson.css';
 
 interface Props { id:number; mode:'learn' | 'review'; onBack:() => void; onPickSpeaker:() => void; onComplete:() => void; }
-const posePath = (pose:string) => pose.startsWith('friend-') ? `/school-lesson/${pose}.webp` : `/sisters-story/solo/${pose}.webp`;
+const posePath = (pose:string) => pose === 'friend-greet' ? '/school-entry/friend.webp' : pose.startsWith('friend-') ? `/school-lesson/${pose}.webp` : `/sisters-story/solo/${pose}.webp`;
 
-/** A pupil-led classroom story: one speaker at a time, controlled by the learner. */
+/** The whole conversation happens in the hall, one speaker at a time. */
 export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) {
   const [index, setIndex] = useState(0);
-  const [cameraZoom, setCameraZoom] = useState(1);
-  const stage = useRef<HTMLElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const gesture = useRef<{x:number;y:number} | null>(null);
   const scene = SCHOOL_STORY[index];
-  const teaching = index >= SCHOOL_STORY.findIndex(item => item.teaching);
   const goTo = useCallback((n:number) => setIndex(Math.max(0, Math.min(SCHOOL_STORY.length - 1, n))), []);
   useEffect(() => { heading.current?.focus({preventScroll:true}); }, [index]);
   useEffect(() => {
     for (const pose of new Set(SCHOOL_STORY.map(item => item.pose))) { const img = new Image(); img.src = posePath(pose); }
-    const img = new Image(); img.src = '/sisters-story/solo/young-confident.webp';
-  }, []);
-  useEffect(() => {
-    const element = stage.current;
-    if (!element) return;
-    const measure = () => {
-      const {width,height} = element.getBoundingClientRect();
-      // Portrait framing is already close; extra zoom would hide the characters
-      // behind the card on short phones, especially in the shared finale.
-      if (width <= 700 && height > width) { setCameraZoom(1); return; }
-      const naturalWidth = height * .44 * .4;
-      const desiredWidth = Math.min(180, width * .40);
-      setCameraZoom(naturalWidth >= desiredWidth * .9 ? 1 : Math.min(1.65, desiredWidth / naturalWidth));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
   }, []);
   useEffect(() => {
     const onKey = (event:KeyboardEvent) => {
@@ -56,22 +35,24 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
       {mode === 'review' && <span className="sisters-review">وضع المراجعة</span>}
       <button className="sisters-tool" onClick={onPickSpeaker} type="button"><Icon name="wheel" size={18} /> مَن يتحدث؟</button>
     </div>
-    <section ref={stage} className={`sisters-stage${teaching ? ' is-teaching' : ''}${cameraZoom > 1 ? ' needs-camera' : ''}`} style={{'--camera-zoom':cameraZoom} as CSSProperties} aria-label={`المشهد ${index + 1} من ${SCHOOL_STORY.length}: ${scene.title}`}
+    <section className="sisters-stage" aria-label={`المشهد ${index + 1} من ${SCHOOL_STORY.length}: ${scene.title}`}
       onTouchStart={event => { const p = event.changedTouches[0]; gesture.current = {x:p.clientX,y:p.clientY}; }}
       onTouchEnd={event => { const p = event.changedTouches[0], start = gesture.current; gesture.current = null; if (start && Math.abs(p.clientX-start.x) >= 48 && Math.abs(p.clientX-start.x) > Math.abs(p.clientY-start.y)*1.2) goTo(index + (p.clientX < start.x ? 1 : -1)); }}
       onTouchCancel={() => { gesture.current = null; }}>
       <div className="sisters-room" aria-hidden="true">
-        <div className={`sisters-figures school-figures${scene.finale ? ' is-finale' : ''}`}>
-          {scene.finale && <img className="school-finale-young" src="/sisters-story/solo/young-confident.webp" alt="" />}
+        <div className="sisters-figures school-figures">
           <img src={posePath(scene.pose)} alt="" />
         </div>
       </div>
       <article className="sisters-card">
-        <p className="sisters-eyebrow">✦ الحصة الثانية · صوتي يصل</p>
+        <p className="sisters-eyebrow">✦ الحصة الثانية · ممر المدرسة</p>
         <h1 ref={heading} tabIndex={-1} aria-describedby="school-turn-description">{scene.title}</h1>
         <span id="school-turn-description" className="sr-only">{scene.speaker}، المشهد {index + 1} من {SCHOOL_STORY.length}</span>
         <div className="sisters-dialogue"><div className="sisters-line"><span className={`sisters-speaker${scene.speaker === 'سارة' ? ' is-laila' : ''}`}>{scene.speaker}</span><p>{scene.text}</p></div></div>
-        {scene.finale && (mode === 'review' ? <p className="sisters-review-note">هذه مراجعة ولا تغيّر تقدّم الرحلة.</p> : <button className="sisters-finish" type="button" onClick={onComplete}>إنهاء الحصة <span aria-hidden="true">✓</span></button>)}
+        {scene.finale && <>
+          {mode === 'review' && <p className="sisters-review-note">هذه مراجعة ولا تغيّر تقدّم الرحلة.</p>}
+          <button className="sisters-finish" type="button" onClick={onComplete}>الدخول إلى القسم <span aria-hidden="true">←</span></button>
+        </>}
       </article>
     </section>
     <nav className="sisters-nav" aria-label="التنقّل بين مشاهد الحصة">

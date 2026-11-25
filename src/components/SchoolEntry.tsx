@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import './SchoolEntry.css';
 
 /** The map leads into the same hallway that remains behind the conversation. */
@@ -35,52 +35,21 @@ export function SchoolEntry({ onSkip, onComplete }: { onSkip: () => void; onComp
   </main>;
 }
 
-const conversation = [
-  { speaker:'سارة', text:'صباح الخير! أنا سارة. هل أنتِ في صفّنا؟' },
-  { speaker:'الطفلة', text:'صباح النور! أنا متوترة؛ أخاف أن أنسى ما حفظته حين أتحدث أمام الصف.' },
-  { speaker:'سارة', text:'أفهمكِ. علّمني أبي تنفّسًا هادئًا ووقفة مريحة. سأريهما لكِ في القسم!' },
-  { speaker:'الطفلة', text:'شكرًا يا سارة! هيا ندخل إلى القسم معًا.' },
-] as const;
-
-/** Wait for each line to be advanced; the hall never advances by itself. */
-export function SchoolHall({ entering, onEnter, onBack, onComplete }: { entering:boolean; onEnter:() => void; onBack:() => void; onComplete:() => void }) {
-  const [turn, setTurn] = useState(0);
-  const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { heading.current?.focus({ preventScroll:true }); }, []);
-  const line = conversation[turn];
-  return <main className={`school-hall${entering ? ' is-entering-room' : ''}`} dir="rtl" aria-label="لقاء الصديقتين في ممر المدرسة">
+/** Only after the whole hallway conversation, move into the classroom. */
+export function SchoolClassroomEntry({ onComplete }: { onComplete:() => void }) {
+  const skip = useRef<HTMLButtonElement>(null);
+  useEffect(() => { skip.current?.focus(); }, []);
+  return <main className="school-hall is-entering-room" aria-label="الدخول إلى القسم">
+    <h1 className="sr-only">الدخول إلى القسم</h1>
     <div className="school-hall-background" aria-hidden="true" />
-    <div className="school-hall-foreground" aria-hidden={entering || undefined} ref={el => { if (el) el.inert = entering; }}>
-      <div className="school-hall-characters" aria-hidden="true">
-        <img className="school-hall-young" src="/sisters-story/solo/young-greet.webp" alt="" />
-        <img className="school-hall-friend" src="/school-entry/friend.webp" alt="" />
-      </div>
-      <button className="school-classroom-back" type="button" onClick={onBack}>العودة إلى رحلتي</button>
-      <section className="school-hall-card" aria-labelledby="school-hall-title">
-        <p className="school-hall-eyebrow">✦ الحصة الثانية · ممر المدرسة</p>
-        <h1 id="school-hall-title" ref={heading} tabIndex={-1}>لقاء في الممر</h1>
-        <div className="school-hall-line" role="status" aria-atomic="true">
-          <span className="school-hall-speaker">{line.speaker}</span>
-          <p>{line.text}</p>
-        </div>
-        <nav className="school-hall-nav" aria-label="التنقّل في الحوار">
-          <button type="button" className="school-hall-prev" disabled={turn === 0} onClick={() => setTurn(turn - 1)}>السابق</button>
-          <span><bdi>{turn + 1} من {conversation.length}</bdi></span>
-          {turn < conversation.length - 1
-            ? <button type="button" className="school-hall-next" onClick={() => setTurn(turn + 1)}>التالي</button>
-            : <button type="button" className="school-hall-next" onClick={onEnter}>الدخول إلى القسم</button>}
-        </nav>
-      </section>
-    </div>
-    {entering && <>
-      <div className="school-hall-room" aria-hidden="true" onAnimationEnd={event => { if (event.animationName === 'school-enter-room') onComplete(); }} />
-      <p className="school-entry-status" role="status">هيا ندخل القسم معًا...</p>
-    </>}
+    <div className="school-hall-room" aria-hidden="true" onAnimationEnd={event => { if (event.animationName === 'school-enter-room') onComplete(); }} />
+    <p className="school-entry-status" role="status">هيا ندخل القسم معًا...</p>
+    <button ref={skip} type="button" className="school-entry-skip school-classroom-entry-skip" onClick={onComplete}>تخطّي الانتقال <span aria-hidden="true">←</span></button>
   </main>;
 }
 
 /** The classroom is the final frame of the entry, not a new cut. */
-export function SchoolClassroom({ onBack, onContinue, review }: { onBack: () => void; onContinue: () => void; review: boolean }) {
+export function SchoolClassroom({ onBack, onComplete, review }: { onBack: () => void; onComplete: () => void; review: boolean }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, []);
   return <main className="school-classroom" dir="rtl" aria-label="صفّ الطفلة">
@@ -89,8 +58,8 @@ export function SchoolClassroom({ onBack, onContinue, review }: { onBack: () => 
     <section className="school-classroom-card">
       <p className="school-classroom-eyebrow">✦ الحصة الثانية · المدرسة {review ? '· وضع المراجعة' : ''}</p>
       <h1 ref={heading} tabIndex={-1}>وصلنا إلى صفّنا!</h1>
-      <p>هيا نتعرّف إلى المكان ونستعدّ للحصة معًا.</p>
-      <button type="button" onClick={onContinue}>متابعة الحصة <span aria-hidden="true">←</span></button>
+      <p>دخلت الصديقتان القسم بعد أن تدربتا معًا في الممر.</p>
+      {review ? <p className="school-classroom-review">هذه مراجعة ولا تغيّر تقدّم الرحلة.</p> : <button type="button" onClick={onComplete}>إنهاء الحصة <span aria-hidden="true">✓</span></button>}
     </section>
   </main>;
 }

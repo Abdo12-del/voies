@@ -3,7 +3,7 @@ import { BottomBar } from "./components/BottomBar";
 import { Celebration } from "./components/Celebration";
 import { Header } from "./components/Header";
 import { HouseEntry } from "./components/HouseEntry";
-import { SchoolEntry, SchoolHall, SchoolClassroom } from "./components/SchoolEntry";
+import { SchoolEntry, SchoolClassroomEntry, SchoolClassroom } from "./components/SchoolEntry";
 import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
@@ -56,8 +56,9 @@ export default function App() {
   const [enteringHouse, setEnteringHouse] = useState(false);
   const schoolTimer = useRef<ReturnType<typeof setTimeout>>();
   const schoolDestination = useRef<string | null>(null);
-  const [schoolPhase, setSchoolPhase] = useState<"approach" | "hall" | "enter" | null>(null);
-  const [classroomIntro, setClassroomIntro] = useState(true);
+  const [schoolPhase, setSchoolPhase] = useState<"approach" | null>(null);
+  const [classroomIntro, setClassroomIntro] = useState(false);
+  const [enteringClassroom, setEnteringClassroom] = useState(false);
   const [arrivingInRoom, setArrivingInRoom] = useState(false);
   const arrivalTimer = useRef<ReturnType<typeof setTimeout>>();
   const focusMapAfterArrival = useRef(false);
@@ -77,7 +78,11 @@ export default function App() {
         schoolDestination.current = null;
         setSchoolPhase(null);
       }
-      if (next.name !== "lesson" || next.id !== 2) setClassroomIntro(true);
+      if (next.name !== "lesson" || next.id !== 2) {
+        clearTimeout(schoolTimer.current);
+        setClassroomIntro(false);
+        setEnteringClassroom(false);
+      }
       if (next.name !== "map") {
         clearTimeout(arrivalTimer.current);
         focusMapAfterArrival.current = false;
@@ -92,6 +97,9 @@ export default function App() {
     // Update React in the same batch as completion. Waiting for hashchange can
     // otherwise let the review redirect reclaim the just-finished lesson.
     setArrivingInRoom(false);
+    clearTimeout(schoolTimer.current);
+    setEnteringClassroom(false);
+    setClassroomIntro(false);
     setRoute({ name: "map" });
     window.location.hash = "#/map";
   }, []);
@@ -148,32 +156,25 @@ export default function App() {
     clearTimeout(schoolTimer.current);
     schoolDestination.current = null;
     window.location.hash = destination;
-    setClassroomIntro(true);
+    setClassroomIntro(false);
     setRoute(parseHash());
     setSchoolPhase(null);
   }, []);
-  const reachSchoolHall = useCallback(() => {
-    if (!schoolDestination.current) return;
+  const finishClassroomEntry = useCallback(() => {
     clearTimeout(schoolTimer.current);
-    setSchoolPhase("hall");
+    setClassroomIntro(true);
+    setEnteringClassroom(false);
   }, []);
   const enterSchoolClassroom = useCallback(() => {
-    if (!schoolDestination.current) return;
-    if (reducedMotion()) { finishSchoolEntry(); return; }
-    setSchoolPhase("enter");
+    if (reducedMotion()) { finishClassroomEntry(); return; }
+    setEnteringClassroom(true);
     clearTimeout(schoolTimer.current);
-    schoolTimer.current = setTimeout(finishSchoolEntry, 10000);
-  }, [finishSchoolEntry]);
-  const cancelSchoolEntry = useCallback(() => {
-    clearTimeout(schoolTimer.current);
-    schoolDestination.current = null;
-    setSchoolPhase(null);
-    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".current-start")?.focus({ preventScroll: true }));
-  }, []);
+    schoolTimer.current = setTimeout(finishClassroomEntry, 10000);
+  }, [finishClassroomEntry]);
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
     if (route.name !== "map") return;
-    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/entrance.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/sisters-story/solo/young-greet.webp"]) {
+    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/entrance.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/school-lesson/friend-explain.webp", "/sisters-story/solo/young-greet.webp"]) {
       const image = new Image();
       image.src = path;
     }
@@ -199,10 +200,10 @@ export default function App() {
         viewport.style.transformOrigin = `${image.left - view.left + image.width * 418 / 1584}px ${image.top - view.top + image.height * 260 / 672}px`;
       }
       schoolDestination.current = destination;
-      if (reducedMotion()) setSchoolPhase("hall");
+      if (reducedMotion()) finishSchoolEntry();
       else {
         setSchoolPhase("approach");
-        schoolTimer.current = setTimeout(reachSchoolHall, 15000);
+        schoolTimer.current = setTimeout(finishSchoolEntry, 15000);
       }
       return;
     }
@@ -336,8 +337,9 @@ export default function App() {
       {route.name === "welcome" ? (
         <JourneyWelcome onStart={beginJourney} />
       ) : lesson ? (
-        <div key="lesson" className={`app lesson-app${arrivingInRoom && lesson.id === 1 ? " is-room-arriving" : ""}`}>
-          {lesson.id === 2 && classroomIntro ? <SchoolClassroom onBack={goMap} onContinue={() => setClassroomIntro(false)} review={statusOf(lesson.id, progress.completed) === "completed"} /> : <LessonComponent
+        <div key="lesson" className={`app lesson-app${arrivingInRoom && lesson.id === 1 ? " is-room-arriving" : ""}`}
+          ref={element => { if (element) element.inert = enteringClassroom; }} aria-hidden={enteringClassroom || undefined}>
+          {lesson.id === 2 && classroomIntro ? <SchoolClassroom onBack={goMap} onComplete={() => { if (approveNext(progress.completed)) goMap(); }} review={statusOf(lesson.id, progress.completed) === "completed"} /> : <LessonComponent
             key={lesson.id}
             id={lesson.id}
             mode={
@@ -348,7 +350,8 @@ export default function App() {
             onBack={goMap}
             onPickSpeaker={() => setSpeakerOpen(true)}
             onComplete={() => {
-              if (approveNext(progress.completed)) goMap();
+              if (lesson.id === 2) enterSchoolClassroom();
+              else if (approveNext(progress.completed)) goMap();
             }}
           />}
         </div>
@@ -398,8 +401,8 @@ export default function App() {
       )}
       {enteringMap && route.name === "map" && <JourneyWelcome onStart={beginJourney} exiting />}
       {enteringHouse && route.name === "map" && <HouseEntry onSkip={finishHouseEntry} onComplete={finishHouseEntry} />}
-      {schoolPhase === "approach" && route.name === "map" && <SchoolEntry onSkip={reachSchoolHall} onComplete={reachSchoolHall} />}
-      {(schoolPhase === "hall" || schoolPhase === "enter") && route.name === "map" && <SchoolHall entering={schoolPhase === "enter"} onEnter={enterSchoolClassroom} onBack={cancelSchoolEntry} onComplete={finishSchoolEntry} />}
+      {schoolPhase === "approach" && route.name === "map" && <SchoolEntry onSkip={finishSchoolEntry} onComplete={finishSchoolEntry} />}
+      {enteringClassroom && lesson?.id === 2 && <SchoolClassroomEntry onComplete={finishClassroomEntry} />}
       <SpeakerWheel open={speakerOpen} onClose={() => setSpeakerOpen(false)} />
     </>
   );

@@ -2,7 +2,7 @@ export interface SchoolScene {
   id: string;
   title: string;
   speaker: 'الطفلة' | 'سارة';
-  pose: 'young-worried' | 'young-asking' | 'young-think' | 'young-confident' | 'young-practice' | 'young-greet' | 'friend-explain' | 'friend-breathe' | 'friend-stance';
+  pose: 'young-worried' | 'young-asking' | 'young-think' | 'young-confident' | 'young-practice' | 'young-greet' | 'friend-greet' | 'friend-explain' | 'friend-breathe' | 'friend-stance';
   text: string;
   teaching?: boolean;
   finale?: boolean;
@@ -10,7 +10,8 @@ export interface SchoolScene {
 
 /** One line per turn, so the learner controls the pace of the conversation. */
 export const SCHOOL_STORY: readonly SchoolScene[] = [
-  { id:'forgotten', title:'ماذا لو نسيت؟', speaker:'الطفلة', pose:'young-worried', text:'تدرّبت على تقديم نفسي، لكنني أخاف أن أنسى ما حفظته عندما أقف أمام زملائي.' },
+  { id:'hall-greeting', title:'لقاء في الممر', speaker:'سارة', pose:'friend-greet', text:'صباح الخير! أنا سارة. هل أنتِ في صفّنا؟' },
+  { id:'forgotten', title:'ماذا لو نسيت؟', speaker:'الطفلة', pose:'young-worried', text:'صباح النور! أنا متوترة؛ أخاف أن أنسى ما حفظته حين أتحدث أمام الصف.' },
   { id:'normal', title:'لستِ وحدك', speaker:'سارة', pose:'friend-explain', text:'أفهمكِ. أشعر بالتوتر أحيانًا أيضًا، وهذا أمر طبيعي عندما نجرب شيئًا جديدًا.' },
   { id:'father', title:'ما علّمني أبي', speaker:'سارة', pose:'friend-explain', text:'علّمني أبي تنفّسًا هادئًا ووقفة مريحة يساعدانني عندما أتوتر. هيا نجرّبهما معًا!' },
   { id:'breath-question', title:'كيف أتنفّس؟', speaker:'الطفلة', pose:'young-asking', text:'كيف أبدأ يا سارة؟' },

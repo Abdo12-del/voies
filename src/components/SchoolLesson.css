@@ -1,27 +1,27 @@
-/* The classroom stays in place from the preceding scene through the story. */
-.school-lesson, .school-lesson .sisters-room { background-image:url('/school-entry/classroom.webp'); }
-.school-lesson .sisters-room { transform-origin:24.5% 97%; }
-.school-lesson .school-figures { height:44%; }
-.school-lesson .school-figures.is-finale { gap:clamp(4px,1vw,20px); }
-.school-lesson .school-figures.is-finale img { width:auto; max-width:48%; }
+/* One continuous hallway, from arrival through the entire conversation. */
+.school-lesson, .school-lesson .sisters-room { background-image:url('/school-entry/hall.webp'); }
+.school-lesson .school-figures { left:30%; width:21%; height:62%; }
+.school-lesson .sisters-nav { left:auto; right:5%; transform:none; }
 .school-lesson .sisters-eyebrow { color:#6c6343; }
 .school-lesson .school-figures, .school-lesson .sisters-top, .school-lesson .sisters-nav, .school-lesson .sisters-card { animation:sisters-elements-in .65s ease-out both; }
 @media (prefers-reduced-motion:reduce) {
   .school-lesson .school-figures, .school-lesson .sisters-top, .school-lesson .sisters-nav, .school-lesson .sisters-card { animation:none; }
 }
 @media (max-height:550px) and (orientation:landscape) {
-  .school-lesson .school-figures { width:32%; }
+  .school-lesson .school-figures { left:24%; width:24%; }
+  .school-lesson .sisters-nav { width:min(400px,calc(100% - 24px)); }
 }
 @media (max-width:700px) and (orientation:portrait) {
   .school-lesson .sisters-room { transform-origin:50% 97%; }
   /* Keep the children's faces and posture visible above the navigation, not
      behind the dialogue card (especially during the breathing exercise). */
   .school-lesson .sisters-card { top:max(58px,calc(env(safe-area-inset-top) + 50px)); bottom:auto; max-height:43%; }
-  .school-lesson .school-figures { bottom:11%; height:39%; }
+  .school-lesson .school-figures { left:0; width:100%; bottom:13%; height:48%; }
+  .school-lesson .sisters-nav { left:50%; right:auto; transform:translateX(-50%); }
 }
 @media (max-width:700px) and (max-height:600px) and (orientation:portrait) {
   .school-lesson .sisters-card { padding:9px 12px; }
   .school-lesson .sisters-card h1 { font-size:19px; margin:1px 0 4px; }
   .school-lesson .sisters-line p { font-size:14px; line-height:1.35; }
-  .school-lesson .school-figures { height:37%; bottom:11%; }
+  .school-lesson .school-figures { height:42%; bottom:13%; }
 }

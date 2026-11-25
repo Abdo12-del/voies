@@ -27,29 +27,9 @@
 .school-hall-background, .school-hall-room { position:absolute; inset:0; background-position:center; background-size:cover; background-repeat:no-repeat; }
 .school-hall-background { background-image:url('/school-entry/hall.webp'); transform-origin:50.2% 46.4%; }
 .school-hall-room { z-index:3; background-image:url('/school-entry/classroom.webp'); opacity:0; animation:school-enter-room 3.2s ease-in-out forwards; }
-.school-hall-foreground { position:absolute; z-index:2; inset:0; }
-.school-hall-characters { position:absolute; left:24%; bottom:3%; width:52%; height:51%; display:flex; align-items:flex-end; justify-content:center; gap:clamp(10px,2vw,32px); pointer-events:none; }
-.school-hall-characters img { height:100%; width:auto; max-width:46%; object-fit:contain; object-position:bottom; filter:drop-shadow(0 5px 6px #60463a30); }
-.school-hall-young { transform:scaleX(-1); }
-.school-hall-card { position:absolute; top:max(18px,env(safe-area-inset-top)); right:3%; width:min(41%,510px); padding:clamp(16px,1.8vw,24px); border:1px solid #e7cbb5; border-radius:24px; background:#fffbf3f7; box-shadow:0 12px 36px #5b423321; }
-.school-hall-eyebrow { color:#6c6343; font-size:14px; font-weight:700; }
-.school-hall-card h1 { font-size:clamp(22px,2.2vw,30px); margin:4px 0 9px; line-height:1.3; }
-.school-hall-card h1:focus { outline:none; }
-.school-hall-line { min-height:83px; }
-.school-hall-speaker { display:inline-block; padding:3px 10px; border-radius:999px; background:#e8eadb; color:#425c41; font-size:14px; font-weight:700; }
-.school-hall-line p { margin-top:5px; font-size:clamp(16px,1.35vw,19px); line-height:1.55; }
-.school-hall-nav { display:flex; align-items:center; gap:9px; margin-top:14px; }
-.school-hall-nav span { flex:1; text-align:center; color:#66554f; font-size:13px; font-weight:700; }
-.school-hall-nav button { min-height:44px; padding:8px 14px; border:0; border-radius:12px; font-weight:700; }
-.school-hall-next { background:#934751; color:white; }
-.school-hall-prev { background:#ebe1d5; color:#583b41; }
-.school-hall-prev:disabled { opacity:.65; }
-.school-hall-characters, .school-hall-card, .school-hall-foreground > .school-classroom-back { animation:school-elements-in .7s ease-out both; }
 .is-entering-room .school-hall-background { animation:school-hall-zoom 3.2s ease-in-out forwards; }
-.is-entering-room .school-hall-foreground { animation:school-hall-elements-out .5s ease forwards; }
-.is-entering-room > .school-entry-status { z-index:4; }
+.is-entering-room > .school-entry-status, .school-classroom-entry-skip { z-index:4; }
 @keyframes school-hall-zoom { 0%,12% {transform:scale(1)} 81%,100% {transform:scale(2.4)} }
-@keyframes school-hall-elements-out { to {opacity:0} }
 @keyframes school-enter-room { 0%,81% {opacity:0} 88%,100% {opacity:1} }
 .school-classroom { position:relative; width:100%; height:100%; overflow:hidden; background:#f5ecdb url('/school-entry/classroom.webp') center / cover no-repeat; color:#3d303a; }
 .school-classroom-girl { position:absolute; height:51%; max-width:35%; object-fit:contain; object-position:bottom; bottom:3%; left:42%; filter:drop-shadow(0 5px 6px #60463a30); }
@@ -63,14 +43,6 @@
 @keyframes school-elements-in { from {opacity:0} to {opacity:1} }
 @media (max-width:700px) and (orientation:portrait) {
   .school-classroom-back, .school-entry-skip { top:10px; left:10px; }
-  .school-hall-characters { left:4%; width:92%; height:36%; bottom:3%; gap:16px; }
-  .school-hall-card { top:max(68px,calc(env(safe-area-inset-top) + 58px)); right:12px; width:calc(100% - 24px); padding:13px 15px; border-radius:19px; }
-  .school-hall-card h1 { font-size:21px; margin:2px 0 5px; }
-  .school-hall-eyebrow { font-size:11px; }
-  .school-hall-speaker { font-size:12px; }
-  .school-hall-line { min-height:63px; }
-  .school-hall-line p { font-size:15px; line-height:1.4; margin-top:3px; }
-  .school-hall-nav { margin-top:8px; }
   .school-classroom-girl { height:44%; max-width:55%; left:29%; bottom:3%; }
   .school-classroom-card { top:max(68px,calc(env(safe-area-inset-top) + 58px)); bottom:auto; right:12px; width:calc(100% - 24px); transform:none; padding:14px 16px; border-radius:19px; }
   .school-classroom-card h1 { font-size:22px; margin:3px 0 5px; }
@@ -79,15 +51,6 @@
 }
 @media (max-height:550px) and (orientation:landscape) {
   .school-classroom-back { top:6px; left:10px; }
-  .school-hall-characters { left:27%; width:44%; height:50%; gap:8px; }
-  .school-hall-card { top:6px; right:2%; width:49%; padding:8px 12px; }
-  .school-hall-card h1 { font-size:19px; margin:1px 0 3px; }
-  .school-hall-eyebrow { font-size:10px; }
-  .school-hall-speaker { font-size:11px; padding:1px 7px; }
-  .school-hall-line { min-height:50px; }
-  .school-hall-line p { font-size:13px; line-height:1.35; margin-top:1px; }
-  .school-hall-nav { margin-top:4px; }
-  .school-hall-nav button { min-height:40px; padding:5px 10px; }
   .school-classroom-girl { height:51%; left:44%; }
   .school-classroom-card { top:6px; width:42%; padding:8px 12px; }
   .school-classroom-card h1 { font-size:20px; margin:2px 0; }
@@ -98,6 +61,5 @@
   .school-departing .city-viewport, .school-departing .app-header, .school-departing .game-bar, .school-departing .city-intro,
   .school-departing .city-zoom, .school-departing .city-current, .school-departing .city-stop,
   .school-departing .city-milestone, .school-departing .city-route,
-  .school-classroom-girl, .school-classroom-card, .school-classroom-back,
-  .school-hall-characters, .school-hall-card, .school-hall-foreground > .school-classroom-back { animation:none; }
+  .school-classroom-girl, .school-classroom-card, .school-classroom-back { animation:none; }
 }

@@ -8,6 +8,7 @@ import { JourneyMap, type JourneyMapHandle } from "./components/JourneyMap";
 import { JourneyWelcome } from "./components/JourneyWelcome";
 import { LessonView } from "./components/LessonView";
 import { SistersLesson } from "./components/SistersLesson";
+import { SchoolLesson } from "./components/SchoolLesson";
 import { StationSheet, type SheetTarget } from "./components/StationSheet";
 import { SpeakerWheel } from "./components/SpeakerWheel";
 import { TeacherPanel } from "./components/TeacherPanel";
@@ -172,7 +173,7 @@ export default function App() {
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
     if (route.name !== "map") return;
-    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/sisters-story/solo/young-greet.webp"]) {
+    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/entrance.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/sisters-story/solo/young-greet.webp"]) {
       const image = new Image();
       image.src = path;
     }
@@ -201,7 +202,7 @@ export default function App() {
       if (reducedMotion()) setSchoolPhase("hall");
       else {
         setSchoolPhase("approach");
-        schoolTimer.current = setTimeout(reachSchoolHall, 10000);
+        schoolTimer.current = setTimeout(reachSchoolHall, 15000);
       }
       return;
     }
@@ -329,7 +330,7 @@ export default function App() {
     statusOf(route.id, progress.completed) !== "locked"
       ? route
       : null;
-  const LessonComponent = lesson?.id === 1 ? SistersLesson : LessonView;
+  const LessonComponent = lesson?.id === 1 ? SistersLesson : lesson?.id === 2 ? SchoolLesson : LessonView;
   return (
     <>
       {route.name === "welcome" ? (

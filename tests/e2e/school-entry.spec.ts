@@ -37,7 +37,7 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
     await expect(page.getByText('صباح الخير! أنا سارة. هل أنتِ في صفّنا؟')).toBeVisible();
     await page.getByRole('button', {name:'التالي', exact:true}).click();
-    await expect(page.getByText('صباح النور! نعم، أنا سعيدة بلقائك، لكنني متوترة قليلًا.')).toBeVisible();
+    await expect(page.getByText('صباح النور! أنا متوترة؛ أخاف أن أنسى ما حفظته حين أتحدث أمام الصف.')).toBeVisible();
     await page.getByRole('button', {name:'السابق', exact:true}).click();
     await expect(page.getByText('صباح الخير! أنا سارة. هل أنتِ في صفّنا؟')).toBeVisible();
     await finishConversation(page);
@@ -53,6 +53,41 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 }
+
+test('the entrance doors open before the camera enters, and the transition can be skipped mid-opening', async ({page}) => {
+  await seedClassroom(page, 1);
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.goto('/#/map');
+  await page.locator('.current-start').click();
+  const state = await page.evaluate(async () => {
+    const entrance = document.querySelector<HTMLElement>('.school-entry-doorway')!;
+    const left = document.querySelector<SVGElement>('.school-entrance-door-left')!;
+    const right = document.querySelector<SVGElement>('.school-entrance-door-right')!;
+    const hall = document.querySelector<HTMLElement>('.school-entry-hall')!;
+    const animations = document.getAnimations();
+    animations.forEach(animation => animation.pause());
+    const seek = async (time:number) => { animations.forEach(animation => { animation.currentTime = time; }); await new Promise(requestAnimationFrame); };
+    await seek(2500);
+    const closed = [getComputedStyle(left).transform, getComputedStyle(right).transform];
+    const visible = getComputedStyle(entrance).opacity;
+    await seek(4000);
+    const opening = [getComputedStyle(left).transform, getComputedStyle(right).transform];
+    const beforeHall = getComputedStyle(hall).opacity;
+    await seek(5500);
+    const opened = [getComputedStyle(left).transform, getComputedStyle(right).transform];
+    await seek(7000);
+    const zoomed = getComputedStyle(entrance).transform;
+    return {closed, opening, opened, visible, beforeHall, zoomed};
+  });
+  expect(Number(state.visible)).toBe(1);
+  expect(state.opening[0]).not.toEqual(state.closed[0]);
+  expect(state.opening[1]).not.toEqual(state.closed[1]);
+  expect(state.opened[0]).not.toEqual(state.opening[0]);
+  expect(Number(state.beforeHall)).toBe(0);
+  expect(state.zoomed).not.toBe('matrix(1, 0, 0, 1, 0, 0)');
+  await page.getByRole('button', {name:/تخطّي الانتقال/}).click();
+  await expect(page.getByRole('heading', {name:'لقاء في الممر'})).toBeFocused();
+});
 
 test('both handoffs keep the same background in place without a map flash', async ({page}) => {
   await seedClassroom(page, 1);
@@ -113,7 +148,8 @@ test('reduced motion keeps the interactive conversation and enters the classroom
   await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused();
   await expect(page.locator('.school-classroom-card')).toHaveCSS('animation-name', 'none');
   await page.getByRole('button', {name:'متابعة الحصة'}).click();
-  await expect(page.getByRole('main', {name:'الحصة 2: صوتي يصل'})).toBeVisible();
+  await expect(page.getByRole('main', {name:'الحصة الثانية: صوتي يصل'})).toBeVisible();
+  await expect(page.getByRole('heading', {name:'ماذا لو نسيت؟'})).toBeFocused();
 });
 
 test('review visits the same hallway and preserves progress', async ({page}) => {

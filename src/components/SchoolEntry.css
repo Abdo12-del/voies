@@ -7,10 +7,19 @@
 .school-entry { position:fixed; z-index:100; inset:0; overflow:hidden; pointer-events:none; }
 .school-entry-frame { position:absolute; inset:0; background-position:center; background-size:cover; background-repeat:no-repeat; opacity:0; will-change:opacity,transform; }
 /* The exterior is a lossless crop of the actual city map, not a redrawn school. */
-.school-entry-exterior { background-image:url('/school-entry/exterior.webp'); transform-origin:50% 57%; animation:school-exterior 4.2s ease-in-out forwards; }
-.school-entry-hall { background-image:url('/school-entry/hall.webp'); animation:school-approach-hall 4.2s ease-in-out forwards; }
-@keyframes school-exterior { 0%,10% {opacity:0;transform:scale(1)} 24%,100% {opacity:1} 65%,100% {transform:scale(1.12)} }
-@keyframes school-approach-hall { 0%,52% {opacity:0} 59%,100% {opacity:1} }
+.school-entry-exterior { background-image:url('/school-entry/exterior.webp'); transform-origin:50% 57%; animation:school-exterior 8.4s ease-in-out forwards; }
+.school-entry-doorway { transform-origin:50% 60%; animation:school-doorway 8.4s ease-in-out forwards; }
+.school-entry-doorway svg { display:block; width:100%; height:100%; }
+.school-entrance-door { transform-box:fill-box; backface-visibility:hidden; }
+.school-entrance-door-left { transform-origin:left center; animation:school-door-open-left 8.4s ease-in-out forwards; }
+.school-entrance-door-right { transform-origin:right center; animation:school-door-open-right 8.4s ease-in-out forwards; }
+.school-entry-hall { background-image:url('/school-entry/hall.webp'); animation:school-approach-hall 8.4s ease-in-out forwards; }
+@keyframes school-exterior { 0%,6% {opacity:0;transform:scale(1)} 15%,100% {opacity:1} 36%,100% {transform:scale(1.12)} }
+@keyframes school-doorway { 0%,19% {opacity:0;transform:scale(1)} 25%,57% {opacity:1;transform:scale(1)} 87%,100% {opacity:1;transform:scale(2.65)} }
+@keyframes school-door-open-left { 0%,35% {transform:perspective(650px) rotateY(0)} 57%,100% {transform:perspective(650px) rotateY(-88deg)} }
+@keyframes school-door-open-right { 0%,35% {transform:perspective(650px) rotateY(0)} 57%,100% {transform:perspective(650px) rotateY(88deg)} }
+/* The final frame is the very same hall used by the dialogue; no cut back to the map. */
+@keyframes school-approach-hall { 0%,86% {opacity:0} 90%,100% {opacity:1} }
 .school-entry-status { position:absolute; bottom:max(28px,env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); border-radius:999px; padding:9px 18px; max-width:calc(100% - 32px); text-align:center; background:#fff9ebed; color:#4b543f; font-weight:700; box-shadow:0 4px 18px #503a3a30; }
 .school-entry-skip, .school-classroom-back { position:absolute; top:max(18px,env(safe-area-inset-top)); left:max(18px,env(safe-area-inset-left)); min-height:44px; padding:9px 15px; border:1px solid #ead7bf; border-radius:14px; background:#fffaf1f2; color:#533c3b; box-shadow:0 4px 16px #352c2e28; font-weight:700; }
 .school-entry-skip { pointer-events:auto; }

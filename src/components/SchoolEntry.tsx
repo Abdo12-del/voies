@@ -12,6 +12,10 @@ export function SchoolEntry({ onSkip, onComplete }: { onSkip: () => void; onComp
     <div className="school-entry-frame school-entry-doorway" aria-hidden="true">
       <svg viewBox="0 0 1376 768" preserveAspectRatio="xMidYMid slice" focusable="false">
         <image href="/school-entry/entrance.webp" width="1376" height="768" />
+        {/* The open doorway reveals the very same artwork used on arrival. */}
+        <svg x="510" y="254" width="356" height="422" viewBox="0 0 1376 768" preserveAspectRatio="xMidYMid slice" overflow="hidden">
+          <image href="/school-entry/hall.webp" width="1376" height="768" />
+        </svg>
         <g className="school-entrance-door school-entrance-door-left">
           <rect x="510" y="254" width="178" height="422" fill="#35465c" stroke="#182538" strokeWidth="5" />
           <rect x="526" y="270" width="145" height="252" fill="#91acb7" stroke="#19293c" strokeWidth="5" />

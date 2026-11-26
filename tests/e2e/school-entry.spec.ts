@@ -49,6 +49,8 @@ test('the entrance doors open before the camera enters and the transition can be
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.goto('/#/map');
   await page.locator('.current-start').click();
+  // The view through the doors and the arrival frame use the same hallway art.
+  await expect(page.locator('.school-entry-doorway svg svg image')).toHaveAttribute('href', '/school-entry/hall.webp');
   const state = await page.evaluate(async () => {
     const entrance = document.querySelector<HTMLElement>('.school-entry-doorway')!;
     const left = document.querySelector<SVGElement>('.school-entrance-door-left')!;

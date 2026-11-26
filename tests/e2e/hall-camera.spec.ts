@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { seedClassroom } from './classroom-fixture';
 
-for (const viewport of [{width:1440,height:900}, {width:820,height:1180}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
+for (const viewport of [{width:1568,height:724}, {width:1440,height:900}, {width:820,height:1180}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
   test(`the camera pans across one fixed hallway at ${viewport.width}x${viewport.height}`, async ({page}) => {
     await page.setViewportSize(viewport);
     await page.emulateMedia({reducedMotion:'reduce'});
@@ -15,6 +15,17 @@ for (const viewport of [{width:1440,height:900}, {width:820,height:1180}, {width
     await expect(friend).toHaveClass(/is-active/);
     await expect(friend).toHaveCSS('visibility', 'visible');
     await expect(young).toHaveCSS('visibility', 'hidden');
+    const expectSpeakerInFrame = async () => {
+      const bounds = await page.locator('.school-figures.is-active').evaluate(el => {
+        const r = el.getBoundingClientRect();
+        return {left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:innerWidth, height:innerHeight};
+      });
+      expect(bounds.left).toBeGreaterThanOrEqual(0);
+      expect(bounds.right).toBeLessThanOrEqual(bounds.width);
+      expect(bounds.top).toBeGreaterThanOrEqual(0);
+      expect(bounds.bottom).toBeLessThanOrEqual(bounds.height);
+    };
+    await expectSpeakerInFrame();
     await expect(world).toHaveCSS('transition-duration', '0s');
     await expect(world).toHaveCSS('background-image', /hall\.webp/);
     await page.waitForTimeout(100);
@@ -32,6 +43,7 @@ for (const viewport of [{width:1440,height:900}, {width:820,height:1180}, {width
     await expect(young).toHaveClass(/is-active/);
     await expect(young).toHaveCSS('visibility', 'visible');
     await expect(friend).toHaveCSS('visibility', 'hidden');
+    await expectSpeakerInFrame();
     const after = await page.evaluate(() => {
       const world = document.querySelector<HTMLElement>('.school-hall-world')!;
       const people = document.querySelector<HTMLElement>('.school-hall-people')!;

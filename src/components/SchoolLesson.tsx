@@ -6,6 +6,9 @@ import './SchoolLesson.css';
 
 interface Props { id:number; mode:'learn' | 'review'; onBack:() => void; onPickSpeaker:() => void; onComplete:() => void; }
 const posePath = (pose:string) => pose === 'friend-greet' ? '/school-entry/friend.webp' : pose.startsWith('friend-') ? `/school-lesson/${pose}.webp` : `/sisters-story/solo/${pose}.webp`;
+// Neighbouring floor positions: the girls can talk at a comfortable distance.
+const FRIEND_X = .43;
+const YOUNG_X = .52;
 
 /** The whole conversation happens in the hall, one speaker at a time. */
 export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) {
@@ -76,21 +79,24 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
   // Both speakers stand on the same floor line and have the same height.
   const floorInset = camera.height * (portrait ? .13 : .08) + closeY;
   const hallPersonHeight = Math.max(0, Math.min(camera.height * .8, worldHeight * (1 - referenceHeadY) - floorInset));
-  const activeX = scene.speaker === 'سارة' ? .25 : .52;
-  const framingX = portrait ? .27 : scene.speaker === 'سارة' ? .30 : .34;
-  const closeX = Math.max(camera.width - worldWidth, Math.min(0, camera.width * framingX - worldWidth * activeX));
+  // Frame the pair together; only a gentle pan follows the active speaker.
+  const pairX = (FRIEND_X + YOUNG_X) / 2;
+  const frameX = portrait ? .5 : worldFactor === 1.2 ? .36 : .35;
+  const pan = Math.min(camera.width * .02, worldWidth * .015);
+  const closeX = Math.max(camera.width - worldWidth, Math.min(0, camera.width * frameX - worldWidth * pairX + (scene.speaker === 'سارة' ? pan : -pan)));
   const wide = !camera.ready || leaving;
   const cameraStyle = {transform:`translate3d(${wide ? wideX : closeX}px, ${wide ? wideY : closeY}px, 0) scale(${wide ? wideScale : 1})`};
   const visual = leaving ? undefined : scene.visual;
-  const teachingShift = visual ? camera.width * .5 - (closeX + worldWidth * .25) : 0;
+  const teachingShift = visual ? camera.width * .5 - (closeX + worldWidth * FRIEND_X) : 0;
   const previous = SCHOOL_STORY.slice(0, index + 1);
   const friendScene = [...previous].reverse().find(item => item.speaker === 'سارة');
   const youngScene = [...previous].reverse().find(item => item.speaker === 'الطفلة');
   const friendPose = friendScene?.pose ?? 'friend-greet';
   const youngPose = youngScene?.pose ?? 'young-worried';
-  // Dialogue faces the other child; demonstrations still address the learner.
-  const friendFacingPartner = !friendScene?.visual && friendScene?.address !== 'learner';
-  const youngFacingPartner = youngScene?.address !== 'learner';
+  // The listener looks at the speaker. During direct instruction the active
+  // character addresses the learner, while the listener still faces her.
+  const friendFacingPartner = scene.speaker !== 'سارة' || (!visual && scene.address !== 'learner');
+  const youngFacingPartner = scene.speaker !== 'الطفلة' || scene.address !== 'learner';
   const hallFriendPose = friendPose === 'friend-greet' ? 'greet' : friendPose === 'friend-ideas' ? 'ideas' : 'explain';
   const friendImage = friendFacingPartner ? `/school-lesson/friend-hall-${hallFriendPose}.webp` : posePath(friendPose);
   useEffect(() => { heading.current?.focus({preventScroll:true}); }, [index]);
@@ -124,7 +130,7 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
         }} />
         <div className="school-teaching-backdrop" />
         <div className="school-hall-people-viewport">
-          <div className={`school-hall-people${!camera.ready ? ' is-establishing' : ''}${moving ? ' is-moving' : ''}`} style={{...cameraStyle, '--hall-close-y': `${closeY}px`, '--hall-person-height': `${hallPersonHeight}px`, '--teaching-shift': `${teachingShift}px`} as CSSProperties}>
+          <div className={`school-hall-people${!camera.ready ? ' is-establishing' : ''}${moving ? ' is-moving' : ''}`} style={{...cameraStyle, '--friend-x': `${FRIEND_X * 100}%`, '--young-x': `${YOUNG_X * 100}%`, '--hall-close-y': `${closeY}px`, '--hall-person-height': `${hallPersonHeight}px`, '--teaching-shift': `${teachingShift}px`} as CSSProperties}>
             <div className={`school-figures school-figure-friend${scene.speaker === 'سارة' ? ' is-active' : ''}`} data-speaker="friend" data-facing={friendFacingPartner ? "partner" : "viewer"}>
               {visual && <div className={`school-teaching-cue${visual === 'scattered' || visual === 'ordered' ? ` is-ideas is-${visual}` : ' is-breath'}`}>
                 {visual === 'scattered' || visual === 'ordered' ? <>

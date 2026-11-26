@@ -14,7 +14,21 @@ for (const viewport of [{width:2560,height:600}, {width:1920,height:540}, {width
     const young = page.locator('[data-speaker="young"]');
     await expect(friend).toHaveClass(/is-active/);
     await expect(friend).toHaveCSS('visibility', 'visible');
-    await expect(young).toHaveCSS('visibility', 'hidden');
+    await expect(young).toHaveCSS('visibility', 'visible');
+    const expectPairInFrame = async () => {
+      const bounds = await page.evaluate(() => {
+        const card = document.querySelector('.sisters-card')!.getBoundingClientRect();
+        return [...document.querySelectorAll('.school-figures')].map(el => {
+          const r = el.getBoundingClientRect();
+          return {inFrame:r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+            clearCard:r.bottom <= card.top || r.top >= card.bottom || r.right <= card.left || r.left >= card.right};
+        });
+      });
+      expect(bounds).toEqual([{inFrame:true, clearCard:true}, {inFrame:true, clearCard:true}]);
+    };
+    await expect(friend).toHaveAttribute('data-facing', 'partner');
+    await expect(young).toHaveAttribute('data-facing', 'partner');
+    await expectPairInFrame();
     const expectSpeakerInFrame = async () => {
       const bounds = await page.locator('.school-figures.is-active').evaluate(el => {
         const r = el.getBoundingClientRect();
@@ -46,19 +60,25 @@ for (const viewport of [{width:2560,height:600}, {width:1920,height:540}, {width
       const friend = document.querySelector<HTMLElement>('[data-speaker="friend"]')!.getBoundingClientRect();
       const young = document.querySelector<HTMLElement>('[data-speaker="young"]')!.getBoundingClientRect();
       return { referenceHead:world.top + world.height * 374 / 768, referenceFoot:world.top + world.height * 570 / 768,
-        friendTop:friend.top, youngTop:young.top, friendFoot:friend.bottom, youngFoot:young.bottom, friendHeight:friend.height, youngHeight:young.height };
+        friendTop:friend.top, youngTop:young.top, friendFoot:friend.bottom, youngFoot:young.bottom, friendHeight:friend.height, youngHeight:young.height, gap:young.left - friend.right };
     });
     expect(Math.abs(proportions.friendHeight-proportions.youngHeight)).toBeLessThan(1);
     expect(Math.abs(proportions.friendTop-proportions.youngTop)).toBeLessThan(1);
     expect(Math.abs(proportions.friendFoot-proportions.youngFoot)).toBeLessThan(1);
     expect(Math.abs(proportions.friendTop-proportions.referenceHead)).toBeLessThan(1);
     expect(proportions.friendFoot).toBeGreaterThan(proportions.referenceFoot);
+    // Their speaking distance remains comfortably smaller than their height.
+    expect(proportions.gap).toBeGreaterThan(-proportions.friendHeight * .15);
+    expect(proportions.gap).toBeLessThan(proportions.friendHeight * .6);
     await page.getByRole('button', {name:'التالي',exact:true}).click();
     await expect(page.getByRole('heading', {name:'ماذا لو نسيت؟'})).toBeFocused();
     await expect(young).toHaveClass(/is-active/);
     await expect(young).toHaveCSS('visibility', 'visible');
-    await expect(friend).toHaveCSS('visibility', 'hidden');
+    await expect(friend).toHaveCSS('visibility', 'visible');
+    await expect(friend).toHaveAttribute('data-facing', 'partner');
+    await expect(young).toHaveAttribute('data-facing', 'partner');
     await expectSpeakerInFrame();
+    await expectPairInFrame();
     const after = await page.evaluate(() => {
       const world = document.querySelector<HTMLElement>('.school-hall-world')!;
       const people = document.querySelector<HTMLElement>('.school-hall-people')!;
@@ -72,7 +92,7 @@ for (const viewport of [{width:2560,height:600}, {width:1920,height:540}, {width
     await page.getByRole('button', {name:'السابق',exact:true}).click();
     await expect(world).toHaveCSS('transform', before.camera);
     await expect(friend).toHaveCSS('visibility', 'visible');
-    await expect(young).toHaveCSS('visibility', 'hidden');
+    await expect(young).toHaveCSS('visibility', 'visible');
   });
 }
 
@@ -90,7 +110,7 @@ test('animated camera pans without changing fixed positions, and stays put for t
   await expect.poll(async () => world.evaluate(el => getComputedStyle(el).transform)).not.toBe(initial);
   await expect(page.locator('.school-hall-people')).toHaveClass(/is-moving/);
   await expect(page.locator('.school-hall-people')).not.toHaveClass(/is-moving/, {timeout:5000});
-  await expect(page.locator('[data-speaker="friend"]')).toHaveCSS('visibility', 'hidden');
+  await expect(page.locator('[data-speaker="friend"]')).toHaveCSS('visibility', 'visible');
   await expect(page.locator('[data-speaker="young"]')).toHaveCSS('visibility', 'visible');
   expect(await page.locator('.school-hall-people').evaluate(el => [...el.children].map(child => (child as HTMLElement).offsetLeft))).toEqual(positions);
   await page.getByRole('button', {name:'التالي',exact:true}).click();

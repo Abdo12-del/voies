@@ -11,10 +11,8 @@
 .school-hall-people { pointer-events:none; }
 .school-lesson .school-figures { position:absolute; bottom:calc(8vh + var(--hall-close-y, 0px)); height:var(--hall-person-height, 0px); width:auto; display:block; transform:translateX(-50%); filter:drop-shadow(0 5px 6px #60463a30); }
 .school-lesson .school-figures img { display:block; height:100%; width:auto; max-width:none; object-fit:contain; }
-.school-figure-friend { left:25%; }
-.school-figure-young { left:52%; }
-.school-hall-people .school-figures:not(.is-active) { visibility:hidden; }
-.school-hall-people.is-moving:not(.is-establishing) .school-figures:not(.is-active) { visibility:visible; }
+.school-figure-friend { left:var(--friend-x); }
+.school-figure-young { left:var(--young-x); }
 .school-lesson .sisters-nav { left:auto; right:5%; transform:none; }
 .school-lesson .sisters-eyebrow { color:#6c6343; }
 .school-lesson .school-hall-people, .school-lesson .sisters-top, .school-lesson .sisters-nav, .school-lesson .sisters-card { animation:sisters-elements-in .65s ease-out both; }
@@ -88,7 +86,8 @@
   .school-lesson.has-school-demonstration .sisters-nav { right:2%; width:37%; }
 }
 @media (min-width:701px) and (max-width:1000px) and (orientation:portrait) {
-  .is-school-demonstration .sisters-card { top:max(76px,calc(env(safe-area-inset-top) + 68px)); right:16px; transform:none; width:calc(100% - 32px); max-height:32%; }
+  .school-hall-people-viewport { mask-image:linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%); }
+  .school-lesson .sisters-card { top:max(76px,calc(env(safe-area-inset-top) + 68px)); bottom:auto; right:16px; transform:none; width:calc(100% - 32px); max-height:32%; }
 }
 
 /* The girl looks left towards Sara while they talk; she faces viewers when presenting. */

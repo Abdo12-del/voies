@@ -37,7 +37,8 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused({timeout:12000});
     await expect(page.locator('.school-classroom-card')).toHaveCSS('opacity', '1');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
-    await expect(page.getByRole('button', {name:/إنهاء الحصة/})).toBeVisible();
+    await expect(page.getByRole('button', {name:'إلى المنصّة'})).toBeVisible();
+    await expect(page.getByRole('button', {name:/إنهاء الحصة/})).toHaveCount(0);
   });
 }
 

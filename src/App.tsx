@@ -174,7 +174,7 @@ export default function App() {
   useEffect(() => {
     // Begin loading the frames while the user explores the map.
     if (route.name !== "map") return;
-    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/entrance.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-entry/friend.webp", "/school-lesson/friend-explain.webp", "/sisters-story/solo/young-greet.webp"]) {
+    for (const path of ["/house-entry/01-approach.webp", "/house-entry/02-doorway.webp", "/house-entry/03-inside.webp", "/sisters-story/hallway.webp", "/sisters-story/bedroom-door.webp", "/sisters-story/bedroom-hd.webp", "/sisters-story/solo/young-worried.webp", "/school-entry/exterior.webp", "/school-entry/entrance.webp", "/school-entry/hall.webp", "/school-entry/classroom.webp", "/school-lesson/classroom-stage.webp", "/school-entry/friend.webp", "/school-lesson/friend-explain.webp", "/sisters-story/solo/young-greet.webp"]) {
       const image = new Image();
       image.src = path;
     }

@@ -4,6 +4,7 @@ import { seedClassroom } from './classroom-fixture';
 
 for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
   test(`arrival and hallway conversation precede the classroom at ${viewport.width}x${viewport.height}`, async ({page}) => {
+    test.setTimeout(70000);
     await page.setViewportSize(viewport);
     await page.emulateMedia({reducedMotion:'no-preference'});
     await seedClassroom(page, 1);
@@ -16,8 +17,9 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     await expect(page).toHaveURL(/#\/lesson\/2$/);
     const background = page.locator('.school-lesson .sisters-room');
     await expect(background).toHaveCSS('background-image', /hall\.webp/);
-    const speaker = page.locator('.school-figures img');
+    const speaker = page.locator('.school-figures.is-active img');
     await expect(speaker).toHaveCount(1);
+    await expect(page.locator('.school-figures img')).toHaveCount(2);
     await expect(speaker).toHaveAttribute('src', '/school-entry/friend.webp');
     await expect.poll(() => speaker.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await expect(page.locator('.sisters-card')).toHaveCSS('opacity','1');

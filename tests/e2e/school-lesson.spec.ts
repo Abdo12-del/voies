@@ -16,13 +16,14 @@ for (const {width,height} of [{width:1440,height:900}, {width:820,height:1180}, 
       await expect(page.locator('.sisters-speaker')).toHaveText(scene.speaker);
       await expect(page.locator('.sisters-line p')).toHaveText(scene.text);
       const figures = page.locator('.school-figures img');
-      await expect(figures).toHaveCount(1);
-      const active = figures.last();
+      await expect(figures).toHaveCount(2);
+      const active = page.locator('.school-figures.is-active img');
+      await expect(active).toHaveCount(1);
       await expect(active).toHaveAttribute('src', scene.pose === 'friend-greet' ? '/school-entry/friend.webp' : scene.pose.startsWith('friend-') ? `/school-lesson/${scene.pose}.webp` : `/sisters-story/solo/${scene.pose}.webp`);
       await expect.poll(() => active.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
       const layout = await page.evaluate(() => {
         const c = document.querySelector('.sisters-card')!, card = c.getBoundingClientRect(), n = document.querySelector('.sisters-nav')!.getBoundingClientRect(), t = document.querySelector('.sisters-top')!.getBoundingClientRect();
-        const f = document.querySelector('.school-figures')!.getBoundingClientRect();
+        const f = document.querySelector('.school-figures.is-active')!.getBoundingClientRect();
         return {fits:card.left >= 0 && card.right <= innerWidth && card.top >= 0 && card.bottom <= innerHeight, readable:c.scrollHeight <= c.clientHeight + 1, clearNav:card.bottom <= n.top || card.top >= n.bottom, clearTop:card.top >= t.bottom || card.bottom <= t.top, clearFigures:card.bottom <= f.top || card.top >= f.bottom || card.right <= f.left || card.left >= f.right};
       });
       expect(layout).toEqual({fits:true,readable:true,clearNav:true,clearTop:true,clearFigures:true});

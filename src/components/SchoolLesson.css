@@ -3,10 +3,13 @@
 .school-lesson .sisters-room { transform:none; overflow:hidden; }
 .school-hall-world, .school-hall-people { position:absolute; left:0; bottom:0; width:max(150vw,179.166667vh); aspect-ratio:1376 / 768; transform-origin:left bottom; transition:transform 1s cubic-bezier(.4,0,.2,1); will-change:transform; }
 .school-hall-world { background:url('/school-entry/hall.webp') center / 100% 100% no-repeat; }
+@media (min-aspect-ratio:3/1) {
+  .school-hall-world, .school-hall-people { width:max(120vw,179.166667vh); }
+}
 /* The speaker's part of the frame is separate from the dialogue card. */
 .school-hall-people-viewport { position:absolute; inset:0; overflow:hidden; mask-image:linear-gradient(to right, transparent 0%, #000 8%, #000 50%, transparent 70%); }
 .school-hall-people { pointer-events:none; }
-.school-lesson .school-figures { position:absolute; bottom:calc(8vh + var(--hall-close-y, 0px)); height:min(42%,62vh); width:auto; display:block; transform:translateX(-50%); filter:drop-shadow(0 5px 6px #60463a30); }
+.school-lesson .school-figures { position:absolute; bottom:calc(8vh + var(--hall-close-y, 0px)); height:var(--hall-person-height, 0px); width:auto; display:block; transform:translateX(-50%); filter:drop-shadow(0 5px 6px #60463a30); }
 .school-lesson .school-figures img { display:block; height:100%; width:auto; max-width:none; object-fit:contain; }
 .school-figure-friend { left:25%; }
 .school-figure-young { left:52%; }
@@ -26,7 +29,7 @@
 }
 @media (max-width:700px) and (orientation:portrait) {
   .school-hall-people-viewport { mask-image:linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%); }
-  .school-lesson .school-figures { bottom:calc(13vh + var(--hall-close-y, 0px)); height:min(48%,48vh); }
+  .school-lesson .school-figures { bottom:calc(13vh + var(--hall-close-y, 0px)); }
   .school-lesson .sisters-card { top:max(58px,calc(env(safe-area-inset-top) + 50px)); bottom:auto; max-height:43%; }
   .school-lesson .sisters-nav { left:50%; right:auto; transform:translateX(-50%); }
 }
@@ -34,13 +37,14 @@
   .school-lesson .sisters-card { padding:9px 12px; }
   .school-lesson .sisters-card h1 { font-size:19px; margin:1px 0 4px; }
   .school-lesson .sisters-line p { font-size:14px; line-height:1.35; }
-  .school-lesson .school-figures { height:min(42%,42vh); }
 }
 
 /* A temporary teaching cutaway, not a change of location: the hallway remains
    underneath and fades back in after the explanation. */
 .school-teaching-backdrop { position:absolute; inset:0; background:#e7f0e9; opacity:0; transition:opacity .7s ease; }
 .is-school-demonstration .school-teaching-backdrop { opacity:1; }
+/* The instructional cutaway is not part of the corridor perspective. */
+.is-school-demonstration .school-figures { height:min(42%,62vh); }
 .school-lesson .school-figure-friend { transition:transform .8s cubic-bezier(.4,0,.2,1); transform:translateX(calc(-50% + var(--teaching-shift, 0px))); }
 .is-school-demonstration .school-hall-people-viewport { mask-image:none; }
 .is-school-demonstration .school-figure-young { visibility:hidden !important; }
@@ -62,6 +66,7 @@
 .is-scattered .school-idea-words span:nth-child(3) { transform:translate(-4px,3px) rotate(8deg); }
 .is-ordered .school-idea-words span { transform:none; }
 @media (max-width:700px) and (orientation:portrait) {
+  .is-school-demonstration .school-figures { height:min(48%,48vh); }
   .is-school-demonstration .sisters-card { right:12px; width:calc(100% - 24px); }
   .school-teaching-cue { height:56px; width:min(290px,90vw); bottom:calc(100% + 6px); }
   .school-breath-mark { min-width:110px; padding:4px 6px; font-size:14px; }
@@ -85,3 +90,6 @@
 @media (min-width:701px) and (max-width:1000px) and (orientation:portrait) {
   .is-school-demonstration .sisters-card { top:max(76px,calc(env(safe-area-inset-top) + 68px)); right:16px; transform:none; width:calc(100% - 32px); max-height:32%; }
 }
+
+/* The girl looks left towards Sara while they talk; she faces viewers when presenting. */
+.school-figure-young[data-facing="partner"] img { transform:scaleX(-1); }

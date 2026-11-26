@@ -19,7 +19,12 @@ for (const {width,height} of [{width:1440,height:900}, {width:820,height:1180}, 
       await expect(figures).toHaveCount(2);
       const active = page.locator('.school-figures.is-active img');
       await expect(active).toHaveCount(1);
-      await expect(active).toHaveAttribute('src', scene.pose === 'friend-greet' ? '/school-entry/friend.webp' : scene.pose.startsWith('friend-') ? `/school-lesson/${scene.pose}.webp` : `/sisters-story/solo/${scene.pose}.webp`);
+      const facesPartner = !scene.visual && scene.address !== 'learner';
+      const friendHallPose = scene.pose === 'friend-greet' ? 'greet' : scene.pose === 'friend-ideas' ? 'ideas' : 'explain';
+      const expectedImage = scene.speaker === 'سارة' && facesPartner ? `/school-lesson/friend-hall-${friendHallPose}.webp` : scene.pose === 'friend-greet' ? '/school-entry/friend.webp' : scene.pose.startsWith('friend-') ? `/school-lesson/${scene.pose}.webp` : `/sisters-story/solo/${scene.pose}.webp`;
+      await expect(active).toHaveAttribute('src', expectedImage);
+      await expect(page.locator('.school-figures.is-active')).toHaveAttribute('data-facing', facesPartner ? 'partner' : 'viewer');
+      if (scene.speaker === 'الطفلة') await expect(active).toHaveCSS('transform', facesPartner ? 'matrix(-1, 0, 0, 1, 0, 0)' : 'none');
       await expect.poll(() => active.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
       const layout = await page.evaluate(() => {
         const c = document.querySelector('.sisters-card')!, card = c.getBoundingClientRect(), n = document.querySelector('.sisters-nav')!.getBoundingClientRect(), t = document.querySelector('.sisters-top')!.getBoundingClientRect();

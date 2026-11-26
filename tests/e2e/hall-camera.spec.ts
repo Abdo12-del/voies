@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { seedClassroom } from './classroom-fixture';
 
-for (const viewport of [{width:1568,height:724}, {width:1440,height:900}, {width:820,height:1180}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
+for (const viewport of [{width:2560,height:600}, {width:1920,height:540}, {width:1800,height:600}, {width:1799,height:600}, {width:1568,height:724}, {width:1440,height:900}, {width:820,height:1180}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
   test(`the camera pans across one fixed hallway at ${viewport.width}x${viewport.height}`, async ({page}) => {
     await page.setViewportSize(viewport);
     await page.emulateMedia({reducedMotion:'reduce'});
@@ -38,6 +38,21 @@ for (const viewport of [{width:1568,height:724}, {width:1440,height:900}, {width
     });
     expect(before.camera).toBe(before.figures);
     expect(before.youngX).toBeGreaterThan(before.friendX);
+    // The hallway's reference pupils have heads around y=374 and feet y=570
+    // in the 768px source. Both speakers are same-age and stand on the same
+    // nearer floor line, so their heights share that projected head line.
+    const proportions = await page.evaluate(() => {
+      const world = document.querySelector<HTMLElement>('.school-hall-world')!.getBoundingClientRect();
+      const friend = document.querySelector<HTMLElement>('[data-speaker="friend"]')!.getBoundingClientRect();
+      const young = document.querySelector<HTMLElement>('[data-speaker="young"]')!.getBoundingClientRect();
+      return { referenceHead:world.top + world.height * 374 / 768, referenceFoot:world.top + world.height * 570 / 768,
+        friendTop:friend.top, youngTop:young.top, friendFoot:friend.bottom, youngFoot:young.bottom, friendHeight:friend.height, youngHeight:young.height };
+    });
+    expect(Math.abs(proportions.friendHeight-proportions.youngHeight)).toBeLessThan(1);
+    expect(Math.abs(proportions.friendTop-proportions.youngTop)).toBeLessThan(1);
+    expect(Math.abs(proportions.friendFoot-proportions.youngFoot)).toBeLessThan(1);
+    expect(Math.abs(proportions.friendTop-proportions.referenceHead)).toBeLessThan(1);
+    expect(proportions.friendFoot).toBeGreaterThan(proportions.referenceFoot);
     await page.getByRole('button', {name:'التالي',exact:true}).click();
     await expect(page.getByRole('heading', {name:'ماذا لو نسيت؟'})).toBeFocused();
     await expect(young).toHaveClass(/is-active/);

@@ -4,6 +4,7 @@ export interface SchoolScene {
   speaker: 'الطفلة' | 'سارة';
   pose: 'young-worried' | 'young-asking' | 'young-think' | 'young-confident' | 'young-practice' | 'young-greet' | 'friend-greet' | 'friend-explain' | 'friend-breathe' | 'friend-stance' | 'friend-inhale' | 'friend-exhale' | 'friend-ideas';
   text: string;
+  address?: 'partner' | 'learner';
   visual?: 'breath-ready' | 'inhale' | 'exhale' | 'breath-practice' | 'scattered' | 'ordered';
   teaching?: boolean;
   finale?: boolean;
@@ -23,15 +24,15 @@ export const SCHOOL_STORY: readonly SchoolScene[] = [
   { id:'ideas-scattered', title:'أفكاري متزاحمة', speaker:'سارة', pose:'friend-ideas', visual:'scattered', teaching:true, text:'أحيانًا تتزاحم الأفكار في رأسي، ولا أعرف من أين أبدأ. لا بأس؛ يمكنني التوقف لحظة.' },
   { id:'ideas-ordered', title:'فكرة في كل مرة', speaker:'سارة', pose:'friend-ideas', visual:'ordered', teaching:true, text:'أرتّب أفكاري ببساطة: أبدأ باسمي، ثم مدرستي، ثم شيء أحبّه. فكرة واحدة في كل مرة.' },
   { id:'young-breath', title:'لحظة هدوء', speaker:'الطفلة', pose:'young-think', text:'سأتوقف لحظة وأتنفّس بهدوء قبل أن أبدأ.' },
-  { id:'stance-intro', title:'وقفة مريحة', speaker:'سارة', pose:'friend-stance', teaching:true, text:'وعلّمني أبي أيضًا أن أقف بثبات وراحة، من دون شدّ جسمي.' },
-  { id:'feet', title:'قدماي على الأرض', speaker:'سارة', pose:'friend-stance', teaching:true, text:'ضع قدميك على الأرض متباعدتين قليلًا، وأرخِ ركبتيك. يمكنك الجلوس براحة إن كان الوقوف غير مناسب لك.' },
-  { id:'shoulders', title:'أرخي كتفيّ', speaker:'سارة', pose:'friend-stance', teaching:true, text:'اجعل ظهرك معتدلًا وأرخِ كتفيك ويديك. لا تحتاج أن تتصلّب أو تقف بطريقة مثالية.' },
-  { id:'stance-practice', title:'نجرب الوقفة', speaker:'سارة', pose:'friend-stance', teaching:true, text:'وأنت، جرّب الوقفة أو الجلسة المريحة، ثم خذ نفسًا هادئًا إذا أحببت.' },
+  { id:'stance-intro', address:'learner', title:'وقفة مريحة', speaker:'سارة', pose:'friend-stance', teaching:true, text:'وعلّمني أبي أيضًا أن أقف بثبات وراحة، من دون شدّ جسمي.' },
+  { id:'feet', address:'learner', title:'قدماي على الأرض', speaker:'سارة', pose:'friend-stance', teaching:true, text:'ضع قدميك على الأرض متباعدتين قليلًا، وأرخِ ركبتيك. يمكنك الجلوس براحة إن كان الوقوف غير مناسب لك.' },
+  { id:'shoulders', address:'learner', title:'أرخي كتفيّ', speaker:'سارة', pose:'friend-stance', teaching:true, text:'اجعل ظهرك معتدلًا وأرخِ كتفيك ويديك. لا تحتاج أن تتصلّب أو تقف بطريقة مثالية.' },
+  { id:'stance-practice', address:'learner', title:'نجرب الوقفة', speaker:'سارة', pose:'friend-stance', teaching:true, text:'وأنت، جرّب الوقفة أو الجلسة المريحة، ثم خذ نفسًا هادئًا إذا أحببت.' },
   { id:'forget-question', title:'إن نسيتُ كلامي؟', speaker:'الطفلة', pose:'young-asking', text:'وماذا أفعل إذا نسيتُ كلمة وأنا أتحدث؟' },
   { id:'forget-help', title:'أتوقّف وأكمل', speaker:'سارة', pose:'friend-ideas', teaching:true, text:'لا بأس! توقّف لحظة، وخذ نفسًا مريحًا، ثم ابدأ بالفكرة التي تتذكرها. يمكنك النظر إلى ملاحظاتك أو طلب مساعدة المعلمة.' },
   { id:'ideas', title:'المعنى أهم', speaker:'سارة', pose:'friend-ideas', teaching:true, text:'ليس عليك تذكّر كل كلمة بالضبط. تحدّث عن نفسك بطريقتك، وفكرة واحدة في كل مرة تكفي.' },
   { id:'try', title:'أحاول من جديد', speaker:'الطفلة', pose:'young-practice', text:'سأقف براحة، وأتنفس بهدوء، ثم أبدأ باسمي وما أحبّه. وإذا نسيت، سأتوقف وأكمل.' },
-  { id:'voice', title:'صوتي يصل', speaker:'سارة', pose:'friend-ideas', teaching:true, text:'وأنت أيضًا، جرّب تحيةً بصوت واضح ومريح يسمعه من أمامك، من دون صراخ.' },
-  { id:'young-end', title:'خطوة شجاعة', speaker:'الطفلة', pose:'young-confident', text:'مرحبًا! أحب القصص، وهوايتي الرسم. أنا سعيدة بالتعرّف إليكم!' },
-  { id:'finish', title:'نتقدّم معًا', speaker:'سارة', pose:'friend-explain', teaching:true, finale:true, text:'أحسنتما! عندما نشعر بالتوتر، يمكننا أن نجرّب نفسًا هادئًا ووقفة مريحة، ونطلب المساعدة حين نحتاجها.' },
+  { id:'voice', address:'learner', title:'صوتي يصل', speaker:'سارة', pose:'friend-ideas', teaching:true, text:'وأنت أيضًا، جرّب تحيةً بصوت واضح ومريح يسمعه من أمامك، من دون صراخ.' },
+  { id:'young-end', address:'learner', title:'خطوة شجاعة', speaker:'الطفلة', pose:'young-confident', text:'مرحبًا! أحب القصص، وهوايتي الرسم. أنا سعيدة بالتعرّف إليكم!' },
+  { id:'finish', address:'learner', title:'نتقدّم معًا', speaker:'سارة', pose:'friend-explain', teaching:true, finale:true, text:'أحسنتما! عندما نشعر بالتوتر، يمكننا أن نجرّب نفسًا هادئًا ووقفة مريحة، ونطلب المساعدة حين نحتاجها.' },
 ];

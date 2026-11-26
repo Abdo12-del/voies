@@ -57,27 +57,45 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
   }, [finishExit, onComplete]);
   // Both speakers stay at fixed coordinates in one high-resolution hallway.
   // Only the shared camera transform changes with the active speaker.
-  const worldWidth = Math.max(camera.width * 1.5, camera.height * 1376 / 768);
+  // A very wide display needs a wider view of the corridor, not a taller crop
+  // that would cut the classmates' feet or put the speakers behind them.
+  const worldFactor = camera.height > 0 && camera.width / camera.height >= 3 ? 1.2 : 1.5;
+  const worldWidth = Math.max(camera.width * worldFactor, camera.height * 1376 / 768);
   const worldHeight = worldWidth * 768 / 1376;
   const wideScale = worldWidth && worldHeight ? Math.max(camera.width / worldWidth, camera.height / worldHeight) : 1;
   const wideX = (camera.width - worldWidth * wideScale) / 2;
   const wideY = (worldHeight * wideScale - camera.height) / 2;
-  // Keep the distant pupils fully in the shot without moving the speakers
-  // relative to the floor when the camera is close.
-  const closeY = Math.max(0, worldHeight - camera.height) * .32;
+  // The hallway pupils' heads are at about y=374 in the 768px source artwork.
+  // For children of similar height, this is the reference head line: projected
+  // height grows with the distance from that line to each child's floor point.
+  const referenceHeadY = 374 / 768;
+  const portrait = camera.width <= 700 && camera.height > camera.width;
+  // On very wide screens, lower the camera just enough to keep the head line
+  // in frame, rather than shrinking the characters independently of the floor.
+  const closeY = Math.max(0, (worldHeight - camera.height) * .32, worldHeight * (1 - referenceHeadY) - camera.height * .88);
+  // Both speakers stand on the same floor line and have the same height.
+  const floorInset = camera.height * (portrait ? .13 : .08) + closeY;
+  const hallPersonHeight = Math.max(0, Math.min(camera.height * .8, worldHeight * (1 - referenceHeadY) - floorInset));
   const activeX = scene.speaker === 'سارة' ? .25 : .52;
-  const framingX = camera.width <= 700 && camera.height > camera.width ? .32 : .34;
+  const framingX = portrait ? .27 : scene.speaker === 'سارة' ? .30 : .34;
   const closeX = Math.max(camera.width - worldWidth, Math.min(0, camera.width * framingX - worldWidth * activeX));
   const wide = !camera.ready || leaving;
   const cameraStyle = {transform:`translate3d(${wide ? wideX : closeX}px, ${wide ? wideY : closeY}px, 0) scale(${wide ? wideScale : 1})`};
   const visual = leaving ? undefined : scene.visual;
   const teachingShift = visual ? camera.width * .5 - (closeX + worldWidth * .25) : 0;
   const previous = SCHOOL_STORY.slice(0, index + 1);
-  const friendPose = [...previous].reverse().find(item => item.speaker === 'سارة')?.pose ?? 'friend-greet';
-  const youngPose = [...previous].reverse().find(item => item.speaker === 'الطفلة')?.pose ?? 'young-worried';
+  const friendScene = [...previous].reverse().find(item => item.speaker === 'سارة');
+  const youngScene = [...previous].reverse().find(item => item.speaker === 'الطفلة');
+  const friendPose = friendScene?.pose ?? 'friend-greet';
+  const youngPose = youngScene?.pose ?? 'young-worried';
+  // Dialogue faces the other child; demonstrations still address the learner.
+  const friendFacingPartner = !friendScene?.visual && friendScene?.address !== 'learner';
+  const youngFacingPartner = youngScene?.address !== 'learner';
+  const hallFriendPose = friendPose === 'friend-greet' ? 'greet' : friendPose === 'friend-ideas' ? 'ideas' : 'explain';
+  const friendImage = friendFacingPartner ? `/school-lesson/friend-hall-${hallFriendPose}.webp` : posePath(friendPose);
   useEffect(() => { heading.current?.focus({preventScroll:true}); }, [index]);
   useEffect(() => {
-    for (const pose of new Set(SCHOOL_STORY.map(item => item.pose))) { const img = new Image(); img.src = posePath(pose); }
+    for (const path of [...new Set(SCHOOL_STORY.map(item => posePath(item.pose))), ...['greet', 'explain', 'ideas'].map(pose => `/school-lesson/friend-hall-${pose}.webp`)]) { const img = new Image(); img.src = path; }
   }, []);
   useEffect(() => {
     const onKey = (event:KeyboardEvent) => {
@@ -106,8 +124,8 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
         }} />
         <div className="school-teaching-backdrop" />
         <div className="school-hall-people-viewport">
-          <div className={`school-hall-people${!camera.ready ? ' is-establishing' : ''}${moving ? ' is-moving' : ''}`} style={{...cameraStyle, '--hall-close-y': `${closeY}px`, '--teaching-shift': `${teachingShift}px`} as CSSProperties}>
-            <div className={`school-figures school-figure-friend${scene.speaker === 'سارة' ? ' is-active' : ''}`} data-speaker="friend">
+          <div className={`school-hall-people${!camera.ready ? ' is-establishing' : ''}${moving ? ' is-moving' : ''}`} style={{...cameraStyle, '--hall-close-y': `${closeY}px`, '--hall-person-height': `${hallPersonHeight}px`, '--teaching-shift': `${teachingShift}px`} as CSSProperties}>
+            <div className={`school-figures school-figure-friend${scene.speaker === 'سارة' ? ' is-active' : ''}`} data-speaker="friend" data-facing={friendFacingPartner ? "partner" : "viewer"}>
               {visual && <div className={`school-teaching-cue${visual === 'scattered' || visual === 'ordered' ? ` is-ideas is-${visual}` : ' is-breath'}`}>
                 {visual === 'scattered' || visual === 'ordered' ? <>
                   <span className="school-cue-caption">{visual === 'scattered' ? 'أفكار متزاحمة' : 'فكرة في كل مرة'}</span>
@@ -117,9 +135,9 @@ export function SchoolLesson({ mode, onBack, onPickSpeaker, onComplete }:Props) 
                   <span className={`school-breath-mark${visual === 'exhale' ? ' is-current' : ''}`}>زفير <small>من الفم</small><b>↑</b></span>
                 </>}
               </div>}
-              <img src={posePath(friendPose)} alt="" />
+              <img src={friendImage} alt="" />
             </div>
-            <div className={`school-figures school-figure-young${scene.speaker === 'الطفلة' ? ' is-active' : ''}`} data-speaker="young"><img src={posePath(youngPose)} alt="" /></div>
+            <div className={`school-figures school-figure-young${scene.speaker === 'الطفلة' ? ' is-active' : ''}`} data-speaker="young" data-facing={youngFacingPartner ? "partner" : "viewer"}><img src={posePath(youngPose)} alt="" /></div>
           </div>
         </div>
       </div>

@@ -20,7 +20,7 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     const speaker = page.locator('.school-figures.is-active img');
     await expect(speaker).toHaveCount(1);
     await expect(page.locator('.school-figures img')).toHaveCount(2);
-    await expect(speaker).toHaveAttribute('src', '/school-entry/friend.webp');
+    await expect(speaker).toHaveAttribute('src', '/school-lesson/friend-hall-greet.webp');
     await expect.poll(() => speaker.evaluate(el => (el as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await expect(page.locator('.sisters-card')).toHaveCSS('opacity','1');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
@@ -29,7 +29,7 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     await expect(page.getByText('صباح النور! أنا متوترة؛ أخاف أن أنسى ما حفظته حين أتحدث أمام الصف.')).toBeVisible();
     await expect(speaker).toHaveAttribute('src', '/sisters-story/solo/young-worried.webp');
     await page.getByRole('button', {name:'السابق', exact:true}).click();
-    await expect(speaker).toHaveAttribute('src', '/school-entry/friend.webp');
+    await expect(speaker).toHaveAttribute('src', '/school-lesson/friend-hall-greet.webp');
     await page.keyboard.press('End');
     await expect(page.getByRole('heading', {name:'نتقدّم معًا'})).toBeFocused();
     await expect(background).toHaveCSS('background-image', /hall\.webp/);

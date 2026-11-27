@@ -36,38 +36,42 @@ for (const viewport of [{width:1440,height:900}, {width:390,height:844}, {width:
     await expect(page.locator('.school-classroom')).toHaveCount(0);
     await expect(page.getByRole('button', {name:'الدخول إلى القسم'})).toBeVisible();
     await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
-    await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused({timeout:12000});
+    await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused({timeout:12000});
     await expect(page.locator('.school-classroom-card')).toHaveCSS('opacity', '1');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
-    await expect(page.getByRole('button', {name:'إلى المنصّة'})).toBeVisible();
+    await expect(page.getByRole('button', {name:'إلى المنصّة'})).toHaveCount(0);
+    await expect(page.locator('.school-presentation-art')).toHaveCSS('background-image', /classroom-stage-zoom\.webp/);
     await expect(page.getByRole('button', {name:/إنهاء الحصة/})).toHaveCount(0);
   });
 }
 
-test('the entrance doors open before the camera enters and the transition can be skipped', async ({page}) => {
+test('the school entrance uses still scenes and can be skipped', async ({page}) => {
   await seedClassroom(page, 1);
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.goto('/#/map');
   await page.locator('.current-start').click();
-  // The view through the doors and the arrival frame use the same hallway art.
   await expect(page.locator('.school-entry-doorway svg svg image')).toHaveAttribute('href', '/school-entry/hall.webp');
-  const state = await page.evaluate(async () => {
-    const entrance = document.querySelector<HTMLElement>('.school-entry-doorway')!;
-    const left = document.querySelector<SVGElement>('.school-entrance-door-left')!;
-    const right = document.querySelector<SVGElement>('.school-entrance-door-right')!;
-    const hall = document.querySelector<HTMLElement>('.school-entry-hall')!;
+  await expect(page.locator('.school-entrance-door')).toHaveCount(0);
+  await expect(page.locator('.school-entry-closed')).toHaveCSS('background-image', /doors-closed\.webp/);
+  await expect(page.locator('.school-entry-ajar')).toHaveCSS('background-image', /doors-ajar\.webp/);
+  await expect(page.locator('.school-entry-doorway > svg > image')).toHaveAttribute('href', '/school-entry/doors-open.webp');
+  const frames = await page.evaluate(async () => {
     const animations = document.getAnimations(); animations.forEach(animation => animation.pause());
     const seek = async (time:number) => { animations.forEach(animation => { animation.currentTime = time; }); await new Promise(requestAnimationFrame); };
-    await seek(2500); const closed = [getComputedStyle(left).transform, getComputedStyle(right).transform], visible = getComputedStyle(entrance).opacity;
-    await seek(4000); const opening = [getComputedStyle(left).transform, getComputedStyle(right).transform], beforeHall = getComputedStyle(hall).opacity;
-    await seek(5500); const opened = [getComputedStyle(left).transform, getComputedStyle(right).transform];
-    await seek(7000); const zoomed = getComputedStyle(entrance).transform;
-    return {closed,opening,opened,visible,beforeHall,zoomed};
+    const style = (selector:string) => { const s = getComputedStyle(document.querySelector<HTMLElement>(selector)!); return {opacity:Number(s.opacity), transform:s.transform}; };
+    await seek(1800); const closed = style('.school-entry-closed'), ajarBefore = style('.school-entry-ajar');
+    await seek(3300); const ajar = style('.school-entry-ajar'), openBefore = style('.school-entry-doorway');
+    await seek(4900); const open = style('.school-entry-doorway'), hallBefore = style('.school-entry-hall');
+    await seek(6700); const hall = style('.school-entry-hall');
+    return {closed, ajarBefore, ajar, openBefore, open, hallBefore, hall};
   });
-  expect(Number(state.visible)).toBe(1);
-  expect(state.opening[0]).not.toEqual(state.closed[0]); expect(state.opening[1]).not.toEqual(state.closed[1]);
-  expect(state.opened[0]).not.toEqual(state.opening[0]); expect(Number(state.beforeHall)).toBe(0);
-  expect(state.zoomed).not.toBe('matrix(1, 0, 0, 1, 0, 0)');
+  expect(frames.closed).toEqual({opacity:1, transform:'none'});
+  expect(frames.ajarBefore.opacity).toBe(0);
+  expect(frames.ajar).toEqual({opacity:1, transform:'none'});
+  expect(frames.openBefore.opacity).toBe(0);
+  expect(frames.open).toEqual({opacity:1, transform:'none'});
+  expect(frames.hallBefore.opacity).toBe(0);
+  expect(frames.hall.opacity).toBe(1);
   await page.getByRole('button', {name:/تخطّي الانتقال/}).click();
   await expect(page.getByRole('heading', {name:'لقاء في الممر'})).toBeFocused();
 });
@@ -106,11 +110,11 @@ test('dialogue waits for the learner and reduced motion still visits the hallway
   await expect(page.locator('.sisters-card')).toHaveCSS('animation-name', 'none');
   await page.waitForTimeout(11000);
   await expect(page.getByRole('heading', {name:'لقاء في الممر'})).toBeVisible();
-  await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toHaveCount(0);
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toHaveCount(0);
   await page.keyboard.press('End');
   await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
   await expect(page.locator('.school-hall-room')).toHaveCount(0);
-  await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused();
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await expect(page.locator('.school-classroom-card')).toHaveCSS('animation-name', 'none');
 });
 
@@ -121,7 +125,7 @@ test('review visits the hallway before the class and preserves progress', async 
   await expect(page).toHaveURL(/#\/lesson\/2\?mode=review$/);
   await expect(page.getByRole('heading', {name:'لقاء في الممر'})).toBeFocused();
   await page.keyboard.press('End'); await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
-  await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused();
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await expect(page.getByText(/وضع المراجعة/)).toBeVisible();
   await page.getByRole('button', {name:'العودة إلى رحلتي'}).click();
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','2');

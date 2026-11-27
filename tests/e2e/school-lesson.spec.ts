@@ -61,9 +61,8 @@ test('breathing, posture and a response to forgetting follow the concern', async
   await page.keyboard.press('End');
   await expect(page.getByRole('heading', {name:'نتقدّم معًا'})).toBeFocused();
   await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
-  await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused();
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await expect(page.getByRole('button', {name:/إنهاء الحصة/})).toHaveCount(0);
-  await page.getByRole('button', {name:'إلى المنصّة'}).click();
   await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await page.keyboard.press('End');
   await expect(page.getByRole('heading', {name:'خطوة أفتخر بها'})).toBeFocused();
@@ -76,8 +75,7 @@ test('breathing, posture and a response to forgetting follow the concern', async
   await expect(page.getByRole('button', {name:'الدخول إلى القسم'})).toBeVisible();
   await expect(page.getByText('هذه مراجعة ولا تغيّر تقدّم الرحلة.')).toBeVisible();
   await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
-  await expect(page.getByRole('heading', {name:'وصلنا إلى صفّنا!'})).toBeFocused();
-  await page.getByRole('button', {name:'إلى المنصّة'}).click();
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await page.keyboard.press('End');
   await expect(page.getByRole('heading', {name:'خطوة أفتخر بها'})).toBeFocused();
   await expect(page.getByText('هذه مراجعة ولا تغيّر تقدّم الرحلة.')).toBeVisible();

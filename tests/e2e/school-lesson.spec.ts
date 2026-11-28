@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { seedClassroom } from './classroom-fixture';
+import { arrangeClassroomIdeas, seedClassroom } from './classroom-fixture';
 import { SCHOOL_STORY } from '../../src/data/schoolStory';
 
 for (const {width,height} of [{width:1440,height:900}, {width:820,height:1180}, {width:390,height:844}, {width:320,height:568}, {width:844,height:390}]) {
@@ -65,6 +65,8 @@ test('breathing, posture and a response to forgetting follow the concern', async
   await expect(page.getByRole('button', {name:/إنهاء الحصة/})).toHaveCount(0);
   await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
   await page.keyboard.press('End');
+  await arrangeClassroomIdeas(page);
+  await page.keyboard.press('End');
   await expect(page.getByRole('heading', {name:'خطوة أفتخر بها'})).toBeFocused();
   await page.getByRole('button', {name:/إنهاء الحصة/}).click();
   await expect(page).toHaveURL(/#\/map/);
@@ -76,6 +78,8 @@ test('breathing, posture and a response to forgetting follow the concern', async
   await expect(page.getByText('هذه مراجعة ولا تغيّر تقدّم الرحلة.')).toBeVisible();
   await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
   await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
+  await page.keyboard.press('End');
+  await arrangeClassroomIdeas(page);
   await page.keyboard.press('End');
   await expect(page.getByRole('heading', {name:'خطوة أفتخر بها'})).toBeFocused();
   await expect(page.getByText('هذه مراجعة ولا تغيّر تقدّم الرحلة.')).toBeVisible();

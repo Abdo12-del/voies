@@ -23,13 +23,15 @@
 .school-entry-skip, .school-classroom-back { position:absolute; top:max(18px,env(safe-area-inset-top)); left:max(18px,env(safe-area-inset-left)); min-height:44px; padding:9px 15px; border:1px solid #ead7bf; border-radius:14px; background:#fffaf1f2; color:#533c3b; box-shadow:0 4px 16px #352c2e28; font-weight:700; }
 .school-entry-skip { pointer-events:auto; }
 .school-hall { position:fixed; z-index:100; inset:0; overflow:hidden; background:#efe9dd; color:#3d303a; }
-.school-hall-background, .school-hall-room { position:absolute; inset:0; background-position:center; background-size:cover; background-repeat:no-repeat; }
+.school-hall-background, .school-hall-room, .school-hall-approach { position:absolute; inset:0; background-position:center; background-size:cover; background-repeat:no-repeat; }
 .school-hall-background { background-image:url('/school-entry/hall.webp'); transform-origin:50.2% 46.4%; }
-.school-hall-room { z-index:3; background-image:url('/school-entry/classroom.webp'); opacity:0; animation:school-enter-room 3.2s ease-in-out forwards; }
-.is-entering-room .school-hall-background { animation:school-hall-zoom 3.2s ease-in-out forwards; }
-.is-entering-room > .school-entry-status, .school-classroom-entry-skip { z-index:4; }
-@keyframes school-hall-zoom { 0%,12% {transform:scale(1)} 81%,100% {transform:scale(2.4)} }
-@keyframes school-enter-room { 0%,81% {opacity:0} 88%,100% {opacity:1} }
+.school-hall-room { z-index:3; background-image:url('/school-entry/classroom.webp'); opacity:0; animation:school-enter-room 5.2s ease-in-out forwards; }
+.school-hall-approach { z-index:4; background-image:url('/school-entry/classroom-approach.webp'); opacity:0; animation:school-enter-approach 5.2s ease-in-out forwards; }
+.is-entering-room .school-hall-background { animation:school-hall-zoom 5.2s ease-in-out forwards; }
+.is-entering-room > .school-entry-status, .school-classroom-entry-skip { z-index:5; }
+@keyframes school-hall-zoom { 0%,8% {transform:scale(1)} 45%,100% {transform:scale(2.4)} }
+@keyframes school-enter-room { 0%,42% {opacity:0} 50%,100% {opacity:1} }
+@keyframes school-enter-approach { 0%,70% {opacity:0} 78%,100% {opacity:1} }
 .school-classroom { position:relative; width:100%; height:100%; overflow:hidden; background:#f5ecdb url('/school-entry/classroom.webp') center / cover no-repeat; color:#3d303a; }
 .school-classroom-girl { position:absolute; height:51%; max-width:35%; object-fit:contain; object-position:bottom; bottom:3%; left:42%; filter:drop-shadow(0 5px 6px #60463a30); }
 .school-classroom-card { position:absolute; top:max(18px,env(safe-area-inset-top)); right:3%; width:min(38%,470px); padding:clamp(16px,1.8vw,24px); border:1px solid #e7cbb5; border-radius:24px; background:#fffbf3f5; box-shadow:0 12px 36px #5b423321; }
@@ -63,11 +65,12 @@
   .school-classroom-girl, .school-classroom-card, .school-classroom-back { animation:none; }
 }
 
-/* A separately redrawn and enhanced close-up of the same classroom.
+/* An enhanced crop of the same classroom.
    The girl stands at the platform coordinates within the artwork. */
 .school-presentation-art { position:absolute; left:50%; top:50%; width:max(100%,179.166667vh); aspect-ratio:43 / 24; transform:translate(-50%,-50%); background:url('/school-entry/classroom-stage-zoom.webp') center / 100% 100% no-repeat; animation:school-elements-in .6s ease-out both; }
-.school-presentation-girl { position:absolute; left:46%; bottom:46%; height:34%; width:auto; max-width:none; transform:translateX(-50%); object-fit:contain; filter:drop-shadow(0 5px 5px #58413238); }
+.school-presentation-girl { position:absolute; left:43%; bottom:18%; height:60%; width:auto; max-width:none; transform:translateX(-50%); object-fit:contain; filter:drop-shadow(0 5px 5px #58413238); }
 
+.school-classroom.is-presenting { background-image:url('/school-entry/classroom-approach.webp'); }
 .is-presenting .school-classroom-back { z-index:3; }
 .is-presenting .school-classroom-card { z-index:2; top:max(18px,env(safe-area-inset-top)); right:5%; transform:none; width:min(40%,550px); max-height:calc(100% - 150px); overflow:auto; }
 .school-presentation-line span { display:inline-block; padding:3px 10px; border-radius:999px; background:#f8e0dd; color:#743c46; font-weight:700; font-size:13px; }
@@ -77,19 +80,21 @@
 .school-presentation-nav button:disabled { color:#675b5a; background:#e9dfd4; opacity:1; }
 .school-presentation-nav span { font-size:13px; font-weight:700; color:#5e4c50; text-align:center; }
 @media (max-width:700px) and (orientation:portrait) {
-  .school-presentation-art { left:50%; top:50%; }
-  .school-presentation-girl { left:50%; }
+  .school-presentation-art { left:50%; top:7.5%; width:max(185%,331.458334vh); }
+  .school-presentation-girl { left:50%; height:28%; }
   .is-presenting .school-classroom-card { top:auto; bottom:78px; right:12px; transform:none; width:calc(100% - 24px); max-height:37%; padding:10px 14px; }
   .school-presentation-line p { margin-top:5px; line-height:1.4; }
   .school-presentation-nav { right:12px; width:calc(100% - 24px); bottom:max(9px,env(safe-area-inset-bottom)); }
 }
 @media (max-width:700px) and (max-height:600px) and (orientation:portrait) {
+  .school-presentation-art { top:-25%; width:max(250%,447.916667vh); }
+  .school-presentation-girl { height:18%; }
   .is-presenting .school-classroom-card { padding:8px 12px; }
   .is-presenting .school-classroom-card h1 { font-size:19px; }
   .school-presentation-line p { font-size:14px; line-height:1.3; }
 }
 @media (max-height:550px) and (orientation:landscape) {
-  .school-presentation-girl { left:50%; }
+  .school-presentation-girl { left:44%; }
   .is-presenting .school-classroom-card { top:6px; right:3%; width:40%; max-height:calc(100% - 110px); }
   .school-presentation-line span { font-size:11px; padding:1px 8px; }
   .school-presentation-line p { margin-top:3px; line-height:1.35; }
@@ -111,7 +116,38 @@
 .school-classroom-card .school-stage-status button { display:inline; min-height:44px; margin:0; padding:4px 8px; }
 /* Tablets in portrait need the same below-the-art dialogue layout as phones. */
 @media (min-width:701px) and (max-width:1000px) and (orientation:portrait) {
-  .school-presentation-art { left:50%; top:50%; }
+  .school-presentation-art { left:50%; top:7.5%; width:max(185%,331.458334vh); }
+  .school-presentation-girl { left:50%; height:28%; }
   .is-presenting .school-classroom-card { top:auto; bottom:78px; right:12px; width:calc(100% - 24px); max-height:37%; padding:14px 18px; }
   .school-presentation-nav { right:12px; width:calc(100% - 24px); bottom:max(9px,env(safe-area-inset-bottom)); }
+}
+
+/* The learner arranges Mary's ideas in a thought cloud over her head. */
+.school-order-ideas { position:absolute; z-index:3; top:max(48px,env(safe-area-inset-top)); left:25%; width:min(420px,40%); padding:9px 12px; border:2px solid #d7babc; border-radius:25px; background:#fffcf5f7; color:#503e46; text-align:center; box-shadow:0 6px 20px #604a3b30; }
+.school-order-ideas::after { content:''; position:absolute; left:48%; bottom:-13px; width:17px; height:17px; border-radius:50%; background:#fffcf5; border:2px solid #d7babc; }
+.school-order-title { margin:0 0 5px; font-weight:800; font-size:16px; }
+.school-order-options { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; }
+.school-order-options button { min-height:38px; padding:4px 10px; border:1px solid #cba5a8; border-radius:14px; color:#623b43; background:#fff5eb; font-weight:700; font-size:14px; }
+.school-order-options button:disabled { color:#275b49; background:#e1f2e7; border-color:#9bc9ad; opacity:1; }
+.school-order-feedback { margin:5px 0 0; font-size:13px; line-height:1.25; font-weight:700; }
+.is-ordering .school-presentation-girl { height:43%; }
+@media (max-width:1000px) and (orientation:portrait) {
+  .school-order-ideas { top:max(58px,calc(env(safe-area-inset-top) + 52px)); left:50%; transform:translateX(-50%); width:min(420px,calc(100% - 24px)); padding:7px; }
+  .is-ordering .school-presentation-girl { height:22%; }
+}
+@media (max-width:700px) and (max-height:600px) and (orientation:portrait) {
+  .school-order-ideas { top:54px; padding:5px; }
+  .school-order-title { font-size:14px; margin:0 0 2px; }
+  .school-order-options button { min-height:34px; font-size:12px; padding:2px 7px; }
+  .school-order-feedback { font-size:12px; margin-top:2px; }
+  .is-ordering .school-presentation-art { top:-17%; }
+  .is-ordering .school-presentation-girl { height:11%; }
+}
+@media (max-height:550px) and (orientation:landscape) {
+  .school-order-ideas { top:4px; left:22%; width:35%; padding:3px 5px; border-radius:15px; }
+  .school-order-title { font-size:12px; margin:0; }
+  .school-order-options { gap:2px; }
+  .school-order-options button { min-height:28px; font-size:11px; padding:1px 5px; }
+  .school-order-feedback { font-size:11px; margin:1px 0 0; }
+  .is-ordering .school-presentation-girl { height:37%; }
 }

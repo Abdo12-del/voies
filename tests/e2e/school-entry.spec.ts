@@ -97,7 +97,7 @@ test('handoffs retain the same backgrounds and never flash the map', async ({pag
   await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
   await expect(page.locator('.lesson-app')).toHaveAttribute('inert', '');
   await expect(page.locator('.school-hall-background')).toHaveCSS('background-image', /hall\.webp/);
-  const classroom = await watch('.school-hall-room','.school-classroom');
+  const classroom = await watch('.school-hall-approach','.school-classroom');
   expect(classroom.gap).toBe(false);
   expect(await page.locator('.school-classroom').evaluate(el => getComputedStyle(el).backgroundImage)).toEqual(classroom.frame);
 });
@@ -157,4 +157,31 @@ test('the school exterior is the very same artwork as the map', async ({page}) =
 test('lesson two is locked until the first is complete', async ({page}) => {
   await seedClassroom(page); await page.goto('/#/lesson/2');
   await expect(page).toHaveURL(/#\/map$/); await expect(page.locator('.school-lesson')).toHaveCount(0);
+});
+
+test('classroom approach shows the same seated class before the closer frame', async ({page}) => {
+  await seedClassroom(page, 1);
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.goto('/#/lesson/2');
+  await page.keyboard.press('End');
+  await page.getByRole('button', {name:'الدخول إلى القسم'}).click();
+  await expect(page.locator('.school-hall-approach')).toBeAttached();
+  const frames = await page.evaluate(async () => {
+    const wide = document.querySelector<HTMLElement>('.school-hall-room')!;
+    const near = document.querySelector<HTMLElement>('.school-hall-approach')!;
+    const animations = [...wide.getAnimations(), ...near.getAnimations()];
+    animations.forEach(animation => animation.pause());
+    const seek = async (time:number) => { animations.forEach(a => { a.currentTime = time; }); await new Promise(requestAnimationFrame); };
+    await seek(3200);
+    const first = {wide:Number(getComputedStyle(wide).opacity), near:Number(getComputedStyle(near).opacity), image:getComputedStyle(wide).backgroundImage};
+    await seek(4400);
+    return {first, second:{near:Number(getComputedStyle(near).opacity), image:getComputedStyle(near).backgroundImage}};
+  });
+  expect(frames.first.wide).toBe(1);
+  expect(frames.first.near).toBe(0);
+  expect(frames.first.image).toMatch(/classroom\.webp/);
+  expect(frames.second.near).toBe(1);
+  expect(frames.second.image).toMatch(/classroom-approach\.webp/);
+  await page.getByRole('button', {name:/تخطّي الانتقال/}).click();
+  await expect(page.getByRole('heading', {name:'دوري على المنصّة'})).toBeFocused();
 });

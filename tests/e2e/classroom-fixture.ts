@@ -34,3 +34,11 @@ export async function seedClassroom(
     { completed, names },
   );
 }
+
+/** Complete the interactive thought-ordering step before continuing the presentation. */
+export async function arrangeClassroomIdeas(page: Page) {
+  const ideas = page.getByRole('region', { name: 'ترتيب أفكار مريم' });
+  for (const name of ['التحية واسمي', 'عمري ومدرستي وصفّي', 'ما أحبّه وهوايتي', 'أختم بلطف']) {
+    await ideas.getByRole('button', { name }).click();
+  }
+}
